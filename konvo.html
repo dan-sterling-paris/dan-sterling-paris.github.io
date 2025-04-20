@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konvo Language Tutor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- Styling Overhaul: Konvo Style --- */
+        :root {
+            /* New Color Palette */
+            --konvo-teal: #008080;
+            --konvo-teal-dark: #006666;
+            --konvo-grey-light: #f4f4f4; /* AI bubble bg, page background */
+            --konvo-grey-medium: #e0e0e0; /* Borders */
+            --konvo-grey-dark: #555555; /* Primary Text */
+            --konvo-bg: #ffffff; /* Container background */
+            --konvo-accent-coral: #ff7f50; /* Start button */
+            --konvo-accent-coral-dark: #e57348;
+            --konvo-accent-blue: #3498db; /* User bubble, Send Button */
+            --konvo-accent-blue-dark: #2980b9;
+
+            /* Feedback Colors */
+            --konvo-success: #2ecc71;
+            --konvo-success-light: #d5f5e3;
+            --konvo-error: #e74c3c;
+            --konvo-error-light: #fadde1;
+            --konvo-warn: #f39c12;
+            --konvo-warn-light: #fef5e7;
+            --konvo-hint-bg: #e0f2f7; /* Light blue hint */
+            --konvo-hint-text: #0077a3; /* Darker blue hint text */
+            --konvo-explanation-bg: #eeeeee;
+            --konvo-explanation-border: var(--konvo-teal);
+
+            --font-primary: 'Nunito', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-primary);
+            line-height: 1.6;
+            color: var(--konvo-grey-dark);
+            background-color: var(--konvo-grey-light);
+            padding: 10px;
+            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background-color: var(--konvo-bg);
+            border-radius: 12px;
+            border: 1px solid var(--konvo-grey-medium);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--konvo-grey-medium);
+            text-align: center;
+            background-color: var(--konvo-bg);
+        }
+         .header h1 {
+             font-size: 1.3rem;
+             font-weight: 800;
+             color: var(--konvo-teal);
+             margin: 0; border: none; padding: 0;
+             display: flex; align-items: center; justify-content: center; gap: 10px;
+         }
+         .header .tutor-avatar-placeholder {
+             width: 28px; height: 28px; background-color: var(--konvo-teal);
+             border-radius: 50%; display: inline-flex;
+             align-items: center; justify-content: center;
+             color: white; font-weight: 700; font-size: 0.9rem;
+         }
+
+
+        .setup-section { /* Removed API key section styling */
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--konvo-grey-medium);
+        }
+         .setup-section h2 {
+             font-size: 1.05rem; font-weight: 700; color: var(--konvo-grey-dark);
+             margin-bottom: 15px; border: none; padding: 0; text-align: left;
+         }
+
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; color: var(--konvo-grey-dark); }
+        /* Removed password input styling as it's gone */
+        .input-group input[type="text"], select {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--konvo-grey-medium); border-radius: 8px; font-size: 1rem; transition: border-color 0.2s ease, box-shadow 0.2s ease; font-family: inherit; background-color: #fff;
+            color: var(--konvo-grey-dark);
+        }
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23aaaaaa' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center; background-size: 16px 12px; padding-right: 40px; cursor: pointer;
+        }
+         .input-group input:focus, select:focus, textarea:focus {
+             border-color: var(--konvo-teal); outline: none; box-shadow: 0 0 0 2px rgba(0, 128, 128, 0.2);
+         }
+
+         button#startConversationButton {
+              width: 100%; margin-top: 10px;
+              background-color: var(--konvo-accent-coral);
+              text-transform: uppercase; letter-spacing: 0.8px;
+              padding: 12px; font-size: 0.95rem; font-weight: 700; border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              transition: background-color 0.2s ease, transform 0.1s ease;
+              color: #fff; border: none;
+         }
+         button#startConversationButton:hover:not(:disabled) {
+             background-color: var(--konvo-accent-coral-dark);
+             transform: translateY(-1px);
+         }
+          button#startConversationButton:active:not(:disabled) {
+              transform: translateY(0px);
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+          }
+          button#startConversationButton:disabled {
+              background-color: #ccc; color: #888; box-shadow: none;
+              cursor: not-allowed; transform: none;
+          }
+
+        /* --- Chat Area --- */
+        .chat-log-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px 15px;
+             background-color: var(--konvo-bg);
+        }
+        .message {
+            display: flex; margin-bottom: 18px;
+            max-width: 88%;
+            align-items: flex-end; gap: 8px;
+        }
+         .message-bubble {
+             padding: 10px 15px;
+             border-radius: 18px 18px 18px 5px; /* User shape default */
+             line-height: 1.5; font-size: 1rem;
+             word-wrap: break-word;
+             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+             position: relative;
+         }
+
+         .ai-message { margin-right: auto; }
+         .ai-message .message-bubble {
+             background-color: var(--konvo-grey-light);
+             color: var(--konvo-grey-dark);
+             border: 1px solid var(--konvo-grey-medium);
+             border-radius: 18px 18px 5px 18px; /* AI bubble shape */
+         }
+
+         .user-message { margin-left: auto; flex-direction: row-reverse;}
+         .user-message .message-bubble {
+             background-color: var(--konvo-accent-blue);
+             color: white;
+         }
+
+         .message-avatar {
+              width: 30px; height: 30px; background-color: var(--konvo-teal);
+              border-radius: 50%; flex-shrink: 0; align-self: flex-end;
+              display: inline-flex; align-items: center; justify-content: center;
+              color: white; font-weight: 600; font-size: 0.85rem;
+         }
+          .user-message .message-avatar { display: none; }
+
+        /* Formatting inside chat bubbles */
+         .message-bubble strong { color: inherit; font-weight: 700; }
+         .message-bubble em { font-style: italic; color: inherit; }
+         .message-bubble code { background-color: rgba(0,0,0,0.06); border-radius: 3px; border: none; color: var(--konvo-teal-dark); padding: 0.2em 0.4em; font-style: normal; font-weight: 600; }
+         .message-bubble .feedback {
+             margin-top: 0.8em; padding: 6px 10px; border-radius: 6px;
+             font-weight: 700; font-size: 0.9em; border: none; display: inline-block;
+         }
+         .message-bubble .feedback.correct { background-color: var(--konvo-success-light); color: #1e7e34; }
+         .message-bubble .feedback.incorrect { background-color: var(--konvo-error-light); color: var(--konvo-error); }
+         .message-bubble .feedback.partial { background-color: var(--konvo-warn-light); color: #b97509; }
+         .message-bubble .hint {
+             margin-top: 0.8em; padding: 8px 12px; border-radius: 6px;
+             background-color: var(--konvo-hint-bg); color: var(--konvo-hint-text);
+             font-size: 0.9em; font-style: italic; display: block;
+         }
+         .message-bubble .explanation {
+             margin-top: 0.8em; padding: 8px 12px; border-radius: 6px;
+             background-color: var(--konvo-explanation-bg); color: var(--konvo-grey-dark);
+             font-size: 0.9em; display: block; border-left: 3px solid var(--konvo-explanation-border);
+         }
+         .message-bubble .example {
+             margin-top: 0.5em; padding-left: 15px;
+             font-style: italic; color: var(--konvo-grey-dark);
+             font-size: 0.9em; display: block; position: relative;
+         }
+          .message-bubble .example::before {
+              content: '“'; position: absolute; left: 0; top: 0; color: var(--konvo-grey-medium); font-size: 1.2em; line-height: 1;
+          }
+         .message-bubble .exercise-instruction {
+             font-weight: 700; margin-top: 1em; margin-bottom: 0.5em;
+             display: block; color: var(--konvo-teal);
+              background: none; padding: 0; border: none;
+         }
+
+
+        /* --- Chat Input Area --- */
+        .chat-input-area {
+            padding: 12px 15px;
+            border-top: 1px solid var(--konvo-grey-medium);
+            background-color: var(--konvo-bg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chat-input-area textarea {
+            flex-grow: 1; border: 1px solid var(--konvo-grey-medium);
+            border-radius: 8px; padding: 10px 12px; resize: none;
+            min-height: 44px; height: 44px;
+            overflow-y: auto; font-size: 1rem; line-height: 1.4;
+        }
+         button#sendMessageButton {
+             flex-shrink: 0;
+             background-color: var(--konvo-accent-blue);
+             border-radius: 8px; padding: 10px 18px;
+             font-weight: 700; margin-top: 0;
+             transition: background-color 0.2s ease;
+             color: #fff; border: none; box-shadow: none;
+         }
+         button#sendMessageButton:hover:not(:disabled) {
+             background-color: var(--konvo-accent-blue-dark);
+         }
+         button#sendMessageButton:active:not(:disabled) {
+             transform: scale(0.98);
+         }
+         button#sendMessageButton:disabled {
+              background-color: #ccc; box-shadow: none; transform: none;
+         }
+
+
+        /* --- Status Indicators --- */
+        .status-indicator { text-align: center; padding: 10px; font-weight: 500; font-size: 0.9rem; }
+        .loading { color: var(--konvo-grey-dark); font-style: italic; }
+        .error { color: var(--konvo-error); background-color: var(--konvo-error-light); border-radius: 8px; margin: 10px 15px; border: 1px solid var(--konvo-error); padding: 8px 12px; text-align: left;}
+        .assessment-result { display: none; }
+
+        /* API Key Section Removed */
+
+        .hidden { display: none; }
+
+         /* Responsive adjustments */
+         @media (max-width: 600px) {
+             body { padding: 0; }
+             .container { margin: 0; border-radius: 0; height: 100vh; border: none;}
+             .header { padding: 12px 15px; }
+             .header h1 { font-size: 1.2rem; }
+             .chat-log-container { padding: 15px 10px; }
+             .message { max-width: 90%; }
+             .message-bubble { font-size: 0.95rem; padding: 9px 14px; border-radius: 15px 15px 15px 4px;}
+              .ai-message .message-bubble { border-radius: 15px 15px 4px 15px; }
+             .chat-input-area { padding: 10px 12px; }
+             .chat-input-area textarea { padding: 9px 10px; min-height: 40px; height: 40px; }
+             button#sendMessageButton { padding: 9px 15px; }
+         }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1><span class="tutor-avatar-placeholder" id="headerAvatar">K</span> <span id="headerTitle">Konvo Tutor</span></h1>
+        </div>
+
+        <!-- API Key Section Removed -->
+
+        <!-- Setup (Initially Visible) -->
+        <section class="setup-section" id="setupStage">
+            <h2>Start a New Conversation</h2>
+            <div class="setup-grid">
+                <div class="input-group">
+                    <label for="languageSelect">I want to practice:</label>
+                    <select id="languageSelect">
+                        <option value="French">French</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="German">German</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Portuguese">Portuguese</option>
+                        <option value="Japanese">Japanese</option>
+                        <!-- Add more -->
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="topicInput">About this situation:</label>
+                    <input type="text" id="topicInput" placeholder="e.g., ordering coffee, directions...">
+                </div>
+            </div>
+            <button id="startConversationButton">Start Chatting</button>
+        </section>
+
+        <!-- Chat Area (Hidden Initially) -->
+        <div class="chat-log-container hidden" id="chatLogContainer">
+             <!-- Messages Append Here -->
+        </div>
+
+        <!-- Input Area (Hidden Initially) -->
+        <div class="chat-input-area hidden" id="chatInputArea">
+            <textarea id="userInput" rows="1" placeholder="Type your message..."></textarea>
+            <button id="sendMessageButton">Send</button>
+        </div>
+
+         <!-- Status Indicator within chat flow area -->
+        <div class="status-indicator loading hidden" id="loadingIndicator">Thinking...</div>
+        <div class="status-indicator error hidden" id="errorMessage"></div>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        // Removed apiKeyInput
+        const languageSelect = document.getElementById('languageSelect');
+        const topicInput = document.getElementById('topicInput');
+        const startConversationButton = document.getElementById('startConversationButton');
+
+        // Removed apiKeySection
+        const setupStage = document.getElementById('setupStage');
+        const chatLogContainer = document.getElementById('chatLogContainer');
+        const chatInputArea = document.getElementById('chatInputArea');
+
+        const userInput = document.getElementById('userInput');
+        const sendMessageButton = document.getElementById('sendMessageButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const headerTitle = document.getElementById('headerTitle');
+        const headerAvatar = document.getElementById('headerAvatar');
+
+        // --- State ---
+        let currentStage = 'setup';
+        let targetLanguage = '';
+        let currentTopic = '';
+        let chatHistory = [];
+        let TUTOR_NAME = "Konvo";
+
+        // --- Constants ---
+        const API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+        // Hardcoded API Key - Use only for local development/testing!
+        const API_KEY = "AIzaSyAl2AjAIwwdHJdjkWkr7HmEtHr15tSSXPg";
+        const tutorNames = {
+            "French": "Léo", "Spanish": "Mateo", "German": "Finn",
+            "Italian": "Luca", "Portuguese": "Diogo", "Japanese": "Haru",
+            "Default": "Konvo"
+        };
+
+        // --- Functions ---
+
+        function setTutorPersona(language) {
+            TUTOR_NAME = tutorNames[language] || tutorNames["Default"];
+            headerTitle.textContent = `${TUTOR_NAME} (${language})`;
+            const initial = TUTOR_NAME.charAt(0).toUpperCase();
+            headerAvatar.textContent = initial;
+            loadingIndicator.textContent = `${TUTOR_NAME} is thinking...`;
+        }
+
+        function showLoading(isLoading) {
+            loadingIndicator.classList.toggle('hidden', !isLoading);
+            startConversationButton.disabled = isLoading;
+            sendMessageButton.disabled = isLoading;
+            userInput.disabled = isLoading;
+        }
+
+        function showError(message) {
+             let displayMessage = message;
+              try {
+                  if (message.includes("error") && message.includes("message")) {
+                      const errorObj = JSON.parse(message.substring(message.indexOf('{')));
+                      if (errorObj.error?.message) displayMessage = errorObj.error.message;
+                  }
+              } catch (e) { /* Ignore */ }
+
+              // Simplify common error messages
+              if (displayMessage.includes("API key not valid")) displayMessage = "Invalid API Key configured."; // Updated message
+              else if (displayMessage.includes("Quota exceeded")) displayMessage = "API quota exceeded.";
+              else if (displayMessage.includes("location is not supported")) displayMessage = "API access for your region is not available.";
+              else if (displayMessage.includes("Request blocked")) displayMessage += " (Content Safety)";
+
+
+            errorMessage.textContent = `Error: ${displayMessage}`;
+            errorMessage.classList.remove('hidden');
+            showLoading(false);
+            if (currentStage === 'setup') {
+                startConversationButton.disabled = false;
+            } else {
+                sendMessageButton.disabled = false;
+                userInput.disabled = false;
+            }
+        }
+
+        function hideError() { errorMessage.classList.add('hidden'); }
+
+        function updateUIForChat() {
+            // Removed hiding apiKeySection
+            setupStage.classList.add('hidden');
+            chatLogContainer.classList.remove('hidden');
+            chatInputArea.classList.remove('hidden');
+            adjustTextareaHeight();
+            currentStage = 'conversation';
+        }
+
+        function addMessageToLog(sender, textContent) {
+             const messageDiv = document.createElement('div');
+             messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
+
+             if (sender === 'ai') {
+                  const avatarDiv = document.createElement('div');
+                  avatarDiv.classList.add('message-avatar');
+                  avatarDiv.textContent = TUTOR_NAME.charAt(0).toUpperCase();
+                  messageDiv.appendChild(avatarDiv);
+              }
+
+             const bubbleDiv = document.createElement('div');
+             bubbleDiv.classList.add('message-bubble');
+
+             const formattedText = textContent
+                .replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                .replace(/&lt;strong&gt;(.*?)&lt;\/strong&gt;/g, '<strong>$1</strong>')
+                .replace(/&lt;em&gt;(.*?)&lt;\/em&gt;/g, '<em>$1</em>')
+                .replace(/&lt;code&gt;(.*?)&lt;\/code&gt;/g, '<code>$1</code>')
+                .replace(/&lt;span class=['"]exercise-instruction['"]&gt;(.*?)&lt;\/span&gt;/g, '<span class="exercise-instruction">$1</span>')
+                .replace(/&lt;div class=['"]feedback (correct|incorrect|partial)['"]&gt;(.*?)&lt;\/div&gt;/g, '<div class="feedback $1">$2</div>')
+                .replace(/&lt;span class=['"]hint['"]&gt;(.*?)&lt;\/span&gt;/g, '<span class="hint">$1</span>')
+                .replace(/&lt;div class=['"]explanation['"]&gt;(.*?)&lt;\/div&gt;/g, '<div class="explanation">$1</div>')
+                .replace(/&lt;div class=['"]example['"]&gt;(.*?)&lt;\/div&gt;/g, '<div class="example">$1</div>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
+
+             bubbleDiv.innerHTML = formattedText;
+             messageDiv.appendChild(bubbleDiv);
+
+             chatLogContainer.appendChild(messageDiv);
+             chatLogContainer.scrollTop = chatLogContainer.scrollHeight;
+        }
+
+        // Modified callGoogleAI to use the constant API_KEY
+        async function callGoogleAI(prompt) { // Removed apiKey parameter
+             showLoading(true);
+             hideError();
+
+             if (prompt) { chatHistory.push({ role: 'user', parts: [{ text: prompt }] }); }
+
+             const safetySettings = [
+                 { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                 { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                 { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                 { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+             ];
+
+             const requestBody = { contents: chatHistory, safetySettings };
+
+             try {
+                 // Use the constant API_KEY here
+                 const response = await fetch(`${API_ENDPOINT}?key=${API_KEY}`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(requestBody)
+                 });
+                 const data = await response.json();
+
+                 let blockReasonText = null;
+                 if (data.promptFeedback?.blockReason) {
+                     blockReasonText = `Request blocked: ${data.promptFeedback.blockReason}.`;
+                 } else if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+                     const safetyRatings = data.candidates[0].safetyRatings;
+                     let specificReason = "safety settings";
+                     if (safetyRatings?.length > 0) {
+                          specificReason = safetyRatings.filter(r => r.probability !== 'NEGLIGIBLE').map(r => `${r.category.replace('HARM_CATEGORY_','')} (${r.probability})`).join(', ') || specificReason;
+                     }
+                     blockReasonText = `AI response blocked due to ${specificReason}.`;
+                 }
+                  if(blockReasonText) {
+                      console.error("Safety Block Details:", JSON.stringify(data, null, 2));
+                      throw new Error(blockReasonText);
+                  }
+
+                 if (!response.ok) {
+                      let detail = `API Error (${response.status})`;
+                      if (data?.error?.message) detail = data.error.message;
+                       // Check specifically for API key error with the hardcoded key
+                       if (detail.includes("API key not valid")) {
+                           detail = "The hardcoded API key 'AIzaSyAl2AjAIwwdHJdjkWkr7HmEtHr15tSSXPg' is invalid or not enabled for the Gemini API. Please obtain a valid key and update the script.";
+                       }
+                      throw new Error(detail);
+                  }
+                  if (!data.candidates?.[0]?.content) {
+                      console.warn("Unexpected AI response structure:", JSON.stringify(data, null, 2));
+                      throw new Error("AI returned empty or invalid response structure.");
+                  }
+                  const finishReason = data.candidates[0]?.finishReason;
+                  if (finishReason && !["STOP", "MAX_TOKENS"].includes(finishReason)) {
+                       console.warn(`AI generation finish reason: ${finishReason}. Content might be partial.`);
+                  }
+
+                  if (data.candidates[0]?.content?.parts?.[0]?.text) {
+                     const aiText = data.candidates[0].content.parts[0].text;
+                     if (!aiText.trim()) {
+                         console.warn("AI returned an empty text response:", JSON.stringify(data, null, 2));
+                         showLoading(false);
+                         showError("Received an empty response from the AI. You can try again.");
+                         if (prompt && chatHistory.length > 0 && chatHistory[chatHistory.length - 1]?.role === 'user') {
+                             chatHistory.pop();
+                         }
+                         return null;
+                     }
+                     chatHistory.push({ role: 'model', parts: [{ text: aiText }] });
+                     showLoading(false);
+                     return aiText;
+                 } else {
+                      console.warn("AI response structure missing text:", JSON.stringify(data, null, 2));
+                      throw new Error("AI response structure unexpected (missing text).");
+                 }
+             } catch (error) {
+                 console.error("AI Call Failed Details:", error);
+                 showError(error.message || "An unknown error occurred.");
+                  if (prompt && chatHistory.length > 0 && chatHistory[chatHistory.length - 1]?.role === 'user' && chatHistory[chatHistory.length - 1]?.parts[0]?.text === prompt) {
+                       if (!(chatHistory.length > 1 && chatHistory[chatHistory.length - 2]?.role === 'model')) {
+                           chatHistory.pop();
+                       }
+                  } else if (!prompt && chatHistory.length > 0 && chatHistory[chatHistory.length - 1]?.role === 'user' && chatHistory[chatHistory.length - 1]?.parts[0]?.text?.startsWith('SYSTEM:')) {
+                      if (!(chatHistory.length > 1 && chatHistory[chatHistory.length - 2]?.role === 'model')) {
+                          chatHistory.pop();
+                      }
+                  }
+                 showLoading(false);
+                 return null;
+             }
+        }
+
+        // --- Conversation Flow Logic ---
+
+        async function startConversation() {
+             // Removed reading API key from input
+             targetLanguage = languageSelect.value;
+             currentTopic = topicInput.value.trim();
+             // Check only for topic now
+             if (!currentTopic || !targetLanguage) { showError("Language and Topic are required."); return; }
+
+             setTutorPersona(targetLanguage);
+             updateUIForChat();
+
+             chatHistory = [{
+                 role: 'user',
+                 // SYSTEM PROMPT 1 (Revised for Brevity)
+                 parts: [{ text: `SYSTEM: You are ${TUTOR_NAME}, a friendly, patient, and adaptive language tutor for ${targetLanguage}. The user wants to practice: "${currentTopic}". Goal: Facilitate practical language learning through natural conversation.
+
+**Persona:** Act like a real, engaging human teacher. Be warm, encouraging, and slightly informal. Your responses should be educational but **concise** (aim for ~75% of typical long tutor explanation length). Avoid overwhelming the user.
+
+**Teaching Style:** Start in English, gradually introduce ${targetLanguage} based *only* on user's demonstrated ability. Apply 80/20 rule (focus on practical language). **Explicitly but briefly introduce/explain** new language (\`<code>...\</code>\`, example \`<div class="example">...\</div>\`, brief explanation \`<div class="explanation">...\</div>\`). Check understanding simply. Balance conversation & teaching smoothly.
+
+**Instructions for your FIRST message:**
+1.  Adopt the ${TUTOR_NAME} persona.
+2.  Greet warmly **in English**.
+3.  Acknowledge interest in "${currentTopic}" in ${targetLanguage}.
+4.  Ask an open-ended, engaging question **in English** about the topic itself.
+5.  Briefly mention you'll bring in useful ${targetLanguage} phrases.
+6.  Keep this first message **in English**, welcoming, and **reasonably concise**.` }]
+             }];
+
+             const firstAiMsg = await callGoogleAI(); // Pass no prompt for first call
+             if (firstAiMsg) {
+                 addMessageToLog('ai', firstAiMsg);
+             } else if (currentStage === 'setup') {
+                 showLoading(false);
+                 startConversationButton.disabled = false;
+                 currentStage = 'setup';
+             }
+        }
+
+        async function handleConversationResponse() {
+             // Removed reading API key from input
+             const userAnswer = userInput.value.trim();
+             if (!userAnswer) { return; } // Ignore empty sends
+
+             addMessageToLog('user', userAnswer);
+             userInput.value = '';
+             adjustTextareaHeight();
+
+             // SYSTEM PROMPT 2 (Revised for Brevity)
+             const lessonCyclePrompt = `SYSTEM: You are ${TUTOR_NAME}, a friendly, adaptive ${targetLanguage} tutor for "${currentTopic}". Continue the conversation naturally, acting like an engaging human teacher, but keep responses **concise and focused** (~75% length). Gradually increase ${targetLanguage} based *only* on user's demonstrated ability. Focus on practical language (80/20 rule).
+
+**Core Principles:** Analyze & Adapt (language mix/complexity). Natural Flow (respond first, then teach). Explicit but **Brief** Teaching (introduce \`<code>...\</code>\`, example \`<div class="example">...\</div>\`, brief explanation \`<div class="explanation">...\</div>\`). Reinforce & Guide Gently (hints \`<span class="hint">...\</span>\`, questions). Increase Immersion Gradually. Check Understanding Simply. Include **Concise** Micro-Tasks (\`<span class="exercise-instruction">...\</span>\`).
+
+**Your Task Now:**
+1.  Analyze user's last message: "${userAnswer}". Gauge language use/accuracy.
+2.  Craft a **natural but concise response** addressing their message.
+3.  **Briefly integrate a teaching element** based on analysis:
+    *   If English-heavy: Introduce **one** simple practical ${targetLanguage} item with brief explanation/example.
+    *   If Attempting TL: Provide concise feedback/guidance or a brief related expansion.
+    *   If Comfortable TL: Use more ${targetLanguage} concisely, introduce next practical item briefly.
+4.  Provide necessary **brief** guidance or praise.
+5.  Include a clear, **simple, short** micro-task.
+6.  Maintain ${TUTOR_NAME} persona: warm, patient, encouraging, concise teacher.`;
+
+             chatHistory.push({ role: 'user', parts: [{ text: lessonCyclePrompt }] });
+
+             const aiResponse = await callGoogleAI(userAnswer); // Pass user answer, uses constant API_KEY
+
+             if(aiResponse) {
+                 addMessageToLog('ai', aiResponse);
+             }
+             // Error handled by callGoogleAI
+        }
+
+        // Auto-resize textarea
+        function adjustTextareaHeight() {
+            userInput.style.height = 'auto';
+            const maxHeight = 120; // Reduced max height slightly
+            const newHeight = Math.min(userInput.scrollHeight + 2, maxHeight);
+            userInput.style.height = newHeight + 'px';
+        }
+
+        // --- Event Listeners ---
+        startConversationButton.addEventListener('click', startConversation);
+
+        sendMessageButton.addEventListener('click', () => {
+            if (currentStage === 'conversation') { handleConversationResponse(); }
+        });
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendMessageButton.disabled && currentStage === 'conversation') {
+                    sendMessageButton.click();
+                }
+            }
+        });
+        userInput.addEventListener('input', adjustTextareaHeight);
+
+        // --- Initial Setup ---
+        chatLogContainer.classList.add('hidden');
+        chatInputArea.classList.add('hidden');
+        loadingIndicator.classList.add('hidden');
+        errorMessage.classList.add('hidden');
+        setTutorPersona(languageSelect.value);
+
+        languageSelect.addEventListener('change', (e) => {
+            if (currentStage === 'setup') {
+                 setTutorPersona(e.target.value);
+            }
+        });
+
+    </script>
+</body>
+</html>
