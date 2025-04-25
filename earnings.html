@@ -213,12 +213,13 @@
         // Get current date for subject
         const date = new Date();
         const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const subject = `Earnings Report - ${dateString}`;
+        // --- UPDATED Subject Line ---
+        const subject = `LALA EARNINGS ${dateString}`;
 
         // Construct the mailto link - IMPORTANT: Encode components to handle spaces/special chars
         const mailtoLink = `mailto:${recipientEmail}`
-                         + `?subject=${encodeURIComponent(subject)}`
-                         + `&body=${encodeURIComponent(emailBody)}`;
+                         + `?subject=${encodeURIComponent(subject)}` // Subject is encoded here
+                         + `&body=${encodeURIComponent(emailBody)}`; // Body is encoded here
 
         // Try to open the mail client
         // This will fail silently in some environments if no mail client is configured
