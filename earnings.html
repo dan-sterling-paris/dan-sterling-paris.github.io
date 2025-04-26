@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earnings Tracker - Email</title>
+    <title>Upcoming Earnings - Next 7 Days (€)</title>
     <style>
+        /* Styles remain the same as the previous version */
         body {
             font-family: sans-serif;
             line-height: 1.6;
@@ -22,7 +23,15 @@
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* Reduced margin */
+        }
+        h2.day-label {
+             font-size: 1.1em;
+             color: #444;
+             margin-top: 20px;
+             margin-bottom: 8px;
+             border-bottom: 1px solid #eee;
+             padding-bottom: 5px;
         }
         .input-row {
             display: grid;
@@ -36,6 +45,7 @@
             margin-bottom: 5px; /* Space below label */
             font-weight: bold;
             color: #555;
+            font-size: 0.95em; /* Slightly smaller label */
         }
         input[type="text"],
         input[type="number"] {
@@ -51,6 +61,9 @@
                 grid-template-columns: 1fr; /* Stack columns vertically */
                 gap: 5px; /* Reduce gap */
             }
+             h2.day-label {
+                text-align: center;
+             }
             label {
                  margin-bottom: 2px; /* Reduce space below label */
             }
@@ -70,93 +83,123 @@
             border-radius: 5px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 25px;
+            margin-top: 30px; /* More space before button */
             transition: background-color 0.2s ease;
         }
         button:hover {
             background-color: #218838;
         }
-        hr {
-            border: 0;
-            height: 1px;
-            background: #eee;
-            margin: 20px 0;
-        }
         .info {
             font-size: 0.9em;
             color: #666;
             text-align: center;
-            margin-top: 15px;
+            margin-top: 5px; /* Reduced margin */
+            margin-bottom: 25px;
+        }
+        hr { /* Optional: Hide hr if using h2 as separators */
+             display: none;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Track Your Earnings</h1>
-    <p class="info">Fill in the details below. Clicking the button will open your default email app with the information pre-filled. You will need to press 'Send' in your email app.</p>
+    <h1>Upcoming Earnings</h1>
+    <p class="info">Enter expected earnings in Euros (€) for each of the next 7 days. Click the button to prepare an email summary.</p>
     <form id="earningsForm">
-        <!-- Row 1 -->
+
+        <!-- Day 1 -->
+        <h2 class="day-label" id="dayLabel1">Day 1 Loading...</h2>
         <div class="input-row">
             <div>
-                <label for="person1">Person I worked for:</label>
+                <label for="person1">Paying Person/Entity:</label>
                 <input type="text" id="person1" name="person1">
             </div>
             <div>
-                <label for="amount1">Total they owe me (£/$):</label>
+                <label for="amount1">Expected Amount (€):</label>
                 <input type="number" id="amount1" name="amount1" step="0.01" placeholder="e.g., 150.50">
             </div>
         </div>
-        <hr>
-        <!-- Row 2 -->
+
+        <!-- Day 2 -->
+        <h2 class="day-label" id="dayLabel2">Day 2 Loading...</h2>
         <div class="input-row">
             <div>
-                <label for="person2">Person I worked for:</label>
+                <label for="person2">Paying Person/Entity:</label>
                 <input type="text" id="person2" name="person2">
             </div>
             <div>
-                <label for="amount2">Total they owe me (£/$):</label>
-                <input type="number" id="amount2" name="amount2" step="0.01" placeholder="e.g., 150.50">
-            </div>
-        </div>
-        <hr>
-        <!-- Row 3 -->
-        <div class="input-row">
-            <div>
-                <label for="person3">Person I worked for:</label>
-                <input type="text" id="person3" name="person3">
-            </div>
-            <div>
-                <label for="amount3">Total they owe me (£/$):</label>
-                <input type="number" id="amount3" name="amount3" step="0.01" placeholder="e.g., 150.50">
-            </div>
-        </div>
-        <hr>
-        <!-- Row 4 -->
-        <div class="input-row">
-            <div>
-                <label for="person4">Person I worked for:</label>
-                <input type="text" id="person4" name="person4">
-            </div>
-            <div>
-                <label for="amount4">Total they owe me (£/$):</label>
-                <input type="number" id="amount4" name="amount4" step="0.01" placeholder="e.g., 150.50">
-            </div>
-        </div>
-        <hr>
-        <!-- Row 5 -->
-        <div class="input-row">
-            <div>
-                <label for="person5">Person I worked for:</label>
-                <input type="text" id="person5" name="person5">
-            </div>
-            <div>
-                <label for="amount5">Total they owe me (£/$):</label>
-                <input type="number" id="amount5" name="amount5" step="0.01" placeholder="e.g., 150.50">
+                <label for="amount2">Expected Amount (€):</label>
+                <input type="number" id="amount2" name="amount2" step="0.01" placeholder="e.g., 100.00">
             </div>
         </div>
 
-        <button type="submit">Prepare Email Report</button>
+        <!-- Day 3 -->
+        <h2 class="day-label" id="dayLabel3">Day 3 Loading...</h2>
+        <div class="input-row">
+            <div>
+                <label for="person3">Paying Person/Entity:</label>
+                <input type="text" id="person3" name="person3">
+            </div>
+            <div>
+                <label for="amount3">Expected Amount (€):</label>
+                <input type="number" id="amount3" name="amount3" step="0.01" placeholder="e.g., 50.00">
+            </div>
+        </div>
+
+        <!-- Day 4 -->
+        <h2 class="day-label" id="dayLabel4">Day 4 Loading...</h2>
+        <div class="input-row">
+            <div>
+                <label for="person4">Paying Person/Entity:</label>
+                <input type="text" id="person4" name="person4">
+            </div>
+            <div>
+                <label for="amount4">Expected Amount (€):</label>
+                <input type="number" id="amount4" name="amount4" step="0.01" placeholder="e.g., 200.00">
+            </div>
+        </div>
+
+        <!-- Day 5 -->
+        <h2 class="day-label" id="dayLabel5">Day 5 Loading...</h2>
+        <div class="input-row">
+            <div>
+                <label for="person5">Paying Person/Entity:</label>
+                <input type="text" id="person5" name="person5">
+            </div>
+            <div>
+                <label for="amount5">Expected Amount (€):</label>
+                <input type="number" id="amount5" name="amount5" step="0.01" placeholder="e.g., 75.00">
+            </div>
+        </div>
+
+        <!-- Day 6 -->
+        <h2 class="day-label" id="dayLabel6">Day 6 Loading...</h2>
+        <div class="input-row">
+            <div>
+                <label for="person6">Paying Person/Entity:</label>
+                <input type="text" id="person6" name="person6">
+            </div>
+            <div>
+                <label for="amount6">Expected Amount (€):</label>
+                <input type="number" id="amount6" name="amount6" step="0.01" placeholder="e.g., 120.00">
+            </div>
+        </div>
+
+        <!-- Day 7 -->
+        <h2 class="day-label" id="dayLabel7">Day 7 Loading...</h2>
+        <div class="input-row">
+            <div>
+                <label for="person7">Paying Person/Entity:</label>
+                <input type="text" id="person7" name="person7">
+            </div>
+            <div>
+                <label for="amount7">Expected Amount (€):</label>
+                <input type="number" id="amount7" name="amount7" step="0.01" placeholder="e.g., 90.00">
+            </div>
+        </div>
+
+        <button type="submit">Prepare 7-Day Earnings Email (€)</button>
     </form>
 </div>
 
@@ -167,68 +210,105 @@
     const recipientEmail = "dan@sterlingparis.com"; // <--- CHANGE THIS!
     // ---
 
+    // Arrays for formatting date names
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // --- Updated formatDate function ---
+    // Formats date as: dddd, dd mmm yy (e.g., Monday, 08 Jul 24)
+    function formatDate(date) {
+        const dayOfWeek = dayNames[date.getDay()];
+        const dayOfMonth = String(date.getDate()).padStart(2, '0');
+        const month = monthNames[date.getMonth()];
+        const year = String(date.getFullYear()).slice(-2); // Get last two digits of year
+        return `${dayOfWeek}, ${dayOfMonth} ${month} ${year}`;
+    }
+
+    // Function to add days to a date
+    function addDays(date, days) {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    }
+
+    // --- Generate dates and update labels ---
+    const today = new Date();
+    const dayDates = []; // Store actual Date objects
+    const dayLabelsFormatted = []; // Store formatted date strings
+
+    for (let i = 0; i < 7; i++) {
+        const currentDate = addDays(today, i);
+        dayDates.push(currentDate);
+        const formattedDate = formatDate(currentDate);
+        dayLabelsFormatted.push(formattedDate); // Store the formatted string
+
+        const labelElement = document.getElementById(`dayLabel${i + 1}`);
+        if (labelElement) {
+            // Update the H2 label on the page
+            labelElement.textContent = formattedDate;
+        }
+    }
+
+
     form.addEventListener('submit', function(event) {
-        // Prevent the default form submission behavior
-        event.preventDefault();
+        event.preventDefault(); // Prevent the default form submission
 
-        let emailBody = "Earnings Report:\n\n"; // Use \n for new lines in the email body
+        // Use the pre-formatted start date for the email title
+        const startDateFormatted = dayLabelsFormatted[0];
+        let emailBody = `Upcoming Earnings Report (Next 7 Days - Euros):\nWeek Starting ${startDateFormatted}\n\n`;
         let dataEntered = false;
-        let totalOwed = 0;
+        let totalExpected = 0;
 
-        // Loop through the 5 rows of inputs
-        for (let i = 1; i <= 5; i++) {
+        // Loop through the 7 days of inputs
+        for (let i = 1; i <= 7; i++) {
             const personInput = document.getElementById(`person${i}`);
             const amountInput = document.getElementById(`amount${i}`);
+            // Use the corresponding formatted date label for this day
+            const dayLabel = dayLabelsFormatted[i - 1];
 
             const person = personInput.value.trim();
             const amountStr = amountInput.value.trim();
 
-            // Only add row to email if at least one field has a value
+            // Only add day to email if at least one field has a value for that day
             if (person || amountStr) {
                 dataEntered = true;
-                const amount = amountStr ? parseFloat(amountStr) : 0; // Treat empty amount as 0 for calculation
-                const amountDisplay = amountStr ? amount.toFixed(2) : "(No amount entered)"; // How to display it
+                const amount = amountStr ? parseFloat(amountStr) : 0;
+                const amountDisplay = amountStr
+                    ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount)
+                    : "(No amount entered)";
 
-                emailBody += `Person: ${person}\n`;
-                emailBody += `Amount Owed: ${amountDisplay}\n`;
-                emailBody += `--------------------\n`;
+                emailBody += `${dayLabel}\n`; // Add the correctly formatted date label
+                emailBody += `  Paying Person/Entity: ${person || '(Not specified)'}\n`;
+                emailBody += `  Expected Amount: ${amountDisplay}\n`;
+                emailBody += `----------------------------------------\n`;
 
-                if (amount) { // Only add valid numbers to the total
-                   totalOwed += amount;
+                if (amount) {
+                   totalExpected += amount;
                 }
             }
         }
 
-        // Check if any data was actually entered
         if (!dataEntered) {
-            alert("Please enter some earnings information before preparing the email.");
-            return; // Stop the function if no data
+            alert("Please enter some expected earnings information before preparing the email.");
+            return;
         }
 
-        // Add the total to the email body
-        emailBody += `\nTotal Amount Owed: ${totalOwed.toFixed(2)}`;
+        const totalDisplay = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(totalExpected);
+        emailBody += `\nTotal Expected Earnings (Next 7 Days): ${totalDisplay}`;
 
         // --- Prepare the mailto link ---
+        // Use the formatted start date in the subject
+        const subject = `LALA Upcoming Earnings (€) - 7 Days starting ${startDateFormatted}`;
 
-        // Get current date for subject
-        const date = new Date();
-        const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        // --- UPDATED Subject Line ---
-        const subject = `LALA EARNINGS ${dateString}`;
-
-        // Construct the mailto link - IMPORTANT: Encode components to handle spaces/special chars
         const mailtoLink = `mailto:${recipientEmail}`
-                         + `?subject=${encodeURIComponent(subject)}` // Subject is encoded here
-                         + `&body=${encodeURIComponent(emailBody)}`; // Body is encoded here
+                         + `?subject=${encodeURIComponent(subject)}`
+                         + `&body=${encodeURIComponent(emailBody)}`;
 
-        // Try to open the mail client
-        // This will fail silently in some environments if no mail client is configured
-        // or if the link is too long, but it's the best we can do client-side.
         window.location.href = mailtoLink;
 
-        alert("Your email application should now open with the earnings report pre-filled. Please review and press 'Send'.");
+        alert("Your email application should now open with the 7-day earnings report pre-filled. Please review and press 'Send'.");
 
-        // Optional: Clear the form after attempting to open mail client
+        // Optional: Clear the form
         // form.reset();
     });
 </script>
