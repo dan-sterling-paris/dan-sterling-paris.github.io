@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Sterling Paris | Entertainment Consultancy Inquiry</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+     <div class="site-wrapper">
+        <header class="main-header">
+             <div class="container-nav">
+                <a href="index.html" class="logo">Sterling Paris</a>
+                <nav class="main-nav" id="main-nav">
+                    <ul>
+                         <li><a href="index.html">Home</a></li>
+                         <li><a href="about.html">About</a></li>
+                         <li><a href="services.html">Services</a></li>
+                         <li><a href="clients.html">Clients</a></li>
+                         <li><a href="contact.html" class="active">Contact</a></li>
+                    </ul>
+                </nav>
+                 <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                    &#9776; <!-- Hamburger icon -->
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <div class="container">
+                <h1>Connect With Us</h1>
+                <p class="lead text-center" style="max-width: 800px; margin: 0 auto 3rem auto;">Discuss how Sterling Paris can elevate your next project. We welcome inquiries regarding our bespoke consultancy services.</p>
+
+                <div class="contact-grid">
+                    <div class="contact-info">
+                        <h2>Contact Details</h2>
+                        <p><strong>Email:</strong> <a href="mailto:info@sterlingparis.com">info@sterlingparis.com</a></p>
+                        <p><strong>Phone:</strong> <a href="tel:+440000000000">+44 [Your Phone Number Here]</a></p> <!-- ** REPLACE PHONE ** -->
+                        <p><strong>Location:</strong> London, UK</p>
+                        <p style="margin-top: 1.5rem;"><em>Serving clients worldwide. Please reach out via email or the contact form for the quickest response.</em></p>
+                         <!-- Add Address if desired
+                         <p><strong>Address:</strong> [Your Company Address Here]</p>
+                         -->
+                    </div>
+                    <div class="contact-form">
+                        <h2>Send a Message</h2>
+                        <!-- Replace "#" with your form processing endpoint or service -->
+                        <form action="#" method="post">
+                             <div>
+                                <label for="name">Name</label>
+                                <input type="text" id="name" name="name" required>
+                            </div>
+                             <div>
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                             <div>
+                                <label for="subject">Subject (Optional)</label>
+                                <input type="text" id="subject" name="subject">
+                            </div>
+                             <div>
+                                <label for="message">Message</label>
+                                <textarea id="message" name="message" rows="6" required></textarea>
+                            </div>
+                            <div>
+                                <button type="submit" class="cta-button">Submit Inquiry</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="main-footer">
+             <p>&copy; 2024 Sterling Paris Limited. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
