@@ -250,8 +250,8 @@ body.scrolled .main-header {
     padding: 80px 15px;
     background-color: var(--secondary-accent);
     /* Optional: Background image with overlay */
-    /* background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('../images/hero-bg.jpg') no-repeat center center/cover; */
-    /* color: var(--bg-color); if using dark bg image */
+    background: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('../images/hero-bg.jpg') no-repeat center center/cover;
+	color: var(--bg-color);
     margin-bottom: 0; /* Remove bottom margin if next section has bg */
 }
 .hero h1 {
