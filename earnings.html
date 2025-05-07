@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upcoming Earnings - Next 7 Days (€)</title>
+    <title>Financial Overview - Next 7 Days (€)</title> <!-- Updated title -->
     <style>
         /* Styles remain the same as the previous version */
         body {
@@ -25,7 +25,7 @@
             color: #333;
             margin-bottom: 10px; /* Reduced margin */
         }
-        h2.day-label {
+        h2.day-label { /* Renamed for clarity, also used for Outstanding section */
              font-size: 1.1em;
              color: #444;
              margin-top: 20px;
@@ -104,9 +104,22 @@
 <body>
 
 <div class="container">
-    <h1>Upcoming Earnings</h1>
-    <p class="info">Enter expected earnings in Euros (€) for each of the next 7 days. Click the button to prepare an email summary.</p>
+    <h1>Financial Overview</h1> <!-- Updated title -->
+    <p class="info">Enter outstanding amounts owed and expected earnings in Euros (€) for each of the next 7 days. All amount fields are required (enter 0 if none). Click the button to prepare an email summary.</p> <!-- Updated info text -->
     <form id="earningsForm">
+
+        <!-- Outstanding Amounts Owed -->
+        <h2 class="day-label">Outstanding Amounts Owed</h2>
+        <div class="input-row">
+            <div>
+                <label for="outstandingPerson">Paying Person/Entity:</label>
+                <input type="text" id="outstandingPerson" name="outstandingPerson">
+            </div>
+            <div>
+                <label for="outstandingAmount">Amount Owed (€):</label>
+                <input type="number" id="outstandingAmount" name="outstandingAmount" step="0.01" placeholder="e.g., 500.00" required value="0">
+            </div>
+        </div>
 
         <!-- Day 1 -->
         <h2 class="day-label" id="dayLabel1">Day 1 Loading...</h2>
@@ -117,7 +130,7 @@
             </div>
             <div>
                 <label for="amount1">Expected Amount (€):</label>
-                <input type="number" id="amount1" name="amount1" step="0.01" placeholder="e.g., 150.50">
+                <input type="number" id="amount1" name="amount1" step="0.01" placeholder="e.g., 150.50" required value="0">
             </div>
         </div>
 
@@ -130,7 +143,7 @@
             </div>
             <div>
                 <label for="amount2">Expected Amount (€):</label>
-                <input type="number" id="amount2" name="amount2" step="0.01" placeholder="e.g., 100.00">
+                <input type="number" id="amount2" name="amount2" step="0.01" placeholder="e.g., 100.00" required value="0">
             </div>
         </div>
 
@@ -143,7 +156,7 @@
             </div>
             <div>
                 <label for="amount3">Expected Amount (€):</label>
-                <input type="number" id="amount3" name="amount3" step="0.01" placeholder="e.g., 50.00">
+                <input type="number" id="amount3" name="amount3" step="0.01" placeholder="e.g., 50.00" required value="0">
             </div>
         </div>
 
@@ -156,7 +169,7 @@
             </div>
             <div>
                 <label for="amount4">Expected Amount (€):</label>
-                <input type="number" id="amount4" name="amount4" step="0.01" placeholder="e.g., 200.00">
+                <input type="number" id="amount4" name="amount4" step="0.01" placeholder="e.g., 200.00" required value="0">
             </div>
         </div>
 
@@ -169,7 +182,7 @@
             </div>
             <div>
                 <label for="amount5">Expected Amount (€):</label>
-                <input type="number" id="amount5" name="amount5" step="0.01" placeholder="e.g., 75.00">
+                <input type="number" id="amount5" name="amount5" step="0.01" placeholder="e.g., 75.00" required value="0">
             </div>
         </div>
 
@@ -182,7 +195,7 @@
             </div>
             <div>
                 <label for="amount6">Expected Amount (€):</label>
-                <input type="number" id="amount6" name="amount6" step="0.01" placeholder="e.g., 120.00">
+                <input type="number" id="amount6" name="amount6" step="0.01" placeholder="e.g., 120.00" required value="0">
             </div>
         </div>
 
@@ -195,11 +208,11 @@
             </div>
             <div>
                 <label for="amount7">Expected Amount (€):</label>
-                <input type="number" id="amount7" name="amount7" step="0.01" placeholder="e.g., 90.00">
+                <input type="number" id="amount7" name="amount7" step="0.01" placeholder="e.g., 90.00" required value="0">
             </div>
         </div>
 
-        <button type="submit">Prepare 7-Day Earnings Email (€)</button>
+        <button type="submit">Prepare Financial Summary Email (€)</button> <!-- Updated button text -->
     </form>
 </div>
 
@@ -210,106 +223,128 @@
     const recipientEmail = "dan@sterlingparis.com"; // <--- CHANGE THIS!
     // ---
 
-    // Arrays for formatting date names
     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    // --- Updated formatDate function ---
-    // Formats date as: dddd, dd mmm yy (e.g., Monday, 08 Jul 24)
     function formatDate(date) {
         const dayOfWeek = dayNames[date.getDay()];
         const dayOfMonth = String(date.getDate()).padStart(2, '0');
         const month = monthNames[date.getMonth()];
-        const year = String(date.getFullYear()).slice(-2); // Get last two digits of year
+        const year = String(date.getFullYear()).slice(-2);
         return `${dayOfWeek}, ${dayOfMonth} ${month} ${year}`;
     }
 
-    // Function to add days to a date
     function addDays(date, days) {
         const result = new Date(date);
         result.setDate(result.getDate() + days);
         return result;
     }
 
-    // --- Generate dates and update labels ---
     const today = new Date();
-    const dayDates = []; // Store actual Date objects
-    const dayLabelsFormatted = []; // Store formatted date strings
+    const dayDates = [];
+    const dayLabelsFormatted = [];
 
     for (let i = 0; i < 7; i++) {
         const currentDate = addDays(today, i);
         dayDates.push(currentDate);
         const formattedDate = formatDate(currentDate);
-        dayLabelsFormatted.push(formattedDate); // Store the formatted string
+        dayLabelsFormatted.push(formattedDate);
 
         const labelElement = document.getElementById(`dayLabel${i + 1}`);
         if (labelElement) {
-            // Update the H2 label on the page
             labelElement.textContent = formattedDate;
         }
     }
 
 
     form.addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent the default form submission
+        event.preventDefault();
 
-        // Use the pre-formatted start date for the email title
         const startDateFormatted = dayLabelsFormatted[0];
-        let emailBody = `Upcoming Earnings Report (Next 7 Days - Euros):\nWeek Starting ${startDateFormatted}\n\n`;
-        let dataEntered = false;
-        let totalExpected = 0;
+        let emailBody = `Financial Summary Report\n`;
+        emailBody += `Week Starting: ${startDateFormatted}\n\n`;
 
-        // Loop through the 7 days of inputs
+        let totalOutstanding = 0;
+        let totalUpcoming = 0;
+        let overallDataEntered = false; // To check if any meaningful data was entered
+
+        // --- Process Outstanding Amounts ---
+        const outstandingPersonInput = document.getElementById('outstandingPerson');
+        const outstandingAmountInput = document.getElementById('outstandingAmount');
+
+        const outstandingPerson = outstandingPersonInput.value.trim();
+        const outstandingAmountStr = outstandingAmountInput.value.trim(); // Will be '0' by default if not changed
+        const outstandingAmount = parseFloat(outstandingAmountStr);
+
+        if (outstandingPerson || outstandingAmount !== 0) {
+            overallDataEntered = true;
+            emailBody += `--- OUTSTANDING AMOUNTS OWED ---\n`;
+            emailBody += `  Paying Person/Entity: ${outstandingPerson || '(Not specified)'}\n`;
+            const outstandingAmountDisplay = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(outstandingAmount);
+            emailBody += `  Amount Owed: ${outstandingAmountDisplay}\n`;
+            emailBody += `----------------------------------------\n\n`;
+            totalOutstanding += outstandingAmount;
+        }
+
+        // --- Process Upcoming Earnings (Next 7 Days) ---
+        let upcomingEarningsBody = "";
+        let upcomingDataEntered = false;
+
         for (let i = 1; i <= 7; i++) {
             const personInput = document.getElementById(`person${i}`);
             const amountInput = document.getElementById(`amount${i}`);
-            // Use the corresponding formatted date label for this day
             const dayLabel = dayLabelsFormatted[i - 1];
 
             const person = personInput.value.trim();
-            const amountStr = amountInput.value.trim();
+            const amountStr = amountInput.value.trim(); // Will be '0' by default if not changed
+            const amount = parseFloat(amountStr);
 
-            // Only add day to email if at least one field has a value for that day
-            if (person || amountStr) {
-                dataEntered = true;
-                const amount = amountStr ? parseFloat(amountStr) : 0;
-                const amountDisplay = amountStr
-                    ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount)
-                    : "(No amount entered)";
+            if (person || amount !== 0) {
+                upcomingDataEntered = true;
+                overallDataEntered = true;
 
-                emailBody += `${dayLabel}\n`; // Add the correctly formatted date label
-                emailBody += `  Paying Person/Entity: ${person || '(Not specified)'}\n`;
-                emailBody += `  Expected Amount: ${amountDisplay}\n`;
-                emailBody += `----------------------------------------\n`;
-
-                if (amount) {
-                   totalExpected += amount;
-                }
+                upcomingEarningsBody += `${dayLabel}\n`;
+                upcomingEarningsBody += `  Paying Person/Entity: ${person || '(Not specified)'}\n`;
+                const amountDisplay = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
+                upcomingEarningsBody += `  Expected Amount: ${amountDisplay}\n`;
+                upcomingEarningsBody += `----------------------------------------\n`;
+                totalUpcoming += amount;
             }
         }
 
-        if (!dataEntered) {
-            alert("Please enter some expected earnings information before preparing the email.");
+        if (upcomingDataEntered) {
+            emailBody += `--- UPCOMING EARNINGS (Next 7 Days) ---\n`;
+            emailBody += upcomingEarningsBody;
+            emailBody += `\n`;
+        }
+
+        if (!overallDataEntered) {
+            alert("Please enter some financial information (outstanding or upcoming). All amounts were 0 and no persons/entities specified.");
             return;
         }
 
-        const totalDisplay = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(totalExpected);
-        emailBody += `\nTotal Expected Earnings (Next 7 Days): ${totalDisplay}`;
+        // --- Summary Section ---
+        emailBody += `--- TOTALS ---\n`;
+        const totalOutstandingDisplay = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(totalOutstanding);
+        emailBody += `Total Outstanding: ${totalOutstandingDisplay}\n`;
 
-        // --- Prepare the mailto link ---
-        // Use the formatted start date in the subject
-        const subject = `LALA Upcoming Earnings (€) - 7 Days starting ${startDateFormatted}`;
+        const totalUpcomingDisplay = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(totalUpcoming);
+        emailBody += `Total Upcoming Earnings (Next 7 Days): ${totalUpcomingDisplay}\n`;
 
+        const grandTotal = totalOutstanding + totalUpcoming;
+        const grandTotalDisplay = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(grandTotal);
+        emailBody += `GRAND TOTAL (Outstanding + Upcoming): ${grandTotalDisplay}\n`;
+
+
+        const subject = `Financial Summary (€) - Week starting ${startDateFormatted}`;
         const mailtoLink = `mailto:${recipientEmail}`
                          + `?subject=${encodeURIComponent(subject)}`
                          + `&body=${encodeURIComponent(emailBody)}`;
 
         window.location.href = mailtoLink;
+        alert("Your email application should now open with the financial summary pre-filled. Please review and press 'Send'.");
 
-        alert("Your email application should now open with the 7-day earnings report pre-filled. Please review and press 'Send'.");
-
-        // Optional: Clear the form
-        // form.reset();
+        // form.reset(); // This will reset amount fields to their initial "0" value
     });
 </script>
 
