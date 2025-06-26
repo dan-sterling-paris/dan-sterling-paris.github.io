@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Budget</title>
+    <title>Personal Budget & Cashflow</title>
     <style>
         :root {
             --primary-color: #007bff;
             --secondary-color: #6c757d;
             --danger-color: #dc3545;
+            --success-color: #28a745;
             --light-gray: #f8f9fa;
             --medium-gray: #e9ecef;
             --dark-gray: #343a40;
@@ -31,7 +32,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1200px; /* Increased width to better accommodate the new table */
             margin: 0 auto;
             background-color: #fff;
             padding: 20px;
@@ -48,7 +49,7 @@
         h2 { font-size: 1.5em; border-bottom: 1px solid var(--medium-gray); }
         h3 { font-size: 1.2em; }
 
-        section:not(#realBalances) { /* Exclude realBalances from this styling if it's fixed */
+        section {
             margin-bottom: 25px;
             padding: 15px;
             background-color: var(--light-gray);
@@ -136,13 +137,13 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: #ffffff; /* White background for better contrast */
+            background-color: #ffffff;
             padding: 10px 20px;
             box-shadow: 0 -3px 10px rgba(0,0,0,0.15);
             z-index: 1000;
             border-top: 2px solid var(--primary-color);
-            max-height: 200px; /* Max height for the banner */
-            overflow-y: auto; /* Add scroll if content exceeds max height */
+            max-height: 200px;
+            overflow-y: auto;
         }
         #realBalances h2 {
             text-align: center;
@@ -151,59 +152,101 @@
         }
         .balances-wrapper {
             display: flex;
-            justify-content: space-around; /* Distribute balance displays */
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            justify-content: space-around;
+            flex-wrap: wrap;
             gap: 10px;
         }
         #realBalances .balance-display {
             padding: 10px;
             border: 1px solid var(--medium-gray);
             border-radius: var(--border-radius);
-            margin-bottom: 0; /* Removed margin as flex gap handles spacing */
+            margin-bottom: 0;
             background-color: var(--light-gray);
-            flex: 1; /* Allow items to grow and shrink */
-            min-width: 200px; /* Minimum width for each balance display */
+            flex: 1;
+            min-width: 200px;
             text-align: center;
         }
         #realBalances .balance-display h4 { margin-bottom: 5px; color: var(--primary-color); }
         #realBalances .balance-display p { margin: 2px 0; font-size: 0.9em; }
 
-
+        /* --- STYLES FOR CASHFLOW TABLE --- */
+        #cashflow-summary .table-wrapper {
+            overflow-x: auto; /* Enable horizontal scrolling */
+        }
+        #cashflow-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        #cashflow-table th, #cashflow-table td {
+            border: 1px solid var(--medium-gray);
+            padding: 8px 10px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        #cashflow-table th {
+            background-color: var(--dark-gray);
+            color: white;
+            position: sticky; /* Make headers stick during vertical scroll */
+            top: 0;
+            z-index: 10;
+        }
+        #cashflow-table th:first-child, #cashflow-table td:first-child {
+            text-align: left;
+            position: sticky; /* Make date column stick during horizontal scroll */
+            left: 0;
+            background-color: #f2f2f2;
+            z-index: 5;
+            font-weight: bold;
+        }
+        #cashflow-table th:first-child {
+            z-index: 15; /* Ensure date header is above other headers */
+        }
+        #cashflow-table .account-header {
+            text-align: center;
+            background-color: var(--primary-color);
+        }
+        #cashflow-table .total-header {
+            background-color: var(--secondary-color);
+        }
+        #cashflow-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        #cashflow-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        #cashflow-table tbody tr.initial-balance-row {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        .income { color: var(--success-color); }
+        .expenditure { color: var(--danger-color); }
+        .balance-col { font-weight: bold; background-color: rgba(0, 123, 255, 0.05); }
+        .total-balance-col { background-color: rgba(108, 117, 125, 0.1); }
+        
         @media (max-width: 768px) {
-            #realBalances .balance-display {
-                min-width: 150px; /* Adjust for smaller screens */
-            }
-             .balances-wrapper {
-                flex-direction: column; /* Stack balances vertically on very small screens */
-                align-items: stretch;
-            }
-             #realBalances .balance-display {
-                width: 100%; /* Full width when stacked */
-                margin-bottom: 10px; /* Add margin when stacked */
-            }
-            #realBalances {
-                 padding: 10px; /* Reduce padding on smaller screens */
-            }
-             body {
-                padding-bottom: 250px; /* May need more space if banner stacks vertically */
-            }
+            .container { max-width: 100%; }
+            #realBalances .balance-display { min-width: 150px; }
+            .balances-wrapper { flex-direction: column; align-items: stretch; }
+            #realBalances .balance-display { width: 100%; margin-bottom: 10px; }
+            #realBalances { padding: 10px; }
+            body { padding-bottom: 250px; }
         }
 
         @media (max-width: 600px) {
-            body { padding: 10px; padding-bottom: 280px; /* Adjust more if needed */ }
+            body { padding: 10px; padding-bottom: 280px; }
             .container { padding: 10px; }
             h1 { font-size: 1.5em; }
             h2 { font-size: 1.3em; }
             .input-line { flex-direction: column; align-items: stretch; }
-            .input-line input[type="number"], .input-line input[type="text"], .input-line select { width: 100%; }
             .remove-item-button { width: 100%; margin-left: 0; margin-top: 10px; }
         }
-
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Personal Budget</h1>
+        <h1>Personal Budget & Cashflow</h1>
 
         <section id="general-settings">
             <h2>Settings</h2>
@@ -218,7 +261,7 @@
             <div class="form-group item-row asset-item" data-account-id="cash">
                 <span class="item-row-header">Cash in Hand</span>
                 <div class="input-line">
-                    <input type="number" placeholder="Amount" class="amount-input recalculate-trigger" value="0">
+                    <input type="number" placeholder="Amount" class="amount-input recalculate-trigger" value="100">
                 </div>
                 <div class="currency-group">
                     <label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label>
@@ -228,7 +271,7 @@
             <div class="form-group item-row asset-item" data-account-id="lala_revolut">
                 <span class="item-row-header">Lala Revolut Balance</span>
                 <div class="input-line">
-                    <input type="number" placeholder="Amount" class="amount-input recalculate-trigger" value="0">
+                    <input type="number" placeholder="Amount" class="amount-input recalculate-trigger" value="500">
                 </div>
                 <div class="currency-group">
                     <label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label>
@@ -238,7 +281,7 @@
             <div class="form-group item-row asset-item" data-account-id="dano_revolut">
                 <span class="item-row-header">Dano Revolut Balance</span>
                 <div class="input-line">
-                    <input type="number" placeholder="Amount" class="amount-input recalculate-trigger" value="0">
+                    <input type="number" placeholder="Amount" class="amount-input recalculate-trigger" value="500">
                 </div>
                 <div class="currency-group">
                     <label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label>
@@ -249,33 +292,50 @@
 
         <section id="outstanding-owed-section">
             <h2>Outstanding Amounts Owed (To Us)</h2>
-            <div id="outstandingItemsContainer">
-                <!-- Dynamic items will be added here -->
-            </div>
+            <div id="outstandingItemsContainer"></div>
             <button type="button" id="addOutstandingButton">Add Outstanding Amount</button>
         </section>
 
         <section id="expenses-section">
             <h2>Expenses (What We Owe)</h2>
-            <div id="fixedExpensesContainer">
-                <!-- Fixed expenses defined below -->
-            </div>
+            <div id="fixedExpensesContainer"></div>
             <h3>Other Expenses</h3>
-            <div id="otherExpensesContainer">
-                <!-- Dynamic other expenses will be added here -->
-            </div>
+            <div id="otherExpensesContainer"></div>
             <button type="button" id="addOtherExpenseButton">Add Other Expense</button>
+        </section>
+        
+        <section id="cashflow-summary">
+            <h2>Daily Cashflow Summary (EUR)</h2>
+            <div class="table-wrapper">
+                <table id="cashflow-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Date</th>
+                            <th colspan="3" class="account-header">Cash</th>
+                            <th colspan="3" class="account-header">Lala Revolut</th>
+                            <th colspan="3" class="account-header">Dano Revolut</th>
+                            <th colspan="3" class="total-header">TOTAL</th>
+                        </tr>
+                        <tr>
+                            <th>Income</th><th>Expenditure</th><th class="balance-col">Balance</th>
+                            <th>Income</th><th>Expenditure</th><th class="balance-col">Balance</th>
+                            <th>Income</th><th>Expenditure</th><th class="balance-col">Balance</th>
+                            <th>Income</th><th>Expenditure</th><th class="balance-col total-balance-col">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cashflowTableBody"></tbody>
+                </table>
+            </div>
         </section>
 
         <section id="actions">
             <h2>Actions</h2>
             <button type="button" id="draftEmailButton">Draft Summary Email</button>
         </section>
-        <!-- Real Balances section moved outside the main .container to be fixed at the bottom -->
     </div> 
 
     <section id="realBalances">
-        <h2>Real Balances</h2>
+        <h2>Final Balances (After All Transactions)</h2>
         <div class="balances-wrapper">
             <div class="balance-display">
                 <h4>Cash</h4>
@@ -295,80 +355,42 @@
         </div>
     </section>
 
-    <!-- Template for Outstanding Amounts Owed -->
+    <!-- Templates remain the same -->
     <template id="outstandingItemTemplate">
         <div class="form-group item-row dynamic-item transaction-item" data-transaction-type="income">
-            <div class="input-line">
-                <input type="number" placeholder="Amount" class="amount-input recalculate-trigger" value="0">
-            </div>
-            <div class="currency-group">
-                <label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label>
-                <label><input type="checkbox" class="currency-gbp recalculate-trigger" value="GBP"> GBP</label>
-            </div>
-            <div class="input-line">
-                 <input type="text" placeholder="Details of Payer" class="payee-details recalculate-trigger">
-            </div>
-            <div class="input-line">
-                <label>Expected Date:</label>
-                <select class="date-selector recalculate-trigger"></select>
-            </div>
-            <div class="input-line">
-                <label>To Account:</label>
-                <select class="account-selector recalculate-trigger">
-                    <option value="cash">Cash</option>
-                    <option value="lala_revolut">Lala Revolut</option>
-                    <option value="dano_revolut">Dano Revolut</option>
-                </select>
-            </div>
+            <div class="input-line"><input type="number" placeholder="Amount" class="amount-input recalculate-trigger" value="0"></div>
+            <div class="currency-group"><label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label><label><input type="checkbox" class="currency-gbp recalculate-trigger" value="GBP"> GBP</label></div>
+            <div class="input-line"><input type="text" placeholder="Details of Payer" class="payee-details recalculate-trigger"></div>
+            <div class="input-line"><label>Expected Date:</label><select class="date-selector recalculate-trigger"></select></div>
+            <div class="input-line"><label>To Account:</label><select class="account-selector recalculate-trigger"><option value="cash">Cash</option><option value="lala_revolut">Lala Revolut</option><option value="dano_revolut">Dano Revolut</option></select></div>
             <button type="button" class="remove-item-button">Remove</button>
         </div>
     </template>
-
-    <!-- Template for Other Expenses -->
     <template id="otherExpenseItemTemplate">
         <div class="form-group item-row dynamic-item transaction-item" data-transaction-type="expense">
-            <div class="input-line">
-                <input type="number" placeholder="Amount Due" class="amount-input recalculate-trigger" value="0">
-            </div>
-            <div class="currency-group">
-                <label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label>
-                <label><input type="checkbox" class="currency-gbp recalculate-trigger" value="GBP"> GBP</label>
-            </div>
-             <div class="input-line">
-                <input type="text" placeholder="Details of Payee" class="payee-details recalculate-trigger">
-            </div>
-            <div class="input-line">
-                <label>Due Date:</label>
-                <select class="date-selector recalculate-trigger"></select>
-            </div>
-            <div class="input-line">
-                <label>Pay From:</label>
-                <select class="account-selector recalculate-trigger">
-                    <option value="cash">Cash</option>
-                    <option value="lala_revolut">Lala Revolut</option>
-                    <option value="dano_revolut">Dano Revolut</option>
-                </select>
-            </div>
+            <div class="input-line"><input type="number" placeholder="Amount Due" class="amount-input recalculate-trigger" value="0"></div>
+            <div class="currency-group"><label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label><label><input type="checkbox" class="currency-gbp recalculate-trigger" value="GBP"> GBP</label></div>
+             <div class="input-line"><input type="text" placeholder="Details of Payee" class="payee-details recalculate-trigger"></div>
+            <div class="input-line"><label>Due Date:</label><select class="date-selector recalculate-trigger"></select></div>
+            <div class="input-line"><label>Pay From:</label><select class="account-selector recalculate-trigger"><option value="cash">Cash</option><option value="lala_revolut">Lala Revolut</option><option value="dano_revolut">Dano Revolut</option></select></div>
             <button type="button" class="remove-item-button">Remove</button>
         </div>
     </template>
 
     <script>
         const fixedExpenseDefinitions = [
-            { id: 'serrisRent', name: 'Serris Rent' },
-            { id: 'serrisEDF', name: 'Serris EDF' },
-            { id: 'serrisNumericable', name: 'Serris Numericable' },
-            { id: 'aubeterreRent', name: 'Aubeterre Rent' },
-            { id: 'aubeterreEDF', name: 'Aubeterre EDF' },
-            { id: 'lalaEyes', name: 'Lala Eyes' },
-            { id: 'danoPhone', name: 'Dano Phone' },
-            { id: 'lalaPhone', name: 'Lala Phone' }
+            { id: 'serrisRent', name: 'Serris Rent' }, { id: 'serrisEDF', name: 'Serris EDF' },
+            { id: 'serrisNumericable', name: 'Serris Numericable' }, { id: 'aubeterreRent', name: 'Aubeterre Rent' },
+            { id: 'aubeterreEDF', name: 'Aubeterre EDF' }, { id: 'lalaEyes', name: 'Lala Eyes' },
+            { id: 'danoPhone', name: 'Dano Phone' }, { id: 'lalaPhone', name: 'Lala Phone' }
         ];
 
+        // --- All existing JavaScript functions (populateDateSelectors, createFixedExpenseElement, etc.) are here ---
+        
         function populateDateSelectors(elements) {
             const today = new Date();
             const options = [];
-            for (let i = 0; i < 7; i++) {
+            for (let i = 0; i < 30; i++) {
                 const date = new Date(today);
                 date.setDate(today.getDate() + i);
                 const optionValue = date.toISOString().split('T')[0];
@@ -385,182 +407,200 @@
             div.className = 'form-group item-row fixed-expense transaction-item';
             div.dataset.transactionType = 'expense';
             div.dataset.itemId = definition.id;
-
-            div.innerHTML = `
-                <span class="item-row-header">${definition.name}</span>
-                <div class="input-line">
-                    <input type="number" placeholder="Amount Due" class="amount-input recalculate-trigger" value="0">
-                </div>
-                <div class="currency-group">
-                    <label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label>
-                    <label><input type="checkbox" class="currency-gbp recalculate-trigger" value="GBP"> GBP</label>
-                </div>
-                <div class="input-line">
-                    <label>Due Date:</label>
-                    <select class="date-selector recalculate-trigger"></select>
-                </div>
-                <div class="input-line">
-                    <label>Pay From:</label>
-                    <select class="account-selector recalculate-trigger">
-                        <option value="cash">Cash</option>
-                        <option value="lala_revolut">Lala Revolut</option>
-                        <option value="dano_revolut">Dano Revolut</option>
-                    </select>
-                </div>
-            `;
+            div.innerHTML = `<span class="item-row-header">${definition.name}</span><div class="input-line"><input type="number" placeholder="Amount Due" class="amount-input recalculate-trigger" value="0"></div><div class="currency-group"><label><input type="checkbox" class="currency-eur recalculate-trigger" value="EUR" checked> EUR</label><label><input type="checkbox" class="currency-gbp recalculate-trigger" value="GBP"> GBP</label></div><div class="input-line"><label>Due Date:</label><select class="date-selector recalculate-trigger"></select></div><div class="input-line"><label>Pay From:</label><select class="account-selector recalculate-trigger"><option value="cash">Cash</option><option value="lala_revolut" selected>Lala Revolut</option><option value="dano_revolut">Dano Revolut</option></select></div>`;
             populateDateSelectors(div.querySelectorAll('.date-selector'));
             return div;
         }
 
         function initializeFixedExpenses() {
             const container = document.getElementById('fixedExpensesContainer');
-            fixedExpenseDefinitions.forEach(def => {
-                container.appendChild(createFixedExpenseElement(def));
-            });
+            fixedExpenseDefinitions.forEach(def => container.appendChild(createFixedExpenseElement(def)));
         }
 
         function addDynamicItem(templateId, containerId) {
-            const template = document.getElementById(templateId);
-            const container = document.getElementById(containerId);
-            const clone = template.content.cloneNode(true);
+            const clone = document.getElementById(templateId).content.cloneNode(true);
             populateDateSelectors(clone.querySelectorAll('.date-selector'));
-            container.appendChild(clone);
+            document.getElementById(containerId).appendChild(clone);
             calculateAndDisplayBalances(); 
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeFixedExpenses();
             populateDateSelectors(document.querySelectorAll('.date-selector')); 
-
-            document.getElementById('addOutstandingButton').addEventListener('click', () => {
-                addDynamicItem('outstandingItemTemplate', 'outstandingItemsContainer');
-            });
-            document.getElementById('addOtherExpenseButton').addEventListener('click', () => {
-                addDynamicItem('otherExpenseItemTemplate', 'otherExpensesContainer');
-            });
-
-            document.body.addEventListener('click', event => {
-                if (event.target.classList.contains('remove-item-button')) {
-                    event.target.closest('.dynamic-item').remove();
+            document.getElementById('addOutstandingButton').addEventListener('click', () => addDynamicItem('outstandingItemTemplate', 'outstandingItemsContainer'));
+            document.getElementById('addOtherExpenseButton').addEventListener('click', () => addDynamicItem('otherExpenseItemTemplate', 'otherExpensesContainer'));
+            document.body.addEventListener('click', e => {
+                if (e.target.classList.contains('remove-item-button')) {
+                    e.target.closest('.dynamic-item').remove();
                     calculateAndDisplayBalances();
                 }
             });
-            
-            document.body.addEventListener('change', event => {
-                const target = event.target;
-
-                if (target.type === 'checkbox' && (target.classList.contains('currency-eur') || target.classList.contains('currency-gbp'))) {
-                    const parentRow = target.closest('.item-row, .dynamic-item');
-                    if (parentRow) {
-                        const eurCheckbox = parentRow.querySelector('.currency-eur');
-                        const gbpCheckbox = parentRow.querySelector('.currency-gbp');
-                        
-                        if (target.checked) {
-                            if (target.classList.contains('currency-eur') && gbpCheckbox) gbpCheckbox.checked = false;
-                            if (target.classList.contains('currency-gbp') && eurCheckbox) eurCheckbox.checked = false;
+            document.body.addEventListener('change', e => {
+                const t = e.target;
+                if (t.type === 'checkbox' && (t.classList.contains('currency-eur') || t.classList.contains('currency-gbp'))) {
+                    const row = t.closest('.item-row, .dynamic-item');
+                    if (row) {
+                        if (t.checked) {
+                            if (t.classList.contains('currency-eur')) row.querySelector('.currency-gbp').checked = false;
+                            if (t.classList.contains('currency-gbp')) row.querySelector('.currency-eur').checked = false;
                         } else {
-                            target.checked = true; 
+                            t.checked = true;
                         }
                     }
                 }
-
-                if (target.classList.contains('recalculate-trigger')) {
-                    calculateAndDisplayBalances();
-                }
+                if (t.classList.contains('recalculate-trigger')) calculateAndDisplayBalances();
             });
-            
             calculateAndDisplayBalances();
-
             document.getElementById('draftEmailButton').addEventListener('click', draftEmail);
         });
 
-        function getElementValueAsFloat(element) {
-            return parseFloat(element.value) || 0;
-        }
-
-        function getSelectedCurrency(itemRow) {
-            const eurCheckbox = itemRow.querySelector('.currency-eur');
-            const gbpCheckbox = itemRow.querySelector('.currency-gbp');
-            if (eurCheckbox && eurCheckbox.checked) return 'EUR';
-            if (gbpCheckbox && gbpCheckbox.checked) return 'GBP';
-            return 'EUR'; 
-        }
+        function getElementValueAsFloat(element) { return parseFloat(element.value) || 0; }
+        function getSelectedCurrency(itemRow) { return itemRow.querySelector('.currency-gbp:checked') ? 'GBP' : 'EUR'; }
 
         function calculateAndDisplayBalances() {
-            const exchangeRateInput = document.getElementById('exchangeRate');
-            const exchangeRate = getElementValueAsFloat(exchangeRateInput);
-            
+            const exchangeRate = getElementValueAsFloat(document.getElementById('exchangeRate'));
             if (exchangeRate <= 0) {
-                if (document.activeElement !== exchangeRateInput) {
-                     alert("Please enter a valid exchange rate greater than 0.");
-                }
-                const accounts = ['Cash', 'LalaRevolut', 'DanoRevolut'];
-                accounts.forEach(acc => {
+                ['Cash', 'LalaRevolut', 'DanoRevolut'].forEach(acc => {
                     document.getElementById(`real${acc}BalanceEUR`).textContent = "N/A";
                     document.getElementById(`real${acc}BalanceGBP`).textContent = "N/A";
                 });
+                document.getElementById('cashflowTableBody').innerHTML = '<tr><td colspan="13">Please enter a valid exchange rate.</td></tr>';
                 return;
             }
+            updateCashflowTable(exchangeRate); // This function will now handle all calculations
+        }
 
-            let balancesEUR = {
-                cash: 0,
-                lala_revolut: 0,
-                dano_revolut: 0
-            };
+        function updateCashflowTable(exchangeRate) {
+            const tableBody = document.getElementById('cashflowTableBody');
+            tableBody.innerHTML = '';
+            const accounts = ['cash', 'lala_revolut', 'dano_revolut'];
 
+            // 1. Get initial balances
+            let runningBalances = { cash: 0, lala_revolut: 0, dano_revolut: 0 };
             document.querySelectorAll('.asset-item').forEach(item => {
                 const accountId = item.dataset.accountId;
                 const amount = getElementValueAsFloat(item.querySelector('.amount-input'));
                 const currency = getSelectedCurrency(item);
-                
-                let amountInEUR = amount;
-                if (currency === 'GBP') {
-                    amountInEUR = amount * exchangeRate;
-                }
-                balancesEUR[accountId] += amountInEUR;
+                runningBalances[accountId] += (currency === 'GBP') ? amount * exchangeRate : amount;
             });
 
+            // 2. Create and append the "Initial Balance" row
+            let totalInitialBalance = accounts.reduce((sum, acc) => sum + runningBalances[acc], 0);
+            const initialRow = document.createElement('tr');
+            initialRow.className = 'initial-balance-row';
+            initialRow.innerHTML = `
+                <td>Initial Balance</td>
+                <td>-</td><td>-</td><td class="balance-col">${runningBalances.cash.toFixed(2)}</td>
+                <td>-</td><td>-</td><td class="balance-col">${runningBalances.lala_revolut.toFixed(2)}</td>
+                <td>-</td><td>-</td><td class="balance-col">${runningBalances.dano_revolut.toFixed(2)}</td>
+                <td>-</td><td>-</td><td class="balance-col total-balance-col">${totalInitialBalance.toFixed(2)}</td>
+            `;
+            tableBody.appendChild(initialRow);
+
+            // 3. Gather and group transactions by date
+            const dailyData = {};
             document.querySelectorAll('.transaction-item').forEach(item => {
-                const amountInput = item.querySelector('.amount-input');
-                if (!amountInput || amountInput.value === "" || parseFloat(amountInput.value) === 0) {
-                    return; 
+                const amount = getElementValueAsFloat(item.querySelector('.amount-input'));
+                if (amount === 0) return;
+                const date = item.querySelector('.date-selector').value;
+                if (!dailyData[date]) {
+                    dailyData[date] = { income: { ...runningBalances }, expense: { ...runningBalances } };
+                    accounts.forEach(acc => { dailyData[date].income[acc] = 0; dailyData[date].expense[acc] = 0; });
                 }
-
-                const amount = getElementValueAsFloat(amountInput);
                 const currency = getSelectedCurrency(item);
-                const transactionType = item.dataset.transactionType; 
-                const accountSelector = item.querySelector('.account-selector');
-                const targetAccount = accountSelector ? accountSelector.value : null;
-
-                if (!targetAccount && (transactionType === 'income' || transactionType === 'expense')) {
-                    console.warn("Transaction item missing target account:", item);
-                    return; 
-                }
-                
-                let amountInEUR = amount;
-                if (currency === 'GBP') {
-                    amountInEUR = amount * exchangeRate;
-                }
-
-                if (targetAccount) { 
-                    if (transactionType === 'income') {
-                        balancesEUR[targetAccount] += amountInEUR;
-                    } else if (transactionType === 'expense') {
-                        balancesEUR[targetAccount] -= amountInEUR;
-                    }
-                }
+                const amountEUR = (currency === 'GBP') ? amount * exchangeRate : amount;
+                const type = item.dataset.transactionType;
+                const account = item.querySelector('.account-selector').value;
+                dailyData[date][type][account] += amountEUR;
             });
 
+            // 4. Build table rows day by day for transactions
+            Object.keys(dailyData).sort().forEach(dateStr => {
+                const day = dailyData[dateStr];
+                let dayTotalIncome = 0;
+                let dayTotalExpense = 0;
+                accounts.forEach(acc => {
+                    runningBalances[acc] += day.income[acc] - day.expense[acc];
+                    dayTotalIncome += day.income[acc];
+                    dayTotalExpense += day.expense[acc];
+                });
+                let totalEndBalance = accounts.reduce((sum, acc) => sum + runningBalances[acc], 0);
+
+                const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td class="income">${day.income.cash > 0 ? day.income.cash.toFixed(2) : '-'}</td>
+                    <td class="expenditure">${day.expense.cash > 0 ? day.expense.cash.toFixed(2) : '-'}</td>
+                    <td class="balance-col">${runningBalances.cash.toFixed(2)}</td>
+                    <td class="income">${day.income.lala_revolut > 0 ? day.income.lala_revolut.toFixed(2) : '-'}</td>
+                    <td class="expenditure">${day.expense.lala_revolut > 0 ? day.expense.lala_revolut.toFixed(2) : '-'}</td>
+                    <td class="balance-col">${runningBalances.lala_revolut.toFixed(2)}</td>
+                    <td class="income">${day.income.dano_revolut > 0 ? day.income.dano_revolut.toFixed(2) : '-'}</td>
+                    <td class="expenditure">${day.expense.dano_revolut > 0 ? day.expense.dano_revolut.toFixed(2) : '-'}</td>
+                    <td class="balance-col">${runningBalances.dano_revolut.toFixed(2)}</td>
+                    <td class="income">${dayTotalIncome > 0 ? dayTotalIncome.toFixed(2) : '-'}</td>
+                    <td class="expenditure">${dayTotalExpense > 0 ? dayTotalExpense.toFixed(2) : '-'}</td>
+                    <td class="balance-col total-balance-col">${totalEndBalance.toFixed(2)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // 5. Update the bottom banner with the final balances
+            const accountMap = { cash: 'Cash', lala_revolut: 'LalaRevolut', dano_revolut: 'DanoRevolut' };
+            for (const [id, name] of Object.entries(accountMap)) {
+                const eurBalance = runningBalances[id];
+                const gbpBalance = eurBalance / exchangeRate;
+                document.getElementById(`real${name}BalanceEUR`).textContent = eurBalance.toFixed(2);
+                document.getElementById(`real${name}BalanceGBP`).textContent = gbpBalance.toFixed(2);
+            }
+        }
+
+        function generateCashflowText(exchangeRate) {
+            let text = "--- Daily Cashflow Summary (EUR) ---\n\n";
             const accounts = ['cash', 'lala_revolut', 'dano_revolut'];
-            accounts.forEach(acc => {
-                const eurBalance = balancesEUR[acc];
-                const gbpBalance = exchangeRate > 0 ? (eurBalance / exchangeRate) : 0; 
-                
-                let displayAccName = acc.split('_').map(s => s.charAt(0).toUpperCase() + s.substring(1)).join('');
-
-                document.getElementById(`real${displayAccName}BalanceEUR`).textContent = eurBalance.toFixed(2);
-                document.getElementById(`real${displayAccName}BalanceGBP`).textContent = gbpBalance.toFixed(2);
+            const pad = (num) => num.toFixed(2).padStart(10, ' ');
+            const padStr = (str) => str.padEnd(15, ' ');
+            
+            // Header
+            text += padStr("Date") + "| Cash Bal | Lala Bal   | Dano Bal   | TOTAL Bal  \n";
+            text += "-".repeat(65) + "\n";
+            
+            // Initial Balance
+            let runningBalances = { cash: 0, lala_revolut: 0, dano_revolut: 0 };
+            document.querySelectorAll('.asset-item').forEach(item => {
+                const accountId = item.dataset.accountId;
+                const amount = getElementValueAsFloat(item.querySelector('.amount-input'));
+                const currency = getSelectedCurrency(item);
+                runningBalances[accountId] += (currency === 'GBP') ? amount * exchangeRate : amount;
             });
+            let totalBalance = accounts.reduce((sum, acc) => sum + runningBalances[acc], 0);
+            text += padStr("Initial Balance") + `| ${pad(runningBalances.cash)} | ${pad(runningBalances.lala_revolut)} | ${pad(runningBalances.dano_revolut)} | ${pad(totalBalance)}\n`;
+
+            // Transactions
+            const dailyData = {};
+            document.querySelectorAll('.transaction-item').forEach(item => {
+                const amount = getElementValueAsFloat(item.querySelector('.amount-input'));
+                if (amount === 0) return;
+                const date = item.querySelector('.date-selector').value;
+                if (!dailyData[date]) {
+                    dailyData[date] = { income: { ...runningBalances }, expense: { ...runningBalances } };
+                    accounts.forEach(acc => { dailyData[date].income[acc] = 0; dailyData[date].expense[acc] = 0; });
+                }
+                const currency = getSelectedCurrency(item);
+                const amountEUR = (currency === 'GBP') ? amount * exchangeRate : amount;
+                dailyData[date][item.dataset.transactionType][item.querySelector('.account-selector').value] += amountEUR;
+            });
+
+            Object.keys(dailyData).sort().forEach(dateStr => {
+                const day = dailyData[dateStr];
+                accounts.forEach(acc => { runningBalances[acc] += day.income[acc] - day.expense[acc]; });
+                totalBalance = accounts.reduce((sum, acc) => sum + runningBalances[acc], 0);
+                const formattedDate = new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                text += padStr(formattedDate) + `| ${pad(runningBalances.cash)} | ${pad(runningBalances.lala_revolut)} | ${pad(runningBalances.dano_revolut)} | ${pad(totalBalance)}\n`;
+            });
+
+            return text;
         }
 
         function draftEmail() {
@@ -572,54 +612,42 @@
             let emailBody = "Personal Budget Summary:\n\n";
             emailBody += `Exchange Rate: 1 GBP = ${exchangeRate.toFixed(4)} EUR\n\n`;
 
-            emailBody += "Current Balances (after expected transactions):\n";
-            const accountDisplayInfo = [
-                { name: "Cash", idSuffix: "Cash" },
-                { name: "Lala Revolut", idSuffix: "LalaRevolut" },
-                { name: "Dano Revolut", idSuffix: "DanoRevolut" }
-            ];
-            accountDisplayInfo.forEach(acc => {
-                const eur = document.getElementById(`real${acc.idSuffix}BalanceEUR`).textContent;
-                const gbp = document.getElementById(`real${acc.idSuffix}BalanceGBP`).textContent;
-                emailBody += `${acc.name}: ${eur} EUR / ${gbp} GBP\n`;
+            emailBody += "Final Balances (After All Transactions):\n";
+            ['Cash', 'Lala Revolut', 'Dano Revolut'].forEach(name => {
+                const idSuffix = name.replace(' ', '');
+                const eur = document.getElementById(`real${idSuffix}BalanceEUR`).textContent;
+                const gbp = document.getElementById(`real${idSuffix}BalanceGBP`).textContent;
+                emailBody += `- ${name}: ${eur} EUR / ${gbp} GBP\n`;
             });
-            emailBody += "\n";
+            emailBody += "\n----------------------------------\n\n";
 
-            emailBody += "Outstanding Amounts (Expected Income):\n";
+            emailBody += "Upcoming Transactions:\n\n";
+            emailBody += "Expected Income:\n";
             let hasIncome = false;
             document.querySelectorAll('#outstandingItemsContainer .transaction-item').forEach(item => {
                 const amount = item.querySelector('.amount-input').value;
                 if (parseFloat(amount) === 0 || amount === "") return;
                 hasIncome = true;
-                const currency = getSelectedCurrency(item);
-                const payee = item.querySelector('.payee-details').value || 'N/A';
-                const date = item.querySelector('.date-selector option:checked').textContent;
-                const account = item.querySelector('.account-selector option:checked').textContent;
-                emailBody += `- From ${payee}: ${amount} ${currency} on ${date} (to ${account})\n`;
+                emailBody += `- From ${item.querySelector('.payee-details').value || 'N/A'}: ${amount} ${getSelectedCurrency(item)} on ${item.querySelector('.date-selector option:checked').textContent} (to ${item.querySelector('.account-selector option:checked').textContent})\n`;
             });
-            if (!hasIncome) {
-                emailBody += "- None\n";
-            }
+            if (!hasIncome) emailBody += "- None\n";
             emailBody += "\n";
 
             emailBody += "Expenses Due:\n";
             let hasExpenses = false;
             document.querySelectorAll('#fixedExpensesContainer .transaction-item, #otherExpensesContainer .transaction-item').forEach(item => {
                 const amount = item.querySelector('.amount-input').value;
-                 if (parseFloat(amount) === 0 || amount === "") return;
+                if (parseFloat(amount) === 0 || amount === "") return;
                 hasExpenses = true;
-                const currency = getSelectedCurrency(item);
-                const description = item.querySelector('.item-row-header')?.textContent || item.querySelector('.payee-details')?.value || 'Other Expense';
-                const date = item.querySelector('.date-selector option:checked').textContent;
-                const account = item.querySelector('.account-selector option:checked').textContent;
-                emailBody += `- ${description}: ${amount} ${currency} on ${date} (from ${account})\n`;
+                const desc = item.querySelector('.item-row-header')?.textContent || item.querySelector('.payee-details')?.value || 'Other Expense';
+                emailBody += `- ${desc}: ${amount} ${getSelectedCurrency(item)} on ${item.querySelector('.date-selector option:checked').textContent} (from ${item.querySelector('.account-selector option:checked').textContent})\n`;
             });
-            if (!hasExpenses) {
-                emailBody += "- None\n";
-            }
+            if (!hasExpenses) emailBody += "- None\n";
+            
+            // Add the cashflow table text
+            emailBody += "\n" + generateCashflowText(exchangeRate);
 
-            const mailtoLink = `mailto:?subject=${encodeURIComponent('Personal Budget Summary')}&body=${encodeURIComponent(emailBody)}`;
-            window.location.href = mailtoLink;
+            window.location.href = `mailto:?subject=${encodeURIComponent('Personal Budget Summary')}&body=${encodeURIComponent(emailBody)}`;
         }
     </script>
 </body>
