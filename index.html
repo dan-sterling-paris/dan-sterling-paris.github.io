@@ -31,7 +31,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Corporate Blue & Refined Gray -->
     <!-- Application Structure Plan: Final iteration focuses on a flawless, professional "shop window." Structure is direct and benefit-led: Hero answers "What do you do?", Productions answers "Prove it," Services answers "How?", About provides the "Why you?" through the founder's unique story. The copy is sharpened to be direct, confident, and professional. -->
-    <!-- Visualization & Content Choices: The core is the perfected Productions grid. Goal: Flawless presentation of credentials. Viz/Presentation: A clean, symmetrical grid of cards with all information, including centered quotes, visible. Interaction: Subtle hover for polish, modal for deep-dive. Justification: This layout is the industry standard for professionalism and clarity. It projects competence and makes the portfolio—the most crucial selling tool—the hero of the page. -->
+    <!-- Visualization & Content Choices: The core is the perfected Productions grid. Goal: Flawless presentation of credentials. Viz/Presentation: A clean, symmetrical grid of cards with all information, including centered quotes, visible. Interaction: Subtle hover for polish, but cards are not clickable. Conditional "Buy Tickets" link added. Justification: This layout is the industry standard for professionalism and clarity. It projects competence and makes the portfolio—the most crucial selling tool—the hero of the page. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         :root {
@@ -90,18 +90,11 @@
             border: 1px solid var(--border-color);
             border-radius: 0.25rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
             overflow: hidden;
         }
         .production-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07);
-        }
-        .modal-backdrop {
-            background-color: rgba(33, 37, 41, 0.9);
-        }
-        .modal-content {
-            background-color: var(--bg-light);
         }
         .btn-primary {
             background-color: var(--accent-blue);
@@ -114,6 +107,18 @@
         }
         .btn-primary:hover {
             background-color: #004170;
+        }
+        .ticket-link {
+            display: inline-block;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.3s ease;
+            padding-bottom: 2px;
+        }
+        .ticket-link:hover {
+            border-bottom-color: var(--accent-blue);
         }
     </style>
 </head>
@@ -213,26 +218,6 @@
         </div>
     </footer>
 
-    <!-- Modal -->
-    <div id="production-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden modal-backdrop" role="dialog" aria-modal="true">
-        <div class="modal-content rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
-            <button id="modal-close" class="absolute top-4 right-4 text-4xl font-thin text-gray-500 hover:text-gray-800 z-20" aria-label="Close modal">&times;</button>
-            <div class="p-6 md:p-8 grid md:grid-cols-5 gap-8">
-                <div class="md:col-span-2">
-                    <img id="modal-image" src="" alt="Production Poster" class="w-full h-auto object-cover rounded-md">
-                </div>
-                <div class="md:col-span-3">
-                    <h3 id="modal-title" class="text-3xl font-serif"></h3>
-                    <p class="font-semibold text-[var(--text-muted)] mt-1">Venue: <span id="modal-venue" class="font-normal"></span></p>
-                    <p class="font-semibold text-[var(--text-muted)] mt-1">Role: <span id="modal-role" class="font-normal"></span></p>
-                    <div class="mt-6">
-                        <h4 class="text-xl font-serif border-b border-[var(--border-color)] pb-2 mb-4">Critical Acclaim</h4>
-                        <div id="modal-reviews" class="space-y-6"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -242,6 +227,7 @@
                     role: 'Commercial Consultant',
                     venue: 'The O2, London',
                     image: 'images/mamma-mia-party.jpg',
+                    ticketUrl: 'https://mammamiatheparty.co.uk/tickets/',
                     quotes: [
                         { text: "A glorious night out... a huge hit.", source: "The Times", stars: 5 },
                         { text: "Leaves you beaming and wanting to come back for more.", source: "Daily Mail", stars: 4 },
@@ -252,6 +238,7 @@
                     role: 'Associate General Manager',
                     venue: "Wilton's Music Hall",
                     image: 'images/starcrossed.jpg',
+                    // No ticketUrl, so the link won't appear
                     quotes: [
                         { text: "A giddy delight... thoughtful, surprising and original.", source: "The Guardian", stars: 5 },
                         { text: "Captivating... an elegance to it that is stunning.", source: "Theatre Reviewers", stars: 5 },
@@ -262,6 +249,7 @@
                     role: 'General Manager',
                     venue: 'Edinburgh Fringe & International Tour',
                     image: 'images/cadel.jpg',
+                    ticketUrl: 'https://www.cadeltheplay.com/',
                     quotes: [
                         { text: "TOUR DE FORCE.", source: "The Scotsman", stars: 4 },
                         { text: "TRIUMPHANT PERFORMANCE", source: "The Recs", stars: 5 },
@@ -274,7 +262,7 @@
                     image: 'images/standard-short-long-drop.jpg',
                     quotes: [
                         { text: "Captivating... masterfully crafted.", source: "The Student / Fringe Review", stars: 5 },
-                        { text: "Heartbreaking and raw.", source: "The Scotsman", stars: 5 },
+                        { text: "Heartbreaking and raw.", source: "The Scotsman", stars: 4 },
                     ]
                 },
                 {
@@ -288,19 +276,17 @@
                     ]
                 },
                 {
-                    title: 'Upcoming Project',
+                    title: 'Fringe 2026',
                     role: 'Producer',
-                    venue: 'West End',
+                    venue: 'Edinburgh',
                     image: 'images/upcoming-project.jpg',
                     quotes: [
-                        { text: "Anticipated to be the theatrical event of the season.", source: "Industry Buzz", stars: 0 },
+                        { text: "Watch this space!", source: "", stars: 5 },
                     ]
                 }
             ];
 
             const productionGrid = document.getElementById('production-grid');
-            const modal = document.getElementById('production-modal');
-            const modalContent = document.getElementById('modal-content');
 
             productions.forEach(p => {
                 const card = document.createElement('article');
@@ -318,6 +304,18 @@
                     `;
                 }).join('');
 
+                let ticketHTML = '';
+                if (p.ticketUrl) {
+                    ticketHTML = `
+                        <div class="mt-4 text-center">
+                            <a href="${p.ticketUrl}" target="_blank" rel="noopener noreferrer" class="ticket-link">Buy Tickets</a>
+                        </div>
+                    `;
+                } else {
+                    // This placeholder maintains consistent card height when there's no ticket link
+                    ticketHTML = '<div class="h-[36px] mt-4"></div>';
+                }
+
                 card.innerHTML = `
                     <figure>
                         <img src="${p.image}" alt="Poster for ${p.title}" class="w-full h-auto object-cover">
@@ -326,48 +324,11 @@
                         <h3 class="text-xl font-serif text-center">${p.title}</h3>
                         <p class="text-sm font-semibold text-center text-[var(--accent-blue)] mt-1">${p.role}</p>
                         <div class="mt-2 pt-2 border-t border-[var(--border-color)] flex-grow">${quotesHTML}</div>
+                        ${ticketHTML}
                     </div>
                 `;
-                card.addEventListener('click', () => openModal(p));
                 productionGrid.appendChild(card);
             });
-
-            function openModal(production) {
-                document.getElementById('modal-title').textContent = production.title;
-                document.getElementById('modal-role').textContent = production.role;
-                document.getElementById('modal-venue').textContent = production.venue;
-                document.getElementById('modal-image').src = production.image;
-                document.getElementById('modal-image').alt = `Poster for ${production.title}`;
-
-                const reviewsContainer = document.getElementById('modal-reviews');
-                reviewsContainer.innerHTML = '';
-                production.quotes.forEach(r => {
-                    if (r.stars === 0) return;
-                    const reviewEl = document.createElement('div');
-                    const starsHTML = '<span class="star-gold text-xl">★</span>'.repeat(r.stars);
-                    reviewEl.innerHTML = `
-                        <div>${starsHTML}</div>
-                        <blockquote class="italic text-lg my-1">"${r.text}"</blockquote>
-                        <cite class="text-sm not-italic font-medium text-[var(--text-muted)]">- ${r.source}</cite>
-                    `;
-                    reviewsContainer.appendChild(reviewEl);
-                });
-
-                modal.classList.remove('hidden');
-                setTimeout(() => modalContent.classList.remove('scale-95', 'opacity-0'), 10);
-                document.body.style.overflow = 'hidden';
-            }
-            
-            function closeModal() {
-                modalContent.classList.add('scale-95', 'opacity-0');
-                setTimeout(() => modal.classList.add('hidden'), 300);
-                document.body.style.overflow = 'auto';
-            }
-
-            document.getElementById('modal-close').addEventListener('click', closeModal);
-            modal.addEventListener('click', (e) => (e.target === modal) && closeModal());
-            document.addEventListener('keydown', (e) => e.key === "Escape" && !modal.classList.contains('hidden') && closeModal());
-
 
             const mobileMenuButton = document.getElementById('mobile-menu-button');
             const mobileMenu = document.getElementById('mobile-menu');
