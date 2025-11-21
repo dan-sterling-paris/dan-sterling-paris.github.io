@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odd Dog Out - Investment Prospectus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --odo-yellow: #FFD500;
+            --odo-black: #1a1a1a;
+            --odo-red: #FF4A4A;
+            --odo-blue: #4A90E2;
+            --odo-white: #ffffff;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: var(--odo-black);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        h1, h2, h3, h4, .brand-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .bg-odo-yellow { background-color: var(--odo-yellow); }
+        .text-odo-yellow { color: var(--odo-yellow); }
+        .bg-odo-black { background-color: var(--odo-black); }
+        .text-odo-black { color: var(--odo-black); }
+        .bg-odo-red { background-color: var(--odo-red); }
+        .text-odo-red { color: var(--odo-red); }
+
+        .card-shadow {
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-shadow:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--odo-red);
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #ddd;
+            border-radius: 2px;
+        }
+
+        .clip-zigzag {
+            clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 96% 95%, 94% 100%, 92% 95%, 90% 100%, 88% 95%, 86% 100%, 84% 95%, 82% 100%, 80% 95%, 78% 100%, 76% 95%, 74% 100%, 72% 95%, 70% 100%, 68% 95%, 66% 100%, 64% 95%, 62% 100%, 60% 95%, 58% 100%, 56% 95%, 54% 100%, 52% 95%, 50% 100%, 48% 95%, 46% 100%, 44% 95%, 42% 100%, 40% 95%, 38% 100%, 36% 95%, 34% 100%, 32% 95%, 30% 100%, 28% 95%, 26% 100%, 24% 95%, 22% 100%, 20% 95%, 18% 100%, 16% 95%, 14% 100%, 12% 95%, 10% 100%, 8% 95%, 6% 100%, 4% 95%, 2% 100%, 0 95%);
+        }
+        
+        .clip-slant-top {
+            clip-path: polygon(0 5%, 100% 0, 100% 100%, 0 100%);
+        }
+        
+        /* Mobile Nav Overlay */
+        #mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        #mobile-menu.open {
+            transform: translateX(0);
+        }
+        
+        /* Table styling */
+        .financial-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .financial-row:last-child {
+            border-bottom: none;
+        }
+        .financial-row.highlight {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        .financial-row.result {
+            background-color: var(--odo-black);
+            color: white;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Bio styling */
+        .bio-card {
+            transition: all 0.3s ease;
+        }
+        .bio-card:target {
+            background-color: #fff9c4; /* Light yellow highlight on scroll target */
+            border-left: 4px solid var(--odo-black);
+            padding-left: 1rem;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0 flex items-center gap-2">
+                    <div class="w-10 h-10 bg-odo-yellow rounded-full flex items-center justify-center text-odo-black font-bold text-xl brand-font border-2 border-black">OD</div>
+                    <span class="font-bold text-xl tracking-tight brand-font">ODD DOG OUT</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#intro" class="text-gray-600 hover:text-black font-medium transition">Introduction</a>
+                    <a href="#team" class="text-gray-600 hover:text-black font-medium transition">Team</a>
+                    <a href="#capitalisation" class="text-gray-600 hover:text-black font-medium transition">Capitalisation</a>
+                    <a href="#financials" class="text-gray-600 hover:text-black font-medium transition">Financials</a>
+                    <a href="#contact" class="bg-odo-black text-white px-6 py-2 rounded-full font-medium hover:bg-gray-800 transition">Invest Now</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-600 hover:text-black">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="fixed inset-0 z-40 bg-white flex flex-col pt-24 px-6 md:hidden">
+        <a href="#intro" class="text-2xl font-bold py-4 border-b border-gray-100 mobile-link">Introduction</a>
+        <a href="#team" class="text-2xl font-bold py-4 border-b border-gray-100 mobile-link">Team</a>
+        <a href="#capitalisation" class="text-2xl font-bold py-4 border-b border-gray-100 mobile-link">Capitalisation</a>
+        <a href="#financials" class="text-2xl font-bold py-4 border-b border-gray-100 mobile-link">Financials</a>
+        <a href="#contact" class="text-2xl font-bold py-4 text-odo-red mobile-link">Invest Now</a>
+        <button id="close-menu" class="absolute top-6 right-6 p-2">
+            <i data-lucide="x" class="w-8 h-8"></i>
+        </button>
+    </div>
+
+    <!-- Content Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-3/4 bg-gray-50 -skew-y-2 origin-top-left z-0"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+                <div class="mb-12 lg:mb-0">
+                    <div class="inline-block bg-odo-yellow px-4 py-1 rounded-full text-xs font-bold tracking-wide uppercase mb-6 border border-black">
+                        Investment Opportunity
+                    </div>
+                    <h2 class="text-5xl lg:text-7xl font-bold leading-tight mb-6">
+                        Stand Out <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-odo-yellow to-orange-500" style="-webkit-text-stroke: 1px black;">From The Pack</span>
+                    </h2>
+                    <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                        Based on Rob Biddulph’s bestselling book. A foot-stomping musical celebration of individuality featuring the voice of <strong class="text-black">Tom Hardy</strong>.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="#financials" class="flex items-center justify-center px-8 py-4 bg-black text-white rounded-lg font-bold hover:bg-gray-800 transition shadow-lg hover:shadow-xl">
+                            View Financials <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+                        </a>
+                        <button onclick="document.getElementById('deck-modal').classList.remove('hidden')" class="flex items-center justify-center px-8 py-4 bg-white text-black border-2 border-black rounded-lg font-bold hover:bg-gray-50 transition">
+                            <i data-lucide="file-text" class="mr-2 w-5 h-5"></i> View Deck
+                        </button>
+                    </div>
+                </div>
+                <div class="relative">
+                    <!-- Visual Representation -->
+                    <div class="relative bg-odo-yellow rounded-3xl p-8 card-shadow transform rotate-2 border-4 border-black">
+                        <!-- Image Container -->
+                        <div class="aspect-[4/3] bg-white rounded-xl border-2 border-black overflow-hidden flex items-center justify-center bg-opacity-50 relative mb-4">
+                            <!-- Tour Image -->
+                            <img src="ODO-images/Tour.jpg" alt="Mid Scale Tour Stage" class="w-full h-full object-cover">
+                            
+                            <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6 text-white text-center">
+               
+                            </div>
+                        </div>
+
+                        <!-- "New Musical" Badge - Below Image -->
+                        <div class="flex justify-center mb-6">
+                             <div class="w-auto px-6 py-2 bg-odo-red rounded-full flex items-center justify-center text-white font-bold text-center text-sm leading-tight shadow-md border-2 border-white">
+                                New Musical
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p class="text-3xl font-bold">96</p>
+                                <p class="text-xs uppercase font-bold mt-1">Performances</p>
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold">600</p>
+                                <p class="text-xs uppercase font-bold mt-1">Seats</p>
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold">45%</p>
+                                <p class="text-xs uppercase font-bold mt-1">TTR Relief</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Introduction Section (New) -->
+    <section id="intro" class="py-20 bg-white border-b border-gray-100">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold mb-8 text-black">Introduction</h2>
+            <div class="text-xl text-gray-600 leading-relaxed space-y-6">
+                <p>
+                    <strong>Odd Dog Out</strong> is a sophisticated, high-value children’s musical designed to be a major player in the family entertainment market. With aspirations and quality benchmarks set to compete directly with established successes like Julia Donaldson’s <em>The Gruffalo</em> and Axel Scheffler’s <em>Zog</em>, the production offers a boutique and premium theatrical experience.
+                </p>
+                <p>
+                    Produced by Blumenau Productions, this project represents a unique investment opportunity in a scalable intellectual property with significant commercial foresight. The show combines the star power of <strong>Tom Hardy</strong> with the creative genius of <strong>Rob Biddulph</strong> and <strong>Vikki Stone</strong> to create a foot-stomping, tail-wagging celebration of individuality.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Creative Synopsis Section -->
+    <section id="synopsis" class="py-20 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold mb-8 text-black">The Story</h2>
+            
+            <div class="flex flex-col md:flex-row gap-8 items-center text-left">
+                <div class="md:w-1/3">
+                    <div class="relative rounded-xl overflow-hidden border-2 border-black shadow-lg rotate-minus-2 transform transition hover:rotate-0">
+                        <img src="ODO-images/OddDogOut.jpg" alt="Odd Dog Out" class="w-full h-auto">
+                    </div>
+                </div>
+                <div class="md:w-2/3 text-xl text-gray-600 leading-relaxed space-y-6">
+                    <p>
+                        In a world of identical sausage dogs, one dachshund refuses to fit the mould.
+                    </p>
+                    <p>
+                        Based on Rob Biddulph’s bestselling book, <strong>Odd Dog Out</strong> follows the journey of one busy dog who leaves her town to find her place in the world, only to discover that maybe standing out is the best way to fit in.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Creative Vision Section -->
+    <section id="creative" class="py-20 bg-white relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Bringing Doggywood to Life</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">A multi-layered theatrical experience combining pop music, puppetry, and live performance.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-12">
+                <!-- Concept 1 -->
+                <div class="text-center group">
+                    <div class="w-full aspect-square rounded-2xl overflow-hidden mb-6 border-2 border-gray-100 group-hover:border-odo-yellow transition relative">
+                        <img src="ODO-images/ActorMusicians.jpg" alt="Actor Musicians" class="w-full h-full object-cover">
+                         <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition"></div>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">The Actor-Musician Orchestra</h3>
+                    <p class="text-gray-600">
+                        Instruments aren't hidden in a pit—they are an extension of the characters. The cast drives the action and the music simultaneously, creating a seamless, high-energy performance style.
+                    </p>
+                </div>
+
+                <!-- Concept 2 -->
+                <div class="text-center group">
+                    <div class="w-full aspect-square rounded-2xl overflow-hidden mb-6 border-2 border-gray-100 group-hover:border-odo-yellow transition relative">
+                        <img src="ODO-images/Score.jpg" alt="Pop Score" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition"></div>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">A Pop-Fuelled Score</h3>
+                    <p class="text-gray-600">
+                        Written by the critically acclaimed <strong>Vikki Stone</strong>, the score blends sharp, witty lyricism for adults with an eclectic, vibrant pop sound that keeps children engaged from start to finish.
+                    </p>
+                </div>
+
+                <!-- Concept 3 -->
+                <div class="text-center group">
+                    <div class="w-full aspect-square rounded-2xl overflow-hidden mb-6 border-2 border-gray-100 group-hover:border-odo-yellow transition relative">
+                        <img src="ODO-images/Puppetry.jpg" alt="Puppetry Design" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition"></div>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Puppetry & Visuals</h3>
+                    <p class="text-gray-600">
+                        The bustling world of Doggywood is realized through imaginative puppetry and a set design that faithfully recreates Rob Biddulph's signature colorful style.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="py-20 bg-black text-white clip-zigzag">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4 text-odo-yellow">World-Class Creative Team</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">Click on any team member to view their full biography.</p>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-6">
+                
+                <!-- Rob Biddulph -->
+                <a href="#bio-rob" class="w-full md:w-[calc(33.333%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
+                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                        <img src="ODO-images/Rob.jpg" alt="Rob Biddulph" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
+                        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                    </div>
+                    <div class="p-4 relative text-center">
+                         <div class="mx-auto -mt-10 w-10 h-10 bg-odo-yellow rounded-full flex items-center justify-center text-black shadow-lg relative z-10 mb-2">
+                            <i data-lucide="book-open" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-base font-bold mb-0.5">Rob Biddulph</h3>
+                        <p class="text-odo-yellow text-[10px] font-bold uppercase tracking-wider mb-2">Author & Illustrator</p>
+                        <p class="text-xs text-gray-300 mb-3 leading-tight px-2">
+                            The genius behind the viral sensation <strong>#DrawWithRob</strong> and bestselling author.
+                        </p>
+                        <div class="text-xs text-gray-400 flex items-center justify-center gap-1 group-hover:text-white transition">
+                            <span>Read Bio</span> <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Vikki Stone -->
+                <a href="#bio-vikki" class="w-full md:w-[calc(33.333%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
+                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                        <img src="ODO-images/Vikki.jpg" alt="Vikki Stone" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
+                        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                    </div>
+                    <div class="p-4 relative text-center">
+                        <div class="mx-auto -mt-10 w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-lg relative z-10 mb-2">
+                            <i data-lucide="music" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-base font-bold mb-0.5">Vikki Stone</h3>
+                        <p class="text-odo-yellow text-[10px] font-bold uppercase tracking-wider mb-2">Book, Music & Lyrics</p>
+                        <p class="text-xs text-gray-300 mb-3 leading-tight px-2">
+                            Award-winning composer and comedian behind the Olivier-winning <em>Hey Duggee</em>.
+                        </p>
+                        <div class="text-xs text-gray-400 flex items-center justify-center gap-1 group-hover:text-white transition">
+                            <span>Read Bio</span> <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Tom Hardy -->
+                <a href="#bio-tom" class="w-full md:w-[calc(33.333%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
+                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                         <img src="ODO-images/Tom.jpg" alt="Tom Hardy" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
+                        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                    </div>
+                    <div class="p-4 relative text-center">
+                         <div class="mx-auto -mt-10 w-10 h-10 bg-odo-red rounded-full flex items-center justify-center text-white shadow-lg relative z-10 mb-2">
+                            <i data-lucide="mic-2" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-base font-bold mb-0.5">Tom Hardy</h3>
+                        <p class="text-odo-yellow text-[10px] font-bold uppercase tracking-wider mb-2">Voice Over</p>
+                        <p class="text-xs text-gray-300 mb-3 leading-tight px-2">
+                            BAFTA-winning superstar bringing world-class narration to Doggywood.
+                        </p>
+                        <div class="text-xs text-gray-400 flex items-center justify-center gap-1 group-hover:text-white transition">
+                            <span>Read Bio</span> <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Dan Blumenau -->
+                <a href="#bio-dan" class="w-full md:w-[calc(49%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
+                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                        <img src="ODO-images/Dan.jpg" alt="Dan Blumenau" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
+                         <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                    </div>
+                    <div class="p-4 relative text-center">
+                        <div class="mx-auto -mt-10 w-10 h-10 bg-white rounded-full flex items-center justify-center text-black shadow-lg relative z-10 mb-2">
+                            <i data-lucide="briefcase" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-base font-bold mb-0.5">Dan Blumenau</h3>
+                        <p class="text-odo-yellow text-[10px] font-bold uppercase tracking-wider mb-2">Producer</p>
+                        <p class="text-xs text-gray-300 mb-3 leading-tight px-2">
+                            A financial powerhouse with executive experience at <strong>Disney</strong> and <em>Mamma Mia! The Party</em>.
+                        </p>
+                        <div class="text-xs text-gray-400 flex items-center justify-center gap-1 group-hover:text-white transition">
+                            <span>Read Bio</span> <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Harry Blumenau -->
+                <a href="#bio-harry" class="w-full md:w-[calc(49%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
+                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                        <img src="ODO-images/Harry.jpg" alt="Harry Blumenau" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
+                         <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                    </div>
+                    <div class="p-4 relative text-center">
+                        <div class="mx-auto -mt-10 w-10 h-10 bg-white rounded-full flex items-center justify-center text-black shadow-lg relative z-10 mb-2">
+                            <i data-lucide="briefcase" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-base font-bold mb-0.5">Harry Blumenau</h3>
+                        <p class="text-odo-yellow text-[10px] font-bold uppercase tracking-wider mb-2">Producer</p>
+                        <p class="text-xs text-gray-300 mb-3 leading-tight px-2">
+                            Award-winning casting director with major West End credits including <em>Beetlejuice</em>.
+                        </p>
+                        <div class="text-xs text-gray-400 flex items-center justify-center gap-1 group-hover:text-white transition">
+                            <span>Read Bio</span> <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Full Biographies Section -->
+    <section id="biographies" class="py-20 bg-gray-100 clip-slant-top -mt-10 relative z-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+            <h2 class="text-3xl font-bold mb-12 text-center">Creative Biographies</h2>
+            
+            <div class="space-y-12">
+                <!-- Rob Bio -->
+                <div id="bio-rob" class="bg-white p-8 rounded-2xl shadow-sm bio-card scroll-mt-32">
+                    <div class="flex items-start gap-4">
+                         <div class="w-16 h-16 bg-odo-yellow rounded-full flex items-center justify-center text-black flex-shrink-0">
+                            <i data-lucide="book-open" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-black mb-1">Rob Biddulph</h3>
+                            <p class="text-gray-500 text-sm font-bold uppercase tracking-wide mb-4">Author & Illustrator</p>
+                            <div class="text-gray-600 space-y-4 leading-relaxed">
+                                <p>
+                                    Rob is a bestselling and multi-award-winning author/illustrator. He is the genius behind the viral sensation <strong>#DrawWithRob</strong>, a series of draw-along videos that garnered millions of views during lockdown.
+                                </p>
+                                <p>
+                                    His first picture book, <em>Blown Away</em>, won the Waterstones Children's Book Prize in 2015. His subsequent titles, including <em>GRRRRR!</em> and <em>Odd Dog Out</em>, have cemented his status as a titan of children's literature. Before becoming a full-time author, Rob was the art director for the Observer Magazine, NME, and Just Seventeen.
+                                </p>
+                                <p>
+                                    <em>Odd Dog Out</em> was published by HarperCollins in 2016 and celebrates the beauty of fitting out.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vikki Bio -->
+                <div id="bio-vikki" class="bg-white p-8 rounded-2xl shadow-sm bio-card scroll-mt-32">
+                    <div class="flex items-start gap-4">
+                         <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <i data-lucide="music" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-black mb-1">Vikki Stone</h3>
+                            <p class="text-gray-500 text-sm font-bold uppercase tracking-wide mb-4">Book, Music & Lyrics</p>
+                            <div class="text-gray-600 space-y-4 leading-relaxed">
+                                <p>
+                                    Vikki Stone is an award-winning writer, comedian, musician, and composer. She famously co-adapted the smash-hit TV show <em>Hey Duggee</em> for the stage, which won <strong>Best Family Show at the 2023 Olivier Awards</strong>.
+                                </p>
+                                <p>
+                                    Described by The Scotsman as "the bastard love child of Victoria Wood and Tim Minchin," Vikki is also the dramaturg on the new musical <em>Burlesque</em>. She is an Associate of The Royal Academy of Music (ARAM) and has appeared on numerous TV shows including <em>Richard Osman’s House of Games</em> and <em>Romeo & Duet</em> (ITV).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tom Bio -->
+                <div id="bio-tom" class="bg-white p-8 rounded-2xl shadow-sm bio-card scroll-mt-32">
+                    <div class="flex items-start gap-4">
+                         <div class="w-16 h-16 bg-odo-red rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <i data-lucide="mic-2" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-black mb-1">Tom Hardy</h3>
+                            <p class="text-gray-500 text-sm font-bold uppercase tracking-wide mb-4">Voice Over</p>
+                            <div class="text-gray-600 space-y-4 leading-relaxed">
+                                <p>
+                                    One of the most acclaimed actors of his generation, Tom Hardy lends his distinctive voice to the production, serving as the narrator and guide through the world of Doggywood.
+                                </p>
+                                <p>
+                                    Known for his roles in <em>The Dark Knight Rises</em>, <em>Mad Max: Fury Road</em>, and <em>Peaky Blinders</em>, Tom is also a celebrated reader of CBeebies Bedtime Stories, making him a familiar and beloved voice to children and parents alike.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dan Bio -->
+                <div id="bio-dan" class="bg-white p-8 rounded-2xl shadow-sm bio-card scroll-mt-32">
+                    <div class="flex items-start gap-4">
+                         <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <i data-lucide="briefcase" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-black mb-1">Dan Blumenau</h3>
+                            <p class="text-gray-500 text-sm font-bold uppercase tracking-wide mb-4">Producer</p>
+                            <div class="text-gray-600 space-y-4 leading-relaxed">
+                                <p>
+                                    Founder of Sterling Paris Limited, Dan brings over 20 years of industry expertise in production and general management. He currently serves as a Commercial Consultant for <em>Mamma Mia! The Party</em>.
+                                </p>
+                                <p>
+                                    Previously, Dan served as a Financial Analyst for <strong>Disneyland Paris</strong>, managing finances for the resort's seven hotels and entertainment quarters. His unique blend of creative production experience and high-level corporate finance acumen ensures the commercial viability of the project.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Harry Bio -->
+                <div id="bio-harry" class="bg-white p-8 rounded-2xl shadow-sm bio-card scroll-mt-32">
+                    <div class="flex items-start gap-4">
+                         <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <i data-lucide="briefcase" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-black mb-1">Harry Blumenau</h3>
+                            <p class="text-gray-500 text-sm font-bold uppercase tracking-wide mb-4">Producer</p>
+                            <div class="text-gray-600 space-y-4 leading-relaxed">
+                                <p>
+                                    Harry is a prominent casting director for theatre, TV, and film. He won the 2025 WhatsOnStage <strong>Best Casting Direction Award</strong> for <em>Why Am I So Single?</em>.
+                                </p>
+                                <p>
+                                    His extensive credits include <em>Beetlejuice The Musical</em> (Prince Edward Theatre), <em>Kinky Boots</em> (London Coliseum/Tour), <em>Death Note: The Musical</em> (London Palladium), and <em>Derren Brown: Showman</em> (Channel 4). He brings a wealth of industry connections and artistic insight to the production team.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Capitalisation Section (New) -->
+    <section id="capitalisation" class="py-20 bg-gray-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">The Capitalisation</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">A structured investment across two distinct phases, offering 100% repayment of capital followed by a pro-rata share of profits.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-2xl font-bold mb-4">The Ask</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                                <span class="text-gray-600">Phase 1: Edinburgh Fringe Launch</span>
+                                <span class="font-bold text-xl">£135,028</span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                                <span class="text-gray-600">Phase 2: Mid-Scale UK Tour</span>
+                                <span class="font-bold text-xl">£302,932</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2">
+                                <span class="font-bold text-lg text-black">Total Capitalisation</span>
+                                <span class="font-bold text-3xl text-odo-red">£437,960</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="text-2xl font-bold mb-4">Repayment Structure</h3>
+                        <ul class="space-y-4 text-gray-600">
+                            <li class="flex items-start">
+                                <div class="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                                    <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                                </div>
+                                <span><strong>Priority Repayment:</strong> Investors will be repaid 100% of their initial capital investment from the first Net Receipts of the production.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                                    <i data-lucide="check" class="w-4 h-4 text-green-600"></i>
+                                </div>
+                                <span><strong>Profit Share:</strong> Once 100% capitalisation is returned, investors will receive a pro-rata share of the production's profits (typically 50% or 60% distributed to the Investor Pool).</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Theatre Tax Relief Section -->
+                <div class="bg-odo-black text-white p-10 rounded-3xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-40 h-40 bg-odo-yellow rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
+                    
+                    <h3 class="text-3xl font-bold mb-6 text-odo-yellow">Theatre Tax Relief (TTR)</h3>
+                    <p class="text-gray-300 mb-8">
+                        The production benefits from the UK Government's Theatre Tax Relief scheme, which significantly de-risks the investment by offering a cash rebate on qualifying production expenditure.
+                    </p>
+
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between mb-2 text-sm font-medium text-gray-400">
+                                <span>Edinburgh TTR Estimate</span>
+                                <span>45% Rate</span>
+                            </div>
+                            <div class="h-4 bg-gray-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 w-[32%]"></div>
+                            </div>
+                            <div class="text-right mt-1 font-bold text-xl">£42,832</div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between mb-2 text-sm font-medium text-gray-400">
+                                <span>Tour TTR Estimate</span>
+                                <span>45% Rate</span>
+                            </div>
+                            <div class="h-4 bg-gray-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 w-[25%]"></div>
+                            </div>
+                            <div class="text-right mt-1 font-bold text-xl">£32,796</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 p-4 bg-white/10 rounded-xl border border-white/10">
+                        <p class="text-sm text-gray-300">
+                            <strong>Impact:</strong> This rebate effectively lowers the net cost of the production, accelerating the path to recoupment for investors.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Financial Breakdown -->
+    <section id="financials" class="py-20 bg-gray-50">
+        <!-- ... (Existing Financial Content) ... -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4">Financial Overview</h2>
+                <p class="text-gray-600 max-w-3xl mx-auto">A phased approach: Launching at the Edinburgh Fringe to establish critical acclaim, followed by a profitable Mid-Scale UK Tour.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-16">
+                <!-- Phase 1 Edinburgh Card -->
+                <div class="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-200 flex flex-col h-full">
+                    <div class="bg-black p-6 text-white flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold">Phase 1: Edinburgh Launch</h3>
+                            <p class="text-sm text-gray-400">Underbelly Cowbarn (2026)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-odo-yellow text-black text-xs font-bold rounded uppercase">Launch Pad</span>
+                    </div>
+                    <div class="p-8 flex-grow flex flex-col justify-between">
+                        <div>
+                            <p class="text-gray-600 mb-6 text-sm">
+                                The Fringe run acts as the critical launch pad for branding, reviews, and industry showcases. 
+                                The primary goal is market positioning rather than immediate profit.
+                            </p>
+                            
+                            <div class="space-y-4 mb-8">
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-2">
+                                    <span class="text-gray-500 font-medium">Total Capitalization</span>
+                                    <span class="font-bold text-xl">£135,028</span>
+                                </div>
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-2">
+                                    <span class="text-gray-500 font-medium">Est. Theatre Tax Relief (TTR)</span>
+                                    <span class="font-bold text-green-600">£42,832</span>
+                                </div>
+                                <div class="flex justify-between items-end bg-gray-50 p-3 rounded-lg">
+                                    <span class="font-bold text-gray-900">Net Investment (Post TTR)</span>
+                                    <span class="font-bold text-xl">~£92,196</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-yellow-50 border-l-4 border-odo-yellow p-4">
+                            <p class="text-sm text-gray-700 italic">
+                                "Strategic investment to secure national tour bookings and West End interest."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 2 Tour Card -->
+                <div class="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-200 flex flex-col">
+                    <div class="bg-odo-blue p-6 text-white flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-bold">Phase 2: UK Tour</h3>
+                            <p class="text-sm text-white/80">Mid-Scale Venues (2027)</p>
+                        </div>
+                        <span class="px-3 py-1 bg-white text-odo-blue text-xs font-bold rounded uppercase">Profit Center</span>
+                    </div>
+                    <div class="p-8">
+                        <!-- Slider Logic -->
+                         <div class="mb-6">
+                            <div class="flex justify-between mb-4">
+                                <label class="font-bold text-gray-700">Projected Capacity</label>
+                                <span class="font-bold text-lg text-odo-red" id="capacity-display">70%</span>
+                            </div>
+                            <input type="range" min="10" max="100" step="10" value="70" id="capacity-slider" class="mb-2">
+                            <div class="flex justify-between text-xs text-gray-400 px-1">
+                                <span>10%</span>
+                                <span>Break Even (~60%)</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Recoupment Display -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden text-sm">
+                            <div class="financial-row bg-gray-50 border-b border-gray-200">
+                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Projection Snapshot</span>
+                            </div>
+                            
+                            <div class="financial-row">
+                                <span class="text-gray-600">Gross Box Office</span>
+                                <span class="font-medium" id="gross-display">£0</span>
+                            </div>
+
+                            <div class="financial-row highlight">
+                                <span class="font-bold text-gray-800">Net Box Office</span>
+                                <span class="font-bold" id="net-box-display">£0</span>
+                            </div>
+
+                            <!-- Breakdown of Deductions -->
+                            <div class="financial-row bg-gray-50/50">
+                                <span class="text-gray-500 pl-2 border-l-2 border-gray-300 text-xs">Theatre Split (30%)</span>
+                                <span class="text-gray-500 text-xs" id="split-display">(£0)</span>
+                            </div>
+                            <div class="financial-row bg-gray-50/50 border-b border-gray-100">
+                                <span class="text-gray-500 pl-2 border-l-2 border-gray-300 text-xs">Royalties (15%)</span>
+                                <span class="text-gray-500 text-xs" id="royalties-display">(£0)</span>
+                            </div>
+
+                            <div class="financial-row highlight" style="background-color: #eef2ff;">
+                                <span class="font-bold text-odo-blue">Net Receipts</span>
+                                <span class="font-bold text-odo-blue" id="receipts-display">£0</span>
+                            </div>
+                            
+                            <div class="financial-row">
+                                <span class="text-gray-600">Budget (Post TTR & Edin Recoup)</span>
+                                <span class="text-red-500">£249,758</span>
+                            </div>
+
+                            <div class="financial-row result" id="result-row">
+                                <span class="font-bold">Net Profit / (Loss)</span>
+                                <span class="font-bold" id="pnl-display">£0</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Table for all percentages -->
+            <div class="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-200 mb-12">
+                <div class="bg-gray-100 px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-800">Detailed Recoupment Schedule</h3>
+                    <p class="text-xs text-gray-500">Full breakdown of touring financials at varied capacity levels</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-left">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-4 py-3 font-bold text-gray-700">Capacity</th>
+                                <th class="px-4 py-3 font-medium text-gray-500">Gross Box Office</th>
+                                <th class="px-4 py-3 font-medium text-gray-500">Net Box Office</th>
+                                <th class="px-4 py-3 font-medium text-gray-500">Split (30%)</th>
+                                <th class="px-4 py-3 font-medium text-gray-500">Royalties (15%)</th>
+                                <th class="px-4 py-3 font-bold text-odo-blue">Net Receipts</th>
+                                <th class="px-4 py-3 font-medium text-gray-500">Budget (Post TTR & Edin Recoup)</th>
+                                <th class="px-4 py-3 font-bold text-gray-900">Profit / (Loss)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <!-- 100% -->
+                            <tr class="hover:bg-gray-50 bg-green-100">
+                                <td class="px-4 py-3 font-bold">100%</td>
+                                <td class="px-4 py-3">£950,400</td>
+                                <td class="px-4 py-3">£744,480</td>
+                                <td class="px-4 py-3 text-red-400">(£223,344)</td>
+                                <td class="px-4 py-3 text-red-400">(£111,672)</td>
+                                <td class="px-4 py-3 font-medium">£409,464</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-green-700">£159,706</td>
+                            </tr>
+                            <!-- 90% -->
+                            <tr class="hover:bg-gray-50 bg-green-50/70">
+                                <td class="px-4 py-3 font-bold">90%</td>
+                                <td class="px-4 py-3">£855,360</td>
+                                <td class="px-4 py-3">£670,032</td>
+                                <td class="px-4 py-3 text-red-400">(£201,009)</td>
+                                <td class="px-4 py-3 text-red-400">(£100,504)</td>
+                                <td class="px-4 py-3 font-medium">£368,517</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-green-600">£118,759</td>
+                            </tr>
+                            <!-- 80% -->
+                            <tr class="hover:bg-gray-50 bg-green-50/50">
+                                <td class="px-4 py-3 font-bold">80%</td>
+                                <td class="px-4 py-3">£760,320</td>
+                                <td class="px-4 py-3">£595,584</td>
+                                <td class="px-4 py-3 text-red-400">(£178,675)</td>
+                                <td class="px-4 py-3 text-red-400">(£89,337)</td>
+                                <td class="px-4 py-3 font-medium">£327,571</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-green-600">£77,813</td>
+                            </tr>
+                            <!-- 70% -->
+                            <tr class="hover:bg-gray-50 bg-green-50/30">
+                                <td class="px-4 py-3 font-bold">70%</td>
+                                <td class="px-4 py-3">£665,280</td>
+                                <td class="px-4 py-3">£521,136</td>
+                                <td class="px-4 py-3 text-red-400">(£156,340)</td>
+                                <td class="px-4 py-3 text-red-400">(£78,170)</td>
+                                <td class="px-4 py-3 font-medium">£286,624</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-green-600">£36,866</td>
+                            </tr>
+                            <!-- 60% -->
+                            <tr class="hover:bg-gray-50 bg-yellow-50/30">
+                                <td class="px-4 py-3 font-bold">60%</td>
+                                <td class="px-4 py-3">£570,240</td>
+                                <td class="px-4 py-3">£446,688</td>
+                                <td class="px-4 py-3 text-red-400">(£134,006)</td>
+                                <td class="px-4 py-3 text-red-400">(£67,003)</td>
+                                <td class="px-4 py-3 font-medium">£245,678</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£4,079)</td>
+                            </tr>
+                            <!-- 50% -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-bold">50%</td>
+                                <td class="px-4 py-3">£475,200</td>
+                                <td class="px-4 py-3">£372,240</td>
+                                <td class="px-4 py-3 text-red-400">(£111,672)</td>
+                                <td class="px-4 py-3 text-red-400">(£55,836)</td>
+                                <td class="px-4 py-3 font-medium">£204,732</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£45,026)</td>
+                            </tr>
+                            <!-- 40% -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-bold">40%</td>
+                                <td class="px-4 py-3">£380,160</td>
+                                <td class="px-4 py-3">£297,792</td>
+                                <td class="px-4 py-3 text-red-400">(£89,337)</td>
+                                <td class="px-4 py-3 text-red-400">(£44,668)</td>
+                                <td class="px-4 py-3 font-medium">£163,785</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£85,972)</td>
+                            </tr>
+                            <!-- 30% -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-bold">30%</td>
+                                <td class="px-4 py-3">£285,120</td>
+                                <td class="px-4 py-3">£223,344</td>
+                                <td class="px-4 py-3 text-red-400">(£67,003)</td>
+                                <td class="px-4 py-3 text-red-400">(£33,502)</td>
+                                <td class="px-4 py-3 font-medium">£122,839</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£126,919)</td>
+                            </tr>
+                            <!-- 20% -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-bold">20%</td>
+                                <td class="px-4 py-3">£190,080</td>
+                                <td class="px-4 py-3">£148,896</td>
+                                <td class="px-4 py-3 text-red-400">(£44,669)</td>
+                                <td class="px-4 py-3 text-red-400">(£22,334)</td>
+                                <td class="px-4 py-3 font-medium">£81,893</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£167,866)</td>
+                            </tr>
+                            <!-- 10% -->
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-bold">10%</td>
+                                <td class="px-4 py-3">£95,040</td>
+                                <td class="px-4 py-3">£74,448</td>
+                                <td class="px-4 py-3 text-red-400">(£22,334)</td>
+                                <td class="px-4 py-3 text-red-400">(£11,167)</td>
+                                <td class="px-4 py-3 font-medium">£40,946</td>
+                                <td class="px-4 py-3 text-gray-400">£249,758</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£208,812)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <p class="text-center text-xs text-gray-400 mt-6">
+                *Figures based on Budget V21.11.25. Strictly Confidential. TTR estimated at 45%. 
+                Net Box Office calculated after VAT and commissions.
+            </p>
+        </div>
+    </section>
+
+    <!-- Investment Invitation (New) -->
+    <section class="bg-gray-100 py-10 border-t border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">Investment Invitation to Invest</h4>
+            <p class="text-xs text-gray-500 leading-relaxed">
+                The content of this promotion has not been approved by an authorised person within the meaning of the Financial Services and Markets Act 2000. Reliance on this promotion for the purpose of engaging in any investment activity may expose an individual to a significant risk of losing all of the property or other assets invested.
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-odo-black text-white pt-20 pb-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-12 mb-16">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="w-8 h-8 bg-odo-yellow rounded-full flex items-center justify-center text-odo-black font-bold text-sm brand-font">OD</div>
+                        <span class="font-bold text-lg tracking-tight brand-font">ODD DOG OUT</span>
+                    </div>
+                    <p class="text-gray-400 mb-6 max-w-sm">
+                        A unique investment opportunity in family entertainment. 
+                        Produced by Blumenau Productions.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-odo-yellow hover:text-black transition">
+                            <i data-lucide="mail" class="w-5 h-5"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-odo-yellow hover:text-black transition">
+                            <i data-lucide="globe" class="w-5 h-5"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-6">Quick Links</h4>
+                    <ul class="space-y-4 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">The Show</a></li>
+                        <li><a href="#" class="hover:text-white transition">Team</a></li>
+                        <li><a href="#" class="hover:text-white transition">Financials</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-6">Contact</h4>
+                    <p class="text-gray-400">
+                        Blumenau Productions<br>
+                        London, UK<br>
+                        <br>
+                        <a href="mailto:invest@blumenauexample.com" class="text-odo-yellow hover:underline">invest@blumenau.com</a>
+                    </p>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+                &copy; 2025 Blumenau Productions. Confidential Treatment.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal for Deck (Placeholder) -->
+    <div id="deck-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="document.getElementById('deck-modal').classList.add('hidden')"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i data-lucide="lock" class="w-6 h-6 text-green-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Restricted Access</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    The full Investor Bible is a confidential document. Please contact Blumenau Productions to request the full PDF package.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-black text-base font-medium text-white hover:bg-gray-800 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm" onclick="document.getElementById('deck-modal').classList.add('hidden')">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Mobile Menu
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        const closeBtn = document.getElementById('close-menu');
+        const links = document.querySelectorAll('.mobile-link');
+
+        btn.addEventListener('click', () => menu.classList.add('open'));
+        closeBtn.addEventListener('click', () => menu.classList.remove('open'));
+        links.forEach(link => {
+            link.addEventListener('click', () => menu.classList.remove('open'));
+        });
+
+        // Financial Data Logic (Recoupment Schedule)
+        // Base figures at 100% Capacity (derived from PDF Page 4)
+        const MAX_GROSS_BOX_OFFICE = 950400;
+        const MAX_NET_BOX_OFFICE = 744480;
+        const FIXED_BUDGET = 249758; // Post TTR Budget
+        
+        // Elements
+        const slider = document.getElementById('capacity-slider');
+        const capDisplay = document.getElementById('capacity-display');
+        const grossDisplay = document.getElementById('gross-display');
+        const netBoxDisplay = document.getElementById('net-box-display');
+        const splitDisplay = document.getElementById('split-display');
+        const royaltiesDisplay = document.getElementById('royalties-display');
+        const recDisplay = document.getElementById('receipts-display');
+        const pnlDisplay = document.getElementById('pnl-display');
+        const resultRow = document.getElementById('result-row');
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(num);
+        }
+
+        function updateFinancials() {
+            let val = parseInt(slider.value);
+            // Snap to nearest 10 for cleaner chart usage, though slider is smooth
+            val = Math.round(val / 10) * 10;
+            
+            const percentage = val / 100;
+
+            // Dynamic Calculations
+            const currentGross = MAX_GROSS_BOX_OFFICE * percentage;
+            const currentNetBox = MAX_NET_BOX_OFFICE * percentage;
+            
+            // Deductions Breakdown
+            const theatreSplit = currentNetBox * 0.30;
+            const royalties = currentNetBox * 0.15;
+            const netReceipts = currentNetBox - theatreSplit - royalties;
+            
+            const profit = netReceipts - FIXED_BUDGET;
+
+            // Update DOM
+            capDisplay.innerText = val + "%";
+            grossDisplay.innerText = formatCurrency(currentGross);
+            netBoxDisplay.innerText = formatCurrency(currentNetBox);
+            
+            splitDisplay.innerText = "(" + formatCurrency(theatreSplit) + ")";
+            royaltiesDisplay.innerText = "(" + formatCurrency(royalties) + ")";
+            
+            recDisplay.innerText = formatCurrency(netReceipts);
+
+            // P&L Styling
+            if(profit < 0) {
+                pnlDisplay.innerText = "(" + formatCurrency(Math.abs(profit)) + ")";
+                resultRow.classList.add('bg-red-600');
+                resultRow.classList.remove('bg-green-600');
+                resultRow.classList.remove('bg-gray-900'); // fallback remove
+                resultRow.style.backgroundColor = '#DC2626'; // Tailwind red-600
+            } else {
+                pnlDisplay.innerText = formatCurrency(profit);
+                resultRow.classList.add('bg-green-600');
+                resultRow.classList.remove('bg-red-600');
+                resultRow.classList.remove('bg-gray-900');
+                resultRow.style.backgroundColor = '#16A34A'; // Tailwind green-600
+            }
+        }
+
+        slider.addEventListener('input', updateFinancials);
+
+        // Init
+        updateFinancials();
+
+    </script>
+</body>
+</html>
