@@ -74,12 +74,17 @@
             border-radius: 2px;
         }
 
-        .clip-zigzag {
-            clip-path: polygon(0 0, 100% 0, 100% 95%, 98% 100%, 96% 95%, 94% 100%, 92% 95%, 90% 100%, 88% 95%, 86% 100%, 84% 95%, 82% 100%, 80% 95%, 78% 100%, 76% 95%, 74% 100%, 72% 95%, 70% 100%, 68% 95%, 66% 100%, 64% 95%, 62% 100%, 60% 95%, 58% 100%, 56% 95%, 54% 100%, 52% 95%, 50% 100%, 48% 95%, 46% 100%, 44% 95%, 42% 100%, 40% 95%, 38% 100%, 36% 95%, 34% 100%, 32% 95%, 30% 100%, 28% 95%, 26% 100%, 24% 95%, 22% 100%, 20% 95%, 18% 100%, 16% 95%, 14% 100%, 12% 95%, 10% 100%, 8% 95%, 6% 100%, 4% 95%, 2% 100%, 0 95%);
-        }
-        
-        .clip-slant-top {
-            clip-path: polygon(0 5%, 100% 0, 100% 100%, 0 100%);
+        /* Updated Zig Zag Separator */
+        .zigzag-divider {
+            height: 40px;
+            width: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpolygon points='0,100 50,0 100,100' fill='%23f3f4f6'/%3E%3C/svg%3E");
+            background-size: 60px 100%;
+            background-repeat: repeat-x;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 10;
         }
         
         /* Mobile Nav Overlay */
@@ -199,7 +204,8 @@
                             <img src="ODO-images/Tour.jpg" alt="Mid Scale Tour Stage" class="w-full h-full object-cover">
                             
                             <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6 text-white text-center">
-
+                                <h3 class="text-2xl font-bold mb-1">Mid-Scale Tour</h3>
+                                <p class="text-sm opacity-90">Designed for Scalability</p>
                             </div>
                         </div>
 
@@ -476,7 +482,7 @@
     </section>
 
     <!-- Team Section -->
-    <section id="team" class="py-20 bg-black text-white clip-zigzag">
+    <section id="team" class="pt-20 pb-24 bg-black text-white relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h2 class="text-4xl font-bold mb-4 text-odo-yellow">World-Class Creative Team</h2>
@@ -487,7 +493,7 @@
                 
                 <!-- Rob Biddulph -->
                 <a href="#bio-rob" class="w-full md:w-[calc(33.333%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
-                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                    <div class="w-full aspect-square bg-gray-800 relative overflow-hidden">
                         <img src="ODO-images/Rob.jpg" alt="Rob Biddulph" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
                         <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
                     </div>
@@ -508,7 +514,7 @@
 
                 <!-- Vikki Stone -->
                 <a href="#bio-vikki" class="w-full md:w-[calc(33.333%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
-                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                    <div class="w-full aspect-square bg-gray-800 relative overflow-hidden">
                         <img src="ODO-images/Vikki.jpg" alt="Vikki Stone" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
                         <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
                     </div>
@@ -529,7 +535,7 @@
 
                 <!-- Tom Hardy -->
                 <a href="#bio-tom" class="w-full md:w-[calc(33.333%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
-                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                    <div class="w-full aspect-square bg-gray-800 relative overflow-hidden">
                          <img src="ODO-images/Tom.jpg" alt="Tom Hardy" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
                         <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
                     </div>
@@ -550,7 +556,7 @@
 
                 <!-- Dan Blumenau -->
                 <a href="#bio-dan" class="w-full md:w-[calc(49%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
-                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                    <div class="w-full aspect-square bg-gray-800 relative overflow-hidden">
                         <img src="ODO-images/Dan.jpg" alt="Dan Blumenau" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
                          <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
                     </div>
@@ -571,7 +577,7 @@
 
                 <!-- Harry Blumenau -->
                 <a href="#bio-harry" class="w-full md:w-[calc(49%-1rem)] lg:w-[calc(20%-1.25rem)] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-odo-yellow transition duration-300 group transform hover:-translate-y-2 cursor-pointer block">
-                    <div class="h-40 bg-gray-800 relative overflow-hidden">
+                    <div class="w-full aspect-square bg-gray-800 relative overflow-hidden">
                         <img src="ODO-images/Harry.jpg" alt="Harry Blumenau" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
                          <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-gray-900 to-transparent"></div>
                     </div>
@@ -592,11 +598,14 @@
 
             </div>
         </div>
+        
+        <!-- SVG Zig Zag Divider -->
+        <div class="zigzag-divider"></div>
     </section>
 
     <!-- Full Biographies Section -->
-    <section id="biographies" class="py-20 bg-gray-100 clip-slant-top -mt-10 relative z-20">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+    <section id="biographies" class="py-20 bg-gray-100 relative z-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold mb-12 text-center">Creative Biographies</h2>
             
             <div class="space-y-12">
