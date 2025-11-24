@@ -125,13 +125,8 @@
 </head>
 <body class="antialiased">
 
-    <!-- Top Disclaimer -->
-    <div class="bg-gray-900 text-gray-400 text-[10px] py-2 px-4 text-center border-b border-gray-800">
-        The content of this promotion has not been approved by an authorised person within the meaning of the Financial Services and Markets Act 2000. Reliance on this promotion for the purpose of engaging in any investment activity may expose an individual to a significant risk of losing all of the property or other assets invested.
-    </div>
-
     <!-- Navigation -->
-    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 top-8">
+    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 top-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex-shrink-0 flex items-center gap-2">
@@ -171,7 +166,7 @@
     </div>
 
     <!-- Content Hero Section -->
-    <section class="relative pt-40 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+    <section class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-3/4 bg-gray-50 -skew-y-2 origin-top-left z-0"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
@@ -204,8 +199,7 @@
                             <img src="ODO-images/Tour.jpg" alt="Mid Scale Tour Stage" class="w-full h-full object-cover">
                             
                             <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-6 text-white text-center">
-                                <h3 class="text-2xl font-bold mb-1">Mid-Scale Tour</h3>
-                                <p class="text-sm opacity-90">Designed for Scalability</p>
+
                             </div>
                         </div>
 
@@ -253,40 +247,56 @@
 
     <!-- Endorsements Section -->
     <section class="py-20 bg-gray-50">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-2 gap-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-8">
                 
                 <!-- Rob Biddulph Letter -->
-                <div class="bg-white p-8 rounded-2xl shadow-sm border-l-4 border-odo-yellow">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                            <i data-lucide="pen-tool" class="w-6 h-6 text-black"></i>
+                <div class="bg-white p-10 rounded-3xl shadow-lg relative overflow-hidden group hover:-translate-y-2 transition duration-300 border border-gray-100">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-odo-yellow/10 rounded-bl-full -mr-8 -mt-8 transition group-hover:bg-odo-yellow/20"></div>
+                    
+                    <div class="flex items-center gap-4 mb-8 relative z-10">
+                        <div class="w-16 h-16 bg-odo-yellow rounded-full flex items-center justify-center shadow-md border-2 border-white">
+                            <i data-lucide="pen-tool" class="w-7 h-7 text-black"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold">A Note from the Author</h3>
-                            <p class="text-sm text-gray-500">Rob Biddulph</p>
+                            <h3 class="text-2xl font-bold text-gray-900">A Note from the Author</h3>
+                            <p class="text-sm font-bold text-odo-yellow uppercase tracking-wider">Rob Biddulph</p>
                         </div>
                     </div>
-                    <div class="text-gray-600 italic leading-relaxed space-y-4">
-                        <p>"I am absolutely thrilled that Odd Dog Out is being adapted for the stage. When I first wrote the story, my dream was that it might encourage children to embrace what makes them different, to celebrate their individuality, and to know that they have a place in the world exactly as they are."</p>
-                        <p>"The team bringing this production to life have an incredible vision that truly captures the heart of the book... I am proud to give my full support to this project and can’t wait to see Odd Dog Out come to life in theatres."</p>
+                    
+                    <div class="relative z-10">
+                        <i data-lucide="quote" class="w-10 h-10 text-gray-200 absolute -top-4 -left-2 -z-10"></i>
+                        <p class="text-gray-600 text-lg italic leading-relaxed mb-6">
+                            "I am absolutely thrilled that Odd Dog Out is being adapted for the stage. When I first wrote the story, my dream was that it might encourage children to embrace what makes them different... The team bringing this production to life have an incredible vision that truly captures the heart of the book."
+                        </p>
+                        <p class="text-gray-900 font-bold">
+                            "I am proud to give my full support to this project and can’t wait to see Odd Dog Out come to life in theatres."
+                        </p>
                     </div>
                 </div>
 
                 <!-- Underbelly Letter -->
-                <div class="bg-white p-8 rounded-2xl shadow-sm border-l-4 border-odo-red">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                            <i data-lucide="star" class="w-6 h-6 text-purple-600"></i>
+                <div class="bg-white p-10 rounded-3xl shadow-lg relative overflow-hidden group hover:-translate-y-2 transition duration-300 border border-gray-100">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-purple-100 rounded-bl-full -mr-8 -mt-8 transition group-hover:bg-purple-200"></div>
+                    
+                    <div class="flex items-center gap-4 mb-8 relative z-10">
+                        <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center shadow-md border-2 border-white">
+                            <i data-lucide="star" class="w-7 h-7 text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold">Venue Partner: Underbelly</h3>
-                            <p class="text-sm text-gray-500">Jodie Adams, Senior Programmer</p>
+                            <h3 class="text-2xl font-bold text-gray-900">Venue Partner: Underbelly</h3>
+                            <p class="text-sm font-bold text-purple-600 uppercase tracking-wider">Jodie Adams, Senior Programmer</p>
                         </div>
                     </div>
-                    <div class="text-gray-600 leading-relaxed space-y-4">
-                        <p>Underbelly confirms their invitation to present <strong>Odd Dog Out</strong> at the 2026 Edinburgh Festival Fringe. As one of the most established venues at the largest arts festival in the world, they view this show as a "cornerstone" of their family programme.</p>
-                        <p>"We foresee Odd Dog Out being a highlight of the family shows at the festival as a whole. We have worked with Dan Blumenau on previous shows and have a fantastic working relationship - we trust the show will be a great fit for our programme."</p>
+                    
+                    <div class="relative z-10">
+                        <i data-lucide="quote" class="w-10 h-10 text-gray-200 absolute -top-4 -left-2 -z-10"></i>
+                        <p class="text-gray-600 text-lg italic leading-relaxed mb-6">
+                            "Underbelly are very pleased to invite Odd Dog Out to be part of our 2026 programme. We foresee Odd Dog Out being a <span class="text-purple-600 font-bold">cornerstone</span> of that work, delighting children and adults alike."
+                        </p>
+                        <p class="text-gray-900 font-bold">
+                            "We trust the show will be a great fit for our programme, and a highlight of the family shows at the festival as a whole."
+                        </p>
                     </div>
                 </div>
 
@@ -724,11 +734,11 @@
                             </div>
                             <div class="flex justify-between items-center border-b border-gray-100 pb-3">
                                 <span class="text-gray-600 font-semibold">Phase 2: Mid-Scale UK Tour</span>
-                                <span class="font-bold text-xl">£302,932</span>
+                                <span class="font-bold text-xl">£291,223</span>
                             </div>
                             <div class="flex justify-between items-center pt-2">
                                 <span class="font-bold text-lg text-black">Total Capitalisation</span>
-                                <span class="font-bold text-3xl text-odo-red">£437,960</span>
+                                <span class="font-bold text-3xl text-odo-red">£426,251</span>
                             </div>
                         </div>
                         <p class="text-sm text-gray-500 mt-4">We are seeking subscriptions in multiples of £10,000 (a number of half units may be available).</p>
@@ -782,13 +792,13 @@
                             <div class="h-4 bg-gray-800 rounded-full overflow-hidden">
                                 <div class="h-full bg-green-500 w-[25%]"></div>
                             </div>
-                            <div class="text-right mt-1 font-bold text-xl">£32,796</div>
+                            <div class="text-right mt-1 font-bold text-xl">£25,884</div>
                         </div>
                     </div>
 
                     <div class="mt-8 p-4 bg-white/10 rounded-xl border border-white/10">
                         <p class="text-sm text-gray-300">
-                            <strong>Impact:</strong> This rebate effectively lowers the net cost of the production, accelerating the path to recoupment for investors. The estimated amount of relief claimable is approx. £75,628 which will be applied to the recoupment of capital.
+                            <strong>Impact:</strong> This rebate effectively lowers the net cost of the production, accelerating the path to recoupment for investors. The estimated amount of relief claimable is approx. £68,716 which will be applied to the recoupment of capital.
                         </p>
                     </div>
                 </div>
@@ -814,32 +824,24 @@
                     </div>
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Creative Fees (Adapter, Rights, Director)</span>
+                            <span class="text-gray-600">Fees</span>
                             <span class="font-medium">£23,786</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Production Fees (Designers)</span>
-                            <span class="font-medium">£11,900</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Physical Production (Set, Puppets, Tech)</span>
+                            <span class="text-gray-600">Physical Production</span>
                             <span class="font-medium">£27,000</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Salaries (Cast, MD, DSM)</span>
+                            <span class="text-gray-600">Salaries</span>
                             <span class="font-medium">£29,605</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Allowances (Accomm, Per Diems, Travel)</span>
-                            <span class="font-medium">£19,561</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Benefits (Holiday, NI, Pension)</span>
-                            <span class="font-medium">£8,526</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Rehearsals & Casting</span>
                             <span class="font-medium">£5,500</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Allowances</span>
+                            <span class="font-medium">£19,561</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Marketing & PR</span>
@@ -847,7 +849,11 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">General & Admin / Insurance</span>
-                            <span class="font-medium">£500</span>
+                            <span class="font-medium">£11,950</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Contingency</span>
+                            <span class="font-medium">£9,526</span>
                         </div>
                         <div class="flex justify-between border-t border-gray-300 pt-3 mt-3">
                             <span class="font-bold text-gray-900">Total Estimated Budget</span>
@@ -864,32 +870,24 @@
                     </div>
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Creative Fees & Rights</span>
-                            <span class="font-medium">£23,500</span>
+                            <span class="text-gray-600">Fees</span>
+                            <span class="font-medium">£35,500</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Design Fees (Lighting, Sound, Set)</span>
-                            <span class="font-medium">£12,000</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Physical Production (Updates/Maint)</span>
+                            <span class="text-gray-600">Physical Production</span>
                             <span class="font-medium">£50,300</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Salaries (Cast & Crew)</span>
+                            <span class="text-gray-600">Salaries</span>
                             <span class="font-medium">£87,877</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Allowances (Subsistence)</span>
-                            <span class="font-medium">£24,570</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Benefits (Holiday, NI, Pension)</span>
-                            <span class="font-medium">£27,785</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Rehearsals</span>
                             <span class="font-medium">£5,500</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Allowances</span>
+                            <span class="font-medium">£24,570</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Marketing & PR</span>
@@ -897,11 +895,15 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">General & Admin / Insurance</span>
-                            <span class="font-medium">£500</span>
+                            <span class="font-medium">£8,900</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Contingency</span>
+                            <span class="font-medium">£16,076</span>
                         </div>
                         <div class="flex justify-between border-t border-gray-300 pt-3 mt-3">
                             <span class="font-bold text-gray-900">Total Estimated Budget</span>
-                            <span class="font-bold text-gray-900">£302,932</span>
+                            <span class="font-bold text-gray-900">£291,223</span>
                         </div>
                     </div>
                 </div>
@@ -1005,7 +1007,7 @@
                                 <span class="text-gray-500 text-xs" id="split-display">(£0)</span>
                             </div>
                             <div class="financial-row bg-gray-50/50 border-b border-gray-100">
-                                <span class="text-gray-500 pl-2 border-l-2 border-gray-300 text-xs">Royalties (15%)</span>
+                                <span class="text-gray-500 pl-2 border-l-2 border-gray-300 text-xs">Royalties (15.4%)</span>
                                 <span class="text-gray-500 text-xs" id="royalties-display">(£0)</span>
                             </div>
 
@@ -1016,7 +1018,7 @@
                             
                             <div class="financial-row">
                                 <span class="text-gray-600">Budget (Post TTR & Edin Recoup)</span>
-                                <span class="text-red-500">£249,758</span>
+                                <span class="text-red-500">£225,933</span> <!-- (291,223 - 22,458 Edin Recoup - 42,832 Edin TTR) Approx -->
                             </div>
 
                             <div class="financial-row result" id="result-row">
@@ -1043,7 +1045,7 @@
                                 <th class="px-4 py-3 font-medium text-gray-500">Gross Box Office</th>
                                 <th class="px-4 py-3 font-medium text-gray-500">Net Box Office</th>
                                 <th class="px-4 py-3 font-medium text-gray-500">Split (30%)</th>
-                                <th class="px-4 py-3 font-medium text-gray-500">Royalties (15%)</th>
+                                <th class="px-4 py-3 font-medium text-gray-500">Royalties (15.4%)</th>
                                 <th class="px-4 py-3 font-bold text-odo-blue">Net Receipts</th>
                                 <th class="px-4 py-3 font-medium text-gray-500">Budget (Post TTR & Edin Recoup)</th>
                                 <th class="px-4 py-3 font-bold text-gray-900">Profit / (Loss)</th>
@@ -1056,21 +1058,21 @@
                                 <td class="px-4 py-3">£950,400</td>
                                 <td class="px-4 py-3">£744,480</td>
                                 <td class="px-4 py-3 text-red-400">(£223,344)</td>
-                                <td class="px-4 py-3 text-red-400">(£111,672)</td>
-                                <td class="px-4 py-3 font-medium">£409,464</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-green-700">£159,706</td>
+                                <td class="px-4 py-3 text-red-400">(£114,650)</td>
+                                <td class="px-4 py-3 font-medium">£406,486</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-green-700">£163,605</td>
                             </tr>
                             <!-- 90% -->
                             <tr class="hover:bg-gray-50 bg-green-50/70">
                                 <td class="px-4 py-3 font-bold">90%</td>
                                 <td class="px-4 py-3">£855,360</td>
                                 <td class="px-4 py-3">£670,032</td>
-                                <td class="px-4 py-3 text-red-400">(£201,009)</td>
-                                <td class="px-4 py-3 text-red-400">(£100,504)</td>
-                                <td class="px-4 py-3 font-medium">£368,517</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-green-600">£118,759</td>
+                                <td class="px-4 py-3 text-red-400">(£201,010)</td>
+                                <td class="px-4 py-3 text-red-400">(£103,185)</td>
+                                <td class="px-4 py-3 font-medium">£365,838</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-green-600">£122,957</td>
                             </tr>
                             <!-- 80% -->
                             <tr class="hover:bg-gray-50 bg-green-50/50">
@@ -1078,21 +1080,21 @@
                                 <td class="px-4 py-3">£760,320</td>
                                 <td class="px-4 py-3">£595,584</td>
                                 <td class="px-4 py-3 text-red-400">(£178,675)</td>
-                                <td class="px-4 py-3 text-red-400">(£89,337)</td>
-                                <td class="px-4 py-3 font-medium">£327,571</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-green-600">£77,813</td>
+                                <td class="px-4 py-3 text-red-400">(£91,720)</td>
+                                <td class="px-4 py-3 font-medium">£325,189</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-green-600">£82,308</td>
                             </tr>
                             <!-- 70% -->
                             <tr class="hover:bg-gray-50 bg-green-50/30">
                                 <td class="px-4 py-3 font-bold">70%</td>
                                 <td class="px-4 py-3">£665,280</td>
                                 <td class="px-4 py-3">£521,136</td>
-                                <td class="px-4 py-3 text-red-400">(£156,340)</td>
-                                <td class="px-4 py-3 text-red-400">(£78,170)</td>
-                                <td class="px-4 py-3 font-medium">£286,624</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-green-600">£36,866</td>
+                                <td class="px-4 py-3 text-red-400">(£156,341)</td>
+                                <td class="px-4 py-3 text-red-400">(£80,255)</td>
+                                <td class="px-4 py-3 font-medium">£284,541</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-green-600">£41,660</td>
                             </tr>
                             <!-- 60% -->
                             <tr class="hover:bg-gray-50 bg-yellow-50/30">
@@ -1100,10 +1102,10 @@
                                 <td class="px-4 py-3">£570,240</td>
                                 <td class="px-4 py-3">£446,688</td>
                                 <td class="px-4 py-3 text-red-400">(£134,006)</td>
-                                <td class="px-4 py-3 text-red-400">(£67,003)</td>
-                                <td class="px-4 py-3 font-medium">£245,678</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£4,079)</td>
+                                <td class="px-4 py-3 text-red-400">(£68,790)</td>
+                                <td class="px-4 py-3 font-medium">£243,892</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-green-600">£1,011</td>
                             </tr>
                             <!-- 50% -->
                             <tr class="hover:bg-gray-50">
@@ -1111,21 +1113,21 @@
                                 <td class="px-4 py-3">£475,200</td>
                                 <td class="px-4 py-3">£372,240</td>
                                 <td class="px-4 py-3 text-red-400">(£111,672)</td>
-                                <td class="px-4 py-3 text-red-400">(£55,836)</td>
-                                <td class="px-4 py-3 font-medium">£204,732</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£45,026)</td>
+                                <td class="px-4 py-3 text-red-400">(£57,325)</td>
+                                <td class="px-4 py-3 font-medium">£203,243</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£39,638)</td>
                             </tr>
                             <!-- 40% -->
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 font-bold">40%</td>
                                 <td class="px-4 py-3">£380,160</td>
                                 <td class="px-4 py-3">£297,792</td>
-                                <td class="px-4 py-3 text-red-400">(£89,337)</td>
-                                <td class="px-4 py-3 text-red-400">(£44,668)</td>
-                                <td class="px-4 py-3 font-medium">£163,785</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£85,972)</td>
+                                <td class="px-4 py-3 text-red-400">(£89,338)</td>
+                                <td class="px-4 py-3 text-red-400">(£45,860)</td>
+                                <td class="px-4 py-3 font-medium">£162,595</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£80,286)</td>
                             </tr>
                             <!-- 30% -->
                             <tr class="hover:bg-gray-50">
@@ -1133,10 +1135,10 @@
                                 <td class="px-4 py-3">£285,120</td>
                                 <td class="px-4 py-3">£223,344</td>
                                 <td class="px-4 py-3 text-red-400">(£67,003)</td>
-                                <td class="px-4 py-3 text-red-400">(£33,502)</td>
-                                <td class="px-4 py-3 font-medium">£122,839</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£126,919)</td>
+                                <td class="px-4 py-3 text-red-400">(£34,395)</td>
+                                <td class="px-4 py-3 font-medium">£121,946</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£120,935)</td>
                             </tr>
                             <!-- 20% -->
                             <tr class="hover:bg-gray-50">
@@ -1144,10 +1146,10 @@
                                 <td class="px-4 py-3">£190,080</td>
                                 <td class="px-4 py-3">£148,896</td>
                                 <td class="px-4 py-3 text-red-400">(£44,669)</td>
-                                <td class="px-4 py-3 text-red-400">(£22,334)</td>
-                                <td class="px-4 py-3 font-medium">£81,893</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£167,866)</td>
+                                <td class="px-4 py-3 text-red-400">(£22,930)</td>
+                                <td class="px-4 py-3 font-medium">£81,297</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£161,584)</td>
                             </tr>
                             <!-- 10% -->
                             <tr class="hover:bg-gray-50">
@@ -1155,10 +1157,10 @@
                                 <td class="px-4 py-3">£95,040</td>
                                 <td class="px-4 py-3">£74,448</td>
                                 <td class="px-4 py-3 text-red-400">(£22,334)</td>
-                                <td class="px-4 py-3 text-red-400">(£11,167)</td>
-                                <td class="px-4 py-3 font-medium">£40,946</td>
-                                <td class="px-4 py-3 text-gray-400">£249,758</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£208,812)</td>
+                                <td class="px-4 py-3 text-red-400">(£11,465)</td>
+                                <td class="px-4 py-3 font-medium">£40,649</td>
+                                <td class="px-4 py-3 text-gray-400">£242,881</td>
+                                <td class="px-4 py-3 font-bold text-red-600">(£202,232)</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1172,13 +1174,22 @@
         </div>
     </section>
 
-    <!-- Investment Invitation (New) -->
-    <section class="bg-gray-100 py-10 border-t border-gray-200">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h4 class="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">Investment Invitation to Invest</h4>
-            <p class="text-xs text-gray-500 leading-relaxed">
-                The content of this promotion has not been approved by an authorised person within the meaning of the Financial Services and Markets Act 2000. Reliance on this promotion for the purpose of engaging in any investment activity may expose an individual to a significant risk of losing all of the property or other assets invested.
-            </p>
+    <!-- Important Notice / Risk Factors Section -->
+    <section class="bg-gray-100 py-16 border-t border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h4 class="text-sm font-bold uppercase tracking-wider text-gray-600 mb-6 text-center">Important Notice & Risk Factors</h4>
+            
+            <div class="text-xs text-gray-500 leading-relaxed space-y-4 text-justify">
+                <p>
+                    <strong>IMPORTANT NOTICE:</strong> None of the Producers or any of their affiliates, subsidiaries, officers, employees, agents, advisers or representatives make any representation or give any warranty or indemnity or undertaking, express or implied, with respect to the truthfulness, accuracy or completeness of the contents of this document. In particular, none of the information in this document, including any illustrative financial projections (the "Projections"), constitutes a profit forecast or a prediction. Such information is included for illustrative purposes only. No warranty, representation or inference as to the future success or performance of the matters described in this document is made by the Producers.
+                </p>
+                <p>
+                    <strong>RISK FACTORS:</strong> Theatrical production is an inherently risky business. Investments in the Production will involve a higher level of risk than most other financial transactions and there is no probability, but only a possibility, that Investors will get back the amount which they invest. Most of the costs and expenses charged to the Production are incurred prior to the Production opening. If for any reason the Production does not open, the Producers will return to Investors pro rata a proportion of such net assets (if any) of the Production as determined to be available. Similarly, if the Production fails to recoup its capitalisation, then the proportion of net assets available shall be returned to the Investors upon close. Investments in the Production will not be covered by any compensation scheme.
+                </p>
+                <p>
+                    The content of this promotion has not been approved by an authorised person within the meaning of the Financial Services and Markets Act 2000. Reliance on this promotion for the purpose of engaging in any investment activity may expose an individual to a significant risk of losing all of the property or other assets invested.
+                </p>
+            </div>
         </div>
     </section>
 
@@ -1278,7 +1289,8 @@
         // Base figures at 100% Capacity (derived from PDF Page 4)
         const MAX_GROSS_BOX_OFFICE = 950400;
         const MAX_NET_BOX_OFFICE = 744480;
-        const FIXED_BUDGET = 249758; // Post TTR Budget
+        // Updated Fixed Budget logic: Tour Budget (291223) - Edin Receipts (22458) - TTR (25884) = ~242881
+        const FIXED_BUDGET = 242881; 
         
         // Elements
         const slider = document.getElementById('capacity-slider');
@@ -1308,7 +1320,7 @@
             
             // Deductions Breakdown
             const theatreSplit = currentNetBox * 0.30;
-            const royalties = currentNetBox * 0.15;
+            const royalties = currentNetBox * 0.154; // 15.4%
             const netReceipts = currentNetBox - theatreSplit - royalties;
             
             const profit = netReceipts - FIXED_BUDGET;
