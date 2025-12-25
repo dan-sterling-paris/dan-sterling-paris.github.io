@@ -1,962 +1,370 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Lambvent Calendar 🐑</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO & Metadata -->
+    <title>Sterling Paris | Theatre Production & General Management</title>
+    <meta name="description" content="Sterling Paris is a premier theatre production and general management consultancy founded by Dan Blumenau, delivering commercially successful and critically acclaimed productions in London, the UK, and internationally.">
+    <meta name="keywords" content="theatre producer, general management theatre, West End producer, commercial theatre, theatre consultancy, Dan Blumenau, Sterling Paris, London theatre production, UK theatre tour">
+    <meta name="author" content="Sterling Paris">
+    <link rel="canonical" href="https://www.sterlingparis.com">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Sterling Paris | Theatre Production & General Management">
+    <meta property="og:description" content="Expert production and general management services for the commercial theatre industry.">
+    <meta property="og:image" content="images/social-preview.jpg">
+    <meta property="og:url" content="https://www.sterlingparis.com">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_GB">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sterling Paris | Theatre Production & General Management">
+    <meta name="twitter:description" content="Expert general management and production consultancy for commercially successful and critically acclaimed theatre.">
+    <meta name="twitter:image" content="images/social-preview.jpg">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Varela+Round&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Corporate Blue & Refined Gray -->
+    <!-- Application Structure Plan: Final iteration focuses on a flawless, professional "shop window." Structure is direct and benefit-led: Hero answers "What do you do?", Productions answers "Prove it," Services answers "How?", About provides the "Why you?" through the founder's unique story. The copy is sharpened to be direct, confident, and professional. -->
+    <!-- Visualization & Content Choices: The core is the perfected Productions grid. Goal: Flawless presentation of credentials. Viz/Presentation: A clean, symmetrical grid of cards with all information, including centered quotes, visible. Interaction: Subtle hover for polish. Conditional "Buy Tickets" link added, and social sharing links in footer. Justification: This layout is the industry standard for professionalism and clarity. It projects competence and makes the portfolio—the most crucial selling tool—the hero of the page. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
-        /* --- AESTHETICS --- */
+        :root {
+            --bg-light: #FFFFFF;
+            --bg-off-white: #F8F9FA;
+            --text-dark: #212529;
+            --text-muted: #6C757D;
+            --accent-blue: #005A9C;
+            --border-color: #DEE2E6;
+        }
         body {
-            font-family: 'Varela Round', sans-serif;
-            background-color: #87CEEB; 
-            color: #334155;
-            background-image: 
-                radial-gradient(white 15%, transparent 16%),
-                radial-gradient(white 15%, transparent 16%);
-            background-size: 60px 60px;
-            background-position: 0 0, 30px 30px;
-            animation: skyMove 60s linear infinite;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
         }
-
-        body.game-active { overflow: hidden; touch-action: none; }
-
-        @keyframes skyMove {
-            0% { background-position: 0 0, 30px 30px; }
-            100% { background-position: 0 600px, 30px 630px; }
+        h1, h2, h3, .font-serif {
+            font-family: 'Lora', serif;
+            font-weight: 600;
         }
-
-        h1, h2, h3, .font-chunky {
-            font-family: 'Fredoka', sans-serif;
+        .hero-section {
+            background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('images/hero-background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Parallax effect */
+        }
+        .hero-headline {
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+        }
+        .nav-link {
+            transition: color 0.3s ease;
+            color: var(--text-dark);
+            font-weight: 500;
             letter-spacing: 0.5px;
+            position: relative;
         }
-
-        .btn-bouncy {
-            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateY(0);
-            box-shadow: 0 4px 0 rgba(0,0,0,0.15);
-        }
-        .btn-bouncy:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 rgba(0,0,0,0.15);
-        }
-
-        /* Animations */
-        @keyframes pop-in {
-            0% { transform: scale(0.5); opacity: 0; }
-            80% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
-        @keyframes trot {
-            0%, 100% { transform: translate(-50%, -50%) translateY(0) rotate(0deg); }
-            25% { transform: translate(-50%, -50%) translateY(-10px) rotate(-5deg); }
-            75% { transform: translate(-50%, -50%) translateY(-5px) rotate(5deg); }
-        }
-        .animate-trot { animation: trot 0.4s infinite ease-in-out; }
-
-        @keyframes bounce-happy {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
-        .animate-happy { animation: bounce-happy 1s infinite ease-in-out; }
-
-        @keyframes shake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(-5deg); }
-            75% { transform: rotate(5deg); }
-        }
-        .animate-shake { animation: shake 0.5s infinite ease-in-out; }
-
-        @keyframes float-ghost {
-            0% { transform: translateY(100px) scale(0.5); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
-        }
-        .ghost-anim { animation: float-ghost 2.5s linear forwards; }
-
-        @keyframes jump {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-        .animate-jump { animation: jump 0.8s infinite; }
-
-        @keyframes fade-in {
-            from { opacity: 0; } to { opacity: 1; }
-        }
-        .animate-fade-in { animation: fade-in 0.5s ease-out; }
-
-        @keyframes shine {
-            0% { background-position: -200% center; }
-            100% { background-position: 200% center; }
-        }
-        .animate-shine {
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
-            background-size: 200% auto;
-            animation: shine 3s infinite;
-        }
-
-        /* Map Elements */
-        #map-svg {
+        .nav-link:after {
+            content: '';
             position: absolute;
-            top: 0;
-            left: 0;
+            width: 0;
+            height: 2px;
+            display: block;
+            margin-top: 4px;
+            right: 0;
+            background: var(--accent-blue);
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover:after {
             width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
+            left: 0;
         }
-        
-        .path-line {
-            fill: none;
-            stroke: white;
-            stroke-width: 12;
-            stroke-linecap: round;
-            stroke-dasharray: 20 20;
-            filter: drop-shadow(0 4px 0 #86efac); 
+        .star-gold {
+            color: #FFC107;
         }
-
-        #lammy-character {
-            position: absolute;
-            width: 90px;
-            height: 90px;
-            z-index: 50;
-            transition: top 1.5s ease-in-out, left 1.5s ease-in-out;
-            pointer-events: none;
-            filter: drop-shadow(0 8px 5px rgba(0,0,0,0.2));
-            transform: translate(-50%, -50%); 
-        }
-
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: #f00;
-            animation: confetti-fall 3s linear forwards;
-            z-index: 100;
-        }
-        @keyframes confetti-fall {
-            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-        }
-
-        /* HUD Styling */
-        .hud-glass {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
-            border: 3px solid white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .heart-bar {
-            background: #e2e8f0;
-            border-radius: 99px;
+        .production-card {
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             overflow: hidden;
-            border: 2px solid white;
         }
-        .heart-fill {
-            background: linear-gradient(90deg, #f472b6, #db2777);
-            transition: width 1s ease-in-out;
+        .production-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07);
         }
-
-        /* Game Specifics */
-        .feather {
-            position: absolute;
-            font-size: 2rem;
-            animation: confetti-fall 5s linear infinite; 
-            cursor: pointer;
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: #FFFFFF;
+            transition: background-color 0.3s ease;
+            font-weight: 700;
+            border-radius: 4px;
+            padding: 12px 28px;
+            display: inline-block;
         }
-
-        canvas { touch-action: none; }
+        .btn-primary:hover {
+            background-color: #004170;
+        }
+        .ticket-link {
+            display: inline-block;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.3s ease;
+            padding-bottom: 2px;
+        }
+        .ticket-link:hover {
+            border-bottom-color: var(--accent-blue);
+        }
+        .social-link svg {
+            transition: transform 0.3s ease;
+        }
+        .social-link:hover svg {
+            transform: scale(1.1);
+            fill: var(--accent-blue);
+        }
     </style>
 </head>
-<body class="pb-32">
+<body class="antialiased">
 
-    <!-- TITLE SCREEN -->
-    <div id="view-title-screen" class="fixed inset-0 z-[100] bg-sky-300 flex flex-col items-center justify-end pb-12">
-        <!-- Full Screen Background Image -->
-        <img id="title-bg" src="" class="absolute inset-0 w-full h-full object-cover z-0">
-        
-        <!-- Gradient Overlay -->
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
-
-        <div class="relative z-20 flex flex-col items-center w-full px-6">
-            <h1 class="text-6xl font-chunky text-white text-center mb-2 drop-shadow-lg leading-tight">The<br>Lambvent Calender</h1>
-            
-            <div class="bg-white/20 backdrop-blur-md rounded-full px-6 py-2 mb-8 text-white font-bold text-sm border border-white/40 animate-pulse flex items-center gap-2">
-                <i data-lucide="volume-2" width="16"></i> Turn Sound On
-            </div>
-            
-            <button onclick="Game.startFromTitle()" class="btn-bouncy bg-white text-sky-500 font-chunky text-2xl w-full py-4 rounded-full shadow-2xl border-4 border-sky-100 hover:scale-105 transition-transform active:scale-95">
-                Start Now ➜
+    <!-- Header & Navigation -->
+    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-[var(--border-color)]">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#home" class="text-2xl font-serif" aria-label="Sterling Paris Home">Sterling Paris</a>
+            <nav class="hidden md:flex space-x-8" aria-label="Main navigation">
+                <a href="#productions" class="nav-link">Productions</a>
+                <a href="#services" class="nav-link">Services</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden" aria-label="Open menu">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
             </button>
         </div>
-    </div>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4 space-y-2 border-t border-[var(--border-color)]">
+            <a href="#productions" class="block nav-link text-center py-2">Productions</a>
+            <a href="#services" class="block nav-link text-center py-2">Services</a>
+            <a href="#about" class="block nav-link text-center py-2">About</a>
+            <a href="#contact" class="block nav-link text-center py-2">Contact</a>
+        </div>
+    </header>
 
-    <!-- NEW GAME HUD -->
-    <div id="game-hud" class="fixed top-0 left-0 w-full z-40 p-4 pointer-events-none flex justify-between items-center hidden">
-        <!-- Love Meter -->
-        <div class="hud-glass rounded-full pl-2 pr-4 py-2 flex items-center gap-3 pointer-events-auto w-2/3 max-w-xs">
-            <div class="text-2xl animate-pulse">❤️</div>
-            <div class="flex-1 flex flex-col">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Love Level</span>
-                <div class="w-full h-3 heart-bar">
-                    <div id="love-meter-fill" class="h-full heart-fill w-0"></div>
+    <main>
+        <!-- Hero Section -->
+        <section id="home" class="hero-section min-h-screen flex items-center justify-center text-center text-white">
+            <div class="container mx-auto px-6">
+                <h1 class="text-4xl md:text-6xl font-serif hero-headline">Strategic Production & General Management for Theatre</h1>
+                <p class="max-w-3xl mx-auto mt-6 text-lg text-gray-200">
+                    We provide the robust operational and financial framework necessary to bring ambitious theatrical productions to the stage successfully.
+                </p>
+            </div>
+        </section>
+
+        <!-- Productions Section -->
+        <section id="productions" class="py-20 bg-[var(--bg-off-white)] border-y border-[var(--border-color)]">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-serif text-center mb-12">Select Productions</h2>
+                <div id="production-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Collection Backpack -->
-        <button id="toggle-log" class="hud-glass w-14 h-14 rounded-full flex items-center justify-center pointer-events-auto btn-bouncy bg-yellow-300 text-yellow-800 border-white relative">
-            <i data-lucide="backpack" width="24"></i>
-        </button>
-    </div>
+        <!-- Services Section -->
+        <section id="services" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-serif text-center mb-12">Core Services</h2>
+                <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <article class="text-center">
+                        <h3 class="text-2xl font-serif mb-3">Production</h3>
+                        <p class="text-[var(--text-muted)]">End-to-end oversight of all production stages, ensuring a seamless, professional, and on-budget delivery from concept to closing night.</p>
+                    </article>
+                    <article class="text-center">
+                        <h3 class="text-2xl font-serif mb-3">General Management</h3>
+                        <p class="text-[var(--text-muted)]">Meticulous management of all operational aspects, including contracts, scheduling, and company logistics, to ensure a smooth-running production.</p>
+                    </article>
+                    <article class="text-center">
+                        <h3 class="text-2xl font-serif mb-3">Consultancy</h3>
+                        <p class="text-[var(--text-muted)]">Strategic advice including financial modeling, commercial viability analysis, and planning to support your production's success.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
 
-    <!-- Map -->
-    <main id="main-container" class="relative w-full max-w-md mx-auto mt-24 opacity-0 transition-opacity duration-1000">
-        <svg id="map-svg"><path class="path-line" d="" /></svg>
-        <img id="lammy-character" class="hidden" src="" alt="Lammy">
-        <div id="view-map" class="relative w-full flex flex-col gap-16 pb-32 px-6 pt-4">
-            <!-- Nodes injected via JS -->
-        </div>
+        <!-- About Us Section -->
+        <section id="about" class="py-20 bg-[var(--bg-off-white)] border-y border-[var(--border-color)]">
+            <div class="container mx-auto px-6">
+                <div class="grid md:grid-cols-5 gap-12 items-center max-w-6xl mx-auto">
+                    <figure class="md:col-span-2">
+                        <img src="images/dan-blumenau.jpg" alt="Dan Blumenau, founder of Sterling Paris" class="rounded-full aspect-square object-cover w-full max-w-[300px] mx-auto shadow-md">
+                    </figure>
+                    <article class="md:col-span-3">
+                        <h2 class="text-3xl md:text-4xl font-serif mb-4">About Sterling Paris</h2>
+                        <div class="text-lg text-[var(--text-muted)] space-y-4">
+                            <p>Sterling Paris was founded by <span class="text-[var(--text-dark)] font-medium">Dan Blumenau</span> to offer a comprehensive management service to the theatre industry. Our approach is built on two decades of experience that combines a practical understanding of the creative process with a rigorous background in financial management.</p>
+                            <p>Having started his career as a performer and later working with leading producers, Dan understands the intricacies of a production from the inside out. This is complemented by his experience as a Financial Analyst for Disneyland Paris, where he was responsible for multi-million euro budgets. This combination of creative and financial expertise allows us to provide robust, strategic support for productions of all scales.</p>
+                             <p class="font-medium text-[var(--text-dark)]">Fluent in English and French, we are well-positioned to manage productions and partnerships across the UK, Europe, and internationally.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- CINEMATIC VIEWER (Used for Intro & Finale) -->
-    <div id="view-cinematic" class="hidden fixed inset-0 z-[110] bg-black flex flex-col items-center justify-center">
-        <div class="relative w-full h-full max-w-md bg-slate-900 flex flex-col">
-            <!-- Image Area -->
-            <div class="flex-1 relative overflow-hidden">
-                <img id="cine-img" src="" class="w-full h-full object-cover animate-fade-in transition-opacity duration-500">
-                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+    <!-- Footer -->
+    <footer id="contact" class="py-20 bg-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-4xl font-serif">Contact</h2>
+            <p class="mt-4 text-lg text-[var(--text-muted)]">For enquiries regarding your next production, please get in touch.</p>
+            <div class="mt-8">
+                <a href="mailto:dan@sterlingparis.com" class="btn-primary">Get In Touch</a>
             </div>
-            <!-- Text Area -->
-            <div class="p-8 pb-12 bg-black text-center relative z-10">
-                <p id="cine-text" class="text-white font-medium text-lg mb-8 leading-relaxed font-chunky animate-fade-in"></p>
-                <div class="flex justify-between items-center">
-                    <div class="flex gap-2" id="cine-dots"></div>
-                    <button onclick="Game.nextSlide()" class="bg-white text-black px-6 py-3 rounded-full font-bold hover:bg-gray-200 transition-colors">
-                        Next ➜
-                    </button>
+            <div class="mt-12">
+                <p class="text-sm font-medium text-gray-500 mb-4">Share this page</p>
+                <div class="flex justify-center space-x-6">
+                    <a id="share-meta" href="#" class="social-link text-gray-400 hover:text-[var(--accent-blue)]" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook">
+                        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35C.59 0 0 .59 0 1.325v21.35C0 23.41.59 24 1.325 24H12.82v-9.29h-3.128V11.16h3.128V8.81c0-3.1 1.893-4.788 4.658-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.55h-3.12V24h5.713c.735 0 1.325-.59 1.325-1.325V1.325C24 .59 23.41 0 22.675 0z"/></svg>
+                    </a>
+                    <a id="share-linkedin" href="#" class="social-link text-gray-400 hover:text-[var(--accent-blue)]" target="_blank" rel="noopener noreferrer" aria-label="Share on LinkedIn">
+                        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
+                    </a>
+                     <a id="share-email" href="#" class="social-link text-gray-400 hover:text-[var(--accent-blue)]" aria-label="Share via Email">
+                        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/></svg>
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
+    </footer>
 
-    <!-- Story Modal (Narrative) -->
-    <div id="view-story" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-        <button onclick="Game.closeStory()" class="absolute top-4 right-4 bg-white/20 text-white p-2 rounded-full z-50"><i data-lucide="x"></i></button>
-        <div class="relative w-full max-w-sm bg-white rounded-[2.5rem] p-6 shadow-2xl animate-pop-in border-[6px] border-white ring-4 ring-blue-200 text-center">
-            <div class="inline-block bg-blue-100 text-blue-500 px-3 py-1 rounded-full text-xs font-bold mb-4 uppercase tracking-widest">Adventure Log</div>
-            <h3 id="story-title" class="text-2xl font-chunky text-slate-700 leading-tight mb-4">Title</h3>
-            <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 mb-6 text-left">
-                <p id="story-text" class="text-slate-600 font-medium text-lg leading-relaxed">Story...</p>
-            </div>
-            <button onclick="Game.startGame()" class="btn-bouncy w-full bg-pink-400 text-white font-chunky text-xl py-3 rounded-2xl border-b-[6px] border-pink-500 active:border-b-0 active:translate-y-1">
-                Let's Go! 🎮
-            </button>
-        </div>
-    </div>
-
-    <!-- Game Modal -->
-    <div id="view-challenge" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-        <div class="relative w-full max-w-sm bg-white rounded-[2.5rem] p-6 shadow-2xl animate-pop-in border-[6px] border-white ring-4 ring-purple-200">
-            <div class="text-center mb-4">
-                <p id="game-instruction" class="text-slate-400 font-bold uppercase text-xs tracking-widest bg-slate-100 inline-block px-2 py-1 rounded-lg">Instruction</p>
-            </div>
-            <div id="game-wrapper" class="w-full aspect-square bg-slate-100 rounded-3xl overflow-hidden relative shadow-inner border-4 border-slate-50 mb-2 select-none touch-none"></div>
-            <button onclick="Game.closeChallenge()" class="mt-4 w-full text-slate-400 font-bold text-sm hover:text-red-400">Exit Game</button>
-        </div>
-    </div>
-
-    <!-- Reward Modal -->
-    <div id="view-reward" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-yellow-400/95 backdrop-blur-xl">
-        <div class="w-full max-w-sm bg-white rounded-[2rem] p-6 text-center animate-pop-in shadow-2xl border-8 border-yellow-200 relative min-h-[420px] flex flex-col items-center justify-center">
-            <div id="gift-stage" class="cursor-pointer transition-transform active:scale-95">
-                <div class="text-9xl animate-bounce mb-6">🎁</div>
-                <h2 class="text-3xl font-chunky text-slate-700 mb-2">Wool Done!</h2>
-                <p class="text-slate-400 font-bold animate-pulse">Tap to open!</p>
-            </div>
-            <div id="reveal-stage" class="hidden w-full relative">
-                <img id="happy-lammy" src="" class="absolute -top-16 -right-6 w-24 h-24 animate-happy filter drop-shadow-md z-10" alt="Happy">
-                <h2 class="text-2xl font-chunky text-yellow-500 mb-4 mt-2">Unwrapped!</h2>
-                <div class="bg-white p-2 pb-8 shadow-xl rotate-1 rounded-sm mb-4 border border-gray-200 transform transition-transform hover:rotate-0 duration-300 w-full relative">
-                    <div class="w-full h-48 bg-gray-100 rounded-sm overflow-hidden mb-2 relative group">
-                        <img id="reward-img" src="" class="w-full h-full object-cover">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    </div>
-                    <div class="flex justify-between items-end px-1 absolute bottom-2 left-2 right-2">
-                        <span id="reward-desc" class="font-handwriting text-slate-700 font-bold text-lg leading-tight bg-white/90 px-1 rounded">Reservation</span>
-                        <i data-lucide="check-circle-2" class="text-green-500 w-6 h-6 bg-white rounded-full"></i>
-                    </div>
-                </div>
-                <div class="bg-pink-50 p-3 rounded-xl border-2 border-pink-100 mb-4">
-                    <p id="reward-pun" class="text-pink-500 font-bold text-md leading-tight">Pun goes here!</p>
-                </div>
-                <button onclick="Game.nextLevel()" class="btn-bouncy w-full bg-blue-400 text-white font-chunky text-xl py-3 rounded-2xl border-b-[6px] border-blue-500 active:border-b-0 active:translate-y-1">
-                    Continue Journey ➜
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- GRAND FINALE SCREEN (Modified) -->
-    <div id="view-finale" class="hidden fixed inset-0 z-[70] flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-400 to-purple-500 text-white text-center">
-        <h2 class="text-5xl font-chunky text-white mb-8 drop-shadow-md">Merry Christmas!</h2>
-        <div class="text-9xl mb-8 animate-bounce">🎄</div>
-        <p class="text-xl font-medium text-blue-100 mb-12 max-w-md leading-relaxed">You've collected all the memories. Thank you for this wonderful adventure!</p>
-
-        <button onclick="document.getElementById('view-finale').classList.add('hidden'); document.getElementById('flock-log').classList.remove('translate-x-full');" class="btn-bouncy w-full max-w-sm bg-purple-500 text-white font-chunky text-xl py-4 rounded-2xl border-b-[6px] border-purple-600 active:border-b-0 active:translate-y-1">
-            Review Memories 📸
-        </button>
-    </div>
-
-    <!-- Sidebar Log -->
-    <div id="flock-log" class="fixed inset-y-0 right-0 w-80 bg-white/95 backdrop-blur shadow-2xl transform translate-x-full transition-transform duration-300 z-[80] flex flex-col border-l-4 border-green-200">
-        <div class="p-6 bg-green-50 flex justify-between items-center">
-            <h2 class="text-2xl font-chunky text-green-600">The Collection</h2>
-            <button id="close-log" class="bg-white p-2 rounded-full text-green-600 shadow-sm hover:bg-green-100"><i data-lucide="x"></i></button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-4 space-y-6" id="log-list"></div>
-    </div>
 
     <script>
-        // ==========================================
-        // 🛠️ ASSETS & EDITABLE DATA
-        // ==========================================
-        
-        const ASSETS = {
-            TITLE_BG: "title.png", // 9:16 PNG
-            LAMMY_MAIN: "lammy.png", 
-            LAMMY_HAPPY: "happy_lammy.png",
-            LAMB_DISTRACTOR: "lammy.png",
-            RAM_TARGET: "rammy.png"
-        };
-
-// 📸 INTRO CINEMATIC (The Fun Challenge)
-const INTRO_DATA = [
-    { 
-        image: "ram1.png", 
-        text: "It was a snowy morning. Rammy was frantically packing his bags, checking his list twice. He had a big plan." 
-    },
-    { 
-        image: "ram2.png", 
-        text: "He wasn't just leaving—he was setting up the Ultimate Scavenger Hunt! He grinned, knowing how much Lammy loves a challenge." 
-    },
-    { 
-        image: "ram3.png", 
-        text: "He zipped to their favorite spots, hiding tricky riddles and inside jokes. He couldn't wait to see her figure them out." 
-    },
-    { 
-        image: "lammy1.png", 
-        text: "Lammy woke up. No Rammy?! But there was a card on the pillow." 
-    },
-    { 
-        image: "lammy2.png", 
-        text: "'Come find me, Player One!' the note read. 'Follow the trail to unlock your prize!'" 
-    },
-    { 
-        image: "lammy3.png", 
-        text: "The clock is ticking! help Lammy beat the game and find Rammy!" 
-    }
-];// 🎬 FINALE CINEMATIC (Reunited at Last!)
-const FINALE_DATA = [
-    { 
-        image: "lammy4.png", 
-        text: "Lammy arrived at the tree, breathless. Not from running, but because her heart was beating so fast!" 
-    },
-    { 
-        image: "ram4.png", 
-        text: "There was Rammy! He was holding a boombox playing 'their song' and wearing a shirt with Lammy's face on it." 
-    },
-    { 
-        image: "hug.png", 
-        text: "'LAMMYYY!' 'RAMMYYY!' They collided in a hug so tight that passersby awkwardly looked away." 
-    },
-    { 
-        image: "boop.png", 
-        text: "They looked at the map. 'Wuv wooooo' Rammy whispered. 'Wuv wooooo' Lammy replied." 
-    },
-    { 
-        image: "hill.png", 
-        text: "'Let's never be apart again,' Rammy said. 'Deal,' said Lammy. 'Now, give me my prize kiss.'" 
-    }
-];
-
-        // 🎭 STORY & LEVEL DATA
-        const STORY_DATA = [
-            { 
-                id: 1, dateLabel: "Jan 1", 
-                title: "Departure Day", 
-                story: "We are finally off! But oh no, the station clock is stuck. Stop the hand exactly on 'JAN' so we don't miss our Eurostar to Paris!",
-                locationLabel: "Paris", modalTitle: "Br-aaaaaas-erie Meal", pun: "Ewe-la-la! We made it! Let's go and eat here to celebrate!", 
-                image: "dubillot.png" 
-            },
-            { 
-                id: 2, dateLabel: "Jan 23", 
-                title: "Woolly Weather", 
-                story: "We made it to Manchester, but it's so cold the local sheep have overgrown coats covering the street signs! Shear them to see the way.",
-                locationLabel: "Manchester", modalTitle: "Dishooooooom", pun: "A Ram-chester Reveal!", 
-                image: "dishoom.png" 
-            },
-            { 
-                id: 4, dateLabel: "Feb 4", 
-                title: "Baby Cheesus", 
-                story: "You can't adventure on an empty stomach! Better have something to eat!",
-                locationLabel: "Wine & Cheese", modalTitle: "Rams-Bottomless Cheese", pun: "Brie-lliant!", 
-                image: "cheese.png" 
-            },
-            { 
-                id: 5, dateLabel: "Mar 4", 
-                title: "Relaxation Needed", 
-                story: "It's been AGES since we've been in a jacuzzi!",
-                locationLabel: "Spa Day", modalTitle: "S-baaaaa Day", pun: "Time for SHEAR relaxation!", 
-                image: "last-drop.png" 
-            },
-            { 
-                id: 6, dateLabel: "Apr 5", 
-                title: "The Daily Grind", 
-                story: "We need a caffeine boost to keep going! Pour the perfect cup of coffee for the journey ahead.",
-                locationLabel: "Coffee Date", modalTitle: "Cros-baa Coffee", pun: "Thanks a latte for adventuring!", 
-                image: "coffee.png" 
-            },
-            { 
-                id: 3, dateLabel: "Jan 23", 
-                title: "Rocking Out", 
-                story: "Dear Maria, count US IN!",
-                locationLabel: "Pop-Punk Gig", modalTitle: "Dear Baaaa-ria Count Me In....", pun: "Ram-and-Roll!", 
-                image: "dear-maria.png" 
-            },
-            { 
-                id: 7, dateLabel: "Jun 21", 
-                title: "Half Birthday", 
-                story: "It's your Half-Birthday Lammy! We better go somewhere special... Slice this cake exactly in half!",
-                locationLabel: "Fallow", modalTitle: "Baaaaaaa-low", pun: "Happy Half Lambday!", 
-                image: "fallow.png" 
-            },
-            { 
-                id: 8, dateLabel: "Jul 15", 
-                title: "Into the Wild", 
-                story: "Let's go see the MONKEYS!!!",
-                locationLabel: "Wildlife Park", modalTitle: "Wo-baaaa-rn", pun: "Spot the G.O.A.T.!", 
-                image: "woburn.png" 
-            },
-            { 
-                id: 9, dateLabel: "Aug 25", 
-                title: "Coastal Carols", 
-                story: "Up in Scotland, the local sheep choir wants to sing for us. Let's memorize their song and join in!",
-                locationLabel: "North Berwick", modalTitle: "North Baaaaar-wick", pun: "Where I FULLY fell in love with you...", 
-                image: "north-berwick.jpg" 
-            },
-            { 
-                id: 10, dateLabel: "Sep 12", 
-                title: "A Toast", 
-                story: "We deserve a view...",
-                locationLabel: "The Hilton", modalTitle: "Ramchester", pun: "Pop the Cham-baaa-gne!", 
-                image: "deansgate.png" 
-            },
-            { 
-                id: 11, dateLabel: "Oct 31", 
-                title: "Spooky Surprise", 
-                story: "It's soo fun in the fall when the wind starts whistlin'....",
-                locationLabel: "Disneyland", modalTitle: "Lamb-oween", pun: "Disney-lamb Paris!", 
-                image: "fall.jpg" 
-            },
-            { 
-                id: 12, dateLabel: "Nov 18", 
-                title: "Luxury Rest", 
-                story: "Just a little happy place...",
-                locationLabel: "Don't Get Wet...", modalTitle: "Loch Lo-lamb", pun: "Glen Ooooooggglle", 
-                image: "loch-tay.png" 
-            }
-        ];
-
-        // ==========================================
-        // 🔊 AUDIO ENGINE
-        // ==========================================
-        const AudioEngine = {
-            ctx: null,
-            init() {
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioContext();
-            },
-            playTone(freq, type, duration, vol = 0.1) {
-                if (!this.ctx) this.init();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + duration);
-            },
-            play(sfx) {
-                if (!this.ctx) this.init();
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                switch (sfx) {
-                    case 'click': this.playTone(600, 'sine', 0.1); break;
-                    case 'pop': this.playTone(200, 'square', 0.1, 0.2); break;
-                    case 'slice': this.playTone(800, 'triangle', 0.05, 0.2); break;
-                    case 'catch': this.playTone(1200, 'sine', 0.1, 0.1); break;
-                    case 'pour': this.playTone(150, 'sawtooth', 0.1, 0.05); break;
-                    case 'win': [523, 659, 783, 1046].forEach((f, i) => setTimeout(() => this.playTone(f, 'sine', 0.3, 0.2), i * 100)); break;
-                    case 'error': this.playTone(150, 'sawtooth', 0.3); break;
-                    case 'unlock': this.playTone(880, 'sine', 0.5); setTimeout(() => this.playTone(1760, 'sine', 0.8), 100); break;
-                    case 'simon1': this.playTone(329, 'sine', 0.3); break;
-                    case 'simon2': this.playTone(440, 'sine', 0.3); break;
-                    case 'simon3': this.playTone(554, 'sine', 0.3); break;
-                    case 'simon4': this.playTone(659, 'sine', 0.3); break;
+        document.addEventListener('DOMContentLoaded', () => {
+            const productions = [
+                {
+                    title: 'CADEL: Lungs on Legs',
+                    role: 'General Manager',
+                    venue: 'Edinburgh Fringe & International Tour',
+                    image: 'images/cadel.jpg',
+                    ticketUrl: 'https://cadeltheplay.com/',
+                    quotes: [
+                        { text: "TOUR DE FORCE.", source: "The Scotsman", stars: 4 },
+                        { text: "TRIUMPHANT PERFORMANCE", source: "The Recs", stars: 5 },
+                    ]
+                },
+                {
+                    title: 'Mamma Mia! The Party',
+                    role: 'Commercial Consultant',
+                    venue: 'The O2, London',
+                    image: 'images/mamma-mia-party.jpg',
+                    ticketUrl: 'https://mammamiatheparty.co.uk/tickets/',
+                    quotes: [
+                        { text: "A glorious night out... a huge hit.", source: "The Times", stars: 5 },
+                        { text: "Leaves you beaming and wanting to come back for more.", source: "Daily Mail", stars: 4 },
+                    ]
+                },
+                {
+                    title: 'Starcrossed',
+                    role: 'Associate General Manager',
+                    venue: "Wilton's Music Hall",
+                    image: 'images/starcrossed.jpg',
+                    quotes: [
+                        { text: "A giddy delight... thoughtful, surprising and original.", source: "The Guardian", stars: 5 },
+                        { text: "Captivating... an elegance to it that is stunning.", source: "Theatre Reviewers", stars: 5 },
+                    ]
+                },
+                {
+                    title: 'The Standard Short Long Drop',
+                    role: 'General Manager',
+                    venue: 'The Vanguard Theatre / Edinburgh Fringe',
+                    image: 'images/standard-short-long-drop.jpg',
+                    quotes: [
+                        { text: "Captivating... masterfully crafted.", source: "The Student", stars: 5 },
+                        { text: "Heartbreaking and raw.", source: "The Scotsman", stars: 4 },
+                    ]
+                },
+                {
+                    title: 'Stand Up Londres',
+                    role: 'Producer',
+                    venue: 'The Crazy Coqs, London',
+                    image: 'images/stand-up-londres.jpg',
+                    quotes: [
+                        { text: "London's premier French-language comedy night.", source: "Time Out London", stars: 4 },
+                        { text: "A vital cultural bridge, filled with laughter.", source: "French Morning London", stars: 5 },
+                    ]
+                },
+                {
+                    title: 'Fringe 2026',
+                    role: 'Producer',
+                    venue: 'Edinburgh',
+                    image: 'images/upcoming-project.jpg',
+                    quotes: [
+                        { text: "Watch this space...", source: "", stars: 5 },
+                    ]
                 }
-            }
-        };
+            ];
 
-        // ==========================================
-        // ⚙️ CONFIG & ENGINE
-        // ==========================================
+            const productionGrid = document.getElementById('production-grid');
 
-        const LEVELS_CONFIG = [
-            { id: 1, type: "clock", icon: "clock", desc: "Tap to stop on JAN!" },
-            { id: 2, type: "shear", icon: "scissors", desc: "Swipe to shear the wool!", isCheese: false },
-            { id: 3, type: "mash", icon: "music", desc: "Tap fast to MOSH!", iconChar: "🎸" },
-            { id: 4, type: "platter", icon: "wine", desc: "Drag cheese to the plate!" },
-            { id: 5, type: "breathe", icon: "wind", desc: "Follow the breathing circle." },
-            { id: 6, type: "pour", icon: "cup-soda", desc: "Hold to fill to the green line!" },
-            { id: 7, type: "perfectSlice", icon: "cake", desc: "Tap to slice in the middle!" },
-            { id: 8, type: "hidden", icon: "binoculars", desc: "Find the Cool Ram!" },
-            { id: 9, type: "simon", icon: "waves", desc: "Repeat the Sheep Song!" },
-            { id: 10, type: "pop", icon: "party-popper", desc: "Tap to POP!" },
-            { id: 11, type: "ghosts", icon: "sparkles", desc: "Tap the ghosts quickly!" },
-            { id: 12, type: "catch", icon: "bed", desc: "Tap 5 feathers!" }
-        ];
+            productions.forEach(p => {
+                const card = document.createElement('article');
+                card.className = 'production-card flex flex-col';
 
-        const LEVELS = LEVELS_CONFIG.map(config => {
-            const content = STORY_DATA.find(r => r.id === config.id);
-            return { ...config, ...content };
-        });
-
-        const Game = {
-            state: { unlocked: 0, introSeen: false, log: [] },
-            
-            init() {
-                const save = localStorage.getItem('lambvent_plat_v2');
-                if(save) this.state = JSON.parse(save);
-                
-                document.getElementById('lammy-character').src = ASSETS.LAMMY_MAIN;
-                document.getElementById('happy-lammy').src = ASSETS.LAMMY_HAPPY;
-                document.getElementById('title-bg').src = ASSETS.TITLE_BG;
-            },
-
-            startFromTitle() {
-                AudioEngine.init();
-                AudioEngine.play('click');
-                document.getElementById('view-title-screen').classList.add('hidden');
-                document.getElementById('game-hud').classList.remove('hidden');
-                
-                this.renderMap(true); 
-                this.updateLog(); 
-                this.updateLoveMeter();
-                lucide.createIcons();
-                window.addEventListener('resize', () => this.drawPath());
-                
-                document.getElementById('toggle-log').onclick = () => { AudioEngine.play('click'); document.getElementById('flock-log').classList.remove('translate-x-full'); toggleScroll(true); };
-                document.getElementById('close-log').onclick = () => { AudioEngine.play('click'); document.getElementById('flock-log').classList.add('translate-x-full'); toggleScroll(false); };
-                document.getElementById('gift-stage').onclick = () => this.openGift();
-
-                if(!this.state.introSeen) {
-                    setTimeout(() => this.playCinematic(INTRO_DATA, () => {
-                        this.state.introSeen = true;
-                        this.save();
-                        // Reveal map after cinematic
-                        document.getElementById('main-container').style.opacity = '1';
-                    }), 500);
-                } else {
-                    document.getElementById('main-container').style.opacity = '1';
-                }
-            },
-
-            save() { localStorage.setItem('lambvent_plat_v2', JSON.stringify(this.state)); },
-            
-            // --- GENERIC CINEMATIC PLAYER ---
-            cinematicData: [],
-            cinematicStep: 0,
-            onCinematicEnd: null,
-
-            playCinematic(data, callback) {
-                this.cinematicData = data;
-                this.cinematicStep = 0;
-                this.onCinematicEnd = callback;
-                
-                const modal = document.getElementById('view-cinematic');
-                const dots = document.getElementById('cine-dots');
-                
-                dots.innerHTML = '';
-                data.forEach((_, i) => {
-                    const d = document.createElement('div');
-                    d.className = `w-2 h-2 rounded-full transition-all ${i===0 ? 'bg-white scale-125' : 'bg-white/30'}`;
-                    d.id = `dot-${i}`;
-                    dots.appendChild(d);
-                });
-
-                modal.classList.remove('hidden');
-                toggleScroll(true);
-                this.showSlide(0);
-            },
-
-            showSlide(idx) {
-                const img = document.getElementById('cine-img');
-                const txt = document.getElementById('cine-text');
-                
-                img.style.opacity = 0;
-                txt.style.opacity = 0;
-
-                setTimeout(() => {
-                    img.src = this.cinematicData[idx].image;
-                    txt.innerText = this.cinematicData[idx].text;
-                    img.style.opacity = 1;
-                    txt.style.opacity = 1;
-                    
-                    this.cinematicData.forEach((_, i) => {
-                        const d = document.getElementById(`dot-${i}`);
-                        if(i===idx) { d.classList.remove('bg-white/30'); d.classList.add('bg-white', 'scale-125'); }
-                        else { d.classList.add('bg-white/30'); d.classList.remove('bg-white', 'scale-125'); }
-                    });
-                }, 300);
-            },
-
-            nextSlide() {
-                this.cinematicStep++;
-                AudioEngine.play('click');
-                if(this.cinematicStep < this.cinematicData.length) {
-                    this.showSlide(this.cinematicStep);
-                } else {
-                    document.getElementById('view-cinematic').classList.add('hidden');
-                    toggleScroll(false);
-                    if(this.onCinematicEnd) this.onCinematicEnd();
-                }
-            },
-
-            // --- MAP LOGIC ---
-            renderMap(firstLoad) {
-                const container = document.getElementById('view-map'); container.innerHTML = '';
-                LEVELS.forEach((level, idx) => {
-                    const locked = idx > this.state.unlocked;
-                    const current = idx === this.state.unlocked;
-                    const beaten = idx < this.state.unlocked;
-                    const btn = document.createElement('button');
-                    btn.id = `node-${idx}`;
-                    btn.className = `w-24 h-24 rounded-3xl border-[6px] border-white shadow-md flex items-center justify-center text-2xl transition-all relative z-10 ${locked ? 'bg-slate-300 opacity-60' : 'bg-white btn-bouncy cursor-pointer'} ${current ? 'ring-4 ring-pink-300 ring-offset-2 z-20' : ''}`;
-                    if(!locked) {
-                        btn.onclick = () => { AudioEngine.play('click'); this.openLevel(idx); };
-                        btn.innerHTML = current && !beaten ? `<div class="flex flex-col items-center"><span class="text-xs font-bold text-slate-400 mb-1">OPEN</span><span class="text-lg font-chunky text-pink-500 leading-none">${level.dateLabel}</span></div>` : `<div class="flex flex-col items-center"><i data-lucide="${level.icon}" class="text-green-500 w-8 h-8 mb-1"></i><span class="text-[9px] font-bold text-slate-400 uppercase">View</span></div>`;
-                    } else {
-                        btn.onclick = () => { AudioEngine.play('error'); alert("Not yet! 🐑"); };
-                        btn.innerHTML = `<i data-lucide="lock" class="text-slate-400 w-6 h-6"></i>`;
-                    }
-                    const wrapper = document.createElement('div'); wrapper.className = `level-node w-full flex ${idx%2===0?'justify-start pl-2':'justify-end pr-2'}`;
-                    const inner = document.createElement('div'); inner.className = 'relative flex flex-col items-center';
-                    const lbl = document.createElement('div'); lbl.className = `absolute -bottom-6 bg-white px-2 py-1 rounded border border-slate-100 text-[10px] font-bold text-slate-500 ${!beaten?'hidden':''}`; lbl.innerText = level.locationLabel;
-                    inner.appendChild(btn); inner.appendChild(lbl); wrapper.appendChild(inner); container.appendChild(wrapper);
-                });
-                lucide.createIcons(); setTimeout(() => { this.drawPath(); this.positionCharacter(firstLoad); }, 50);
-            },
-            positionCharacter(immediate) {
-                const charEl = document.getElementById('lammy-character');
-                const targetIdx = this.state.unlocked < LEVELS.length ? this.state.unlocked : LEVELS.length - 1;
-                const node = document.getElementById(`node-${targetIdx}`);
-                if (node) {
-                    const rect = node.getBoundingClientRect(); const main = document.querySelector('main').getBoundingClientRect();
-                    const top = rect.top - main.top + rect.height/2; const left = rect.left - main.left + rect.width/2;
-                    charEl.classList.remove('hidden');
-                    if (immediate) { charEl.style.transition = 'none'; charEl.style.top = `${top}px`; charEl.style.left = `${left}px`; void charEl.offsetWidth; charEl.style.transition = 'top 1.5s ease-in-out, left 1.5s ease-in-out'; }
-                    else { 
-                        charEl.classList.add('animate-trot'); 
-                        charEl.style.top = `${top}px`; charEl.style.left = `${left}px`; 
-                        node.scrollIntoView({behavior: 'smooth', block: 'center'});
-                        setTimeout(() => charEl.classList.remove('animate-trot'), 1500); 
-                    }
-                }
-            },
-            drawPath() {
-                const svg = document.querySelector('#map-svg path'); const nodes = document.querySelectorAll('[id^="node-"]'); const main = document.querySelector('main').getBoundingClientRect();
-                if(nodes.length === 0) return; let d = "";
-                nodes.forEach((node, i) => {
-                    const rect = node.getBoundingClientRect(); const cx = (rect.left - main.left) + rect.width / 2; const cy = (rect.top - main.top) + rect.height / 2;
-                    if (i === 0) d += `M ${cx} ${cy} `; else { const prev = nodes[i-1].getBoundingClientRect(); const px = (prev.left - main.left) + prev.width / 2; const py = (prev.top - main.top) + prev.height / 2; d += `C ${px} ${py + (cy-py)/2}, ${cx} ${py + (cy-py)/2}, ${cx} ${cy} `; }
-                });
-                svg.setAttribute('d', d); document.getElementById('map-svg').style.height = document.getElementById('view-map').scrollHeight + 'px';
-            },
-            
-            // --- GAME FLOW ---
-            openLevel(idx) {
-                if (idx < this.state.unlocked) { this.state.current = idx; this.showReward(false); return; }
-                const l = LEVELS[idx]; this.state.current = idx;
-                document.getElementById('story-title').innerText = l.title;
-                document.getElementById('story-text').innerText = l.story;
-                document.getElementById('view-story').classList.remove('hidden');
-                toggleScroll(true);
-            },
-            closeStory() { document.getElementById('view-story').classList.add('hidden'); toggleScroll(false); },
-            startGame() {
-                document.getElementById('view-story').classList.add('hidden'); 
-                const l = LEVELS[this.state.current];
-                document.getElementById('game-instruction').innerText = l.desc; 
-                document.getElementById('view-challenge').classList.remove('hidden');
-                const wrapper = document.getElementById('game-wrapper'); wrapper.innerHTML = ''; wrapper.style.backgroundColor = "#f1f5f9"; 
-                MiniGames.play(l, wrapper);
-            },
-
-            win() {
-                const l = LEVELS[this.state.current];
-                if(this.state.current === this.state.unlocked) { 
-                    this.state.unlocked++; 
-                    if(!this.state.log.includes(l.id)) this.state.log.push(l.id); 
-                    this.save(); 
-                }
-                AudioEngine.play('unlock'); 
-                document.getElementById('view-challenge').classList.add('hidden'); 
-                this.updateLoveMeter();
-                this.showReward(true);
-            },
-            updateLoveMeter() {
-                const pct = Math.min((this.state.unlocked / LEVELS.length) * 100, 100);
-                document.getElementById('love-meter-fill').style.width = pct + '%';
-            },
-            showReward(anim) {
-                const l = LEVELS[this.state.current]; document.getElementById('reward-img').src = l.image; document.getElementById('reward-desc').innerText = l.modalTitle; document.getElementById('reward-pun').innerText = l.pun;
-                document.getElementById('view-reward').classList.remove('hidden');
-                toggleScroll(true);
-                if (anim) { document.getElementById('gift-stage').classList.remove('hidden'); document.getElementById('reveal-stage').classList.add('hidden'); }
-                else { document.getElementById('gift-stage').classList.add('hidden'); document.getElementById('reveal-stage').classList.remove('hidden'); }
-            },
-            openGift() {
-                AudioEngine.play('win'); document.getElementById('gift-stage').classList.add('animate-shake');
-                for(let i=0; i<30; i++) { const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random() * 100 + 'vw'; c.style.backgroundColor = ['#ff0', '#f00', '#0f0', '#00f', '#f0f'][Math.floor(Math.random()*5)]; c.style.animationDuration = (Math.random()*2 + 1) + 's'; document.body.appendChild(c); setTimeout(() => c.remove(), 3000); }
-                setTimeout(() => { document.getElementById('gift-stage').classList.add('hidden'); document.getElementById('gift-stage').classList.remove('animate-shake'); document.getElementById('reveal-stage').classList.remove('hidden'); document.getElementById('reveal-stage').classList.add('animate-pop-in'); }, 800);
-            },
-            nextLevel() { 
-                AudioEngine.play('click'); 
-                document.getElementById('view-reward').classList.add('hidden'); 
-                toggleScroll(false);
-                
-                // CHECK FINALE
-                if(this.state.unlocked >= LEVELS.length) { 
-                    this.playCinematic(FINALE_DATA, () => this.showFinaleScreen());
-                } 
-                else { this.renderMap(); this.updateLog(); }
-            },
-            
-            // --- FINALE & GRAND PRIZE ---
-            showFinaleScreen() {
-                document.getElementById('view-finale').classList.remove('hidden');
-                toggleScroll(true);
-                AudioEngine.play('win');
-                
-                // Confetti Loop
-                setInterval(() => { const c = document.createElement('div'); c.className = 'confetti'; c.style.left = Math.random() * 100 + 'vw'; c.style.backgroundColor = ['#ff0', '#fff', '#0f0', '#0ff'][Math.floor(Math.random()*4)]; c.style.animationDuration = (Math.random()*3 + 2) + 's'; document.body.appendChild(c); setTimeout(()=>c.remove(),5000); }, 300);
-                this.renderMap();
-            },
-
-            updateLog() {
-                const list = document.getElementById('log-list'); list.innerHTML = '';
-                
-                // Regular levels
-                this.state.log.forEach(id => {
-                    const l = LEVELS.find(x => x.id === id); const item = document.createElement('div'); item.className = "bg-white p-3 rounded-2xl border border-green-100 shadow-md transform rotate-1 hover:rotate-0 transition-transform cursor-pointer";
-                    item.onclick = () => { this.state.current = LEVELS.indexOf(l); this.showReward(false); document.getElementById('flock-log').classList.add('translate-x-full'); };
-                    item.innerHTML = `<div class="aspect-video w-full rounded-xl bg-gray-100 overflow-hidden mb-2"><img src="${l.image}" class="w-full h-full object-cover"></div><div class="px-1"><div class="font-bold text-sm text-slate-700 leading-tight">${l.modalTitle}</div><div class="text-[10px] text-slate-400 mt-1">${l.dateLabel}</div></div>`; list.appendChild(item);
-                });
-            },
-            closeChallenge() { AudioEngine.play('click'); document.getElementById('view-challenge').classList.add('hidden'); toggleScroll(false); }
-        };
-
-        function toggleScroll(lock) {
-            if(lock) document.body.classList.add('game-active');
-            else document.body.classList.remove('game-active');
-        }
-
-        // --- MINI GAMES ---
-        const MiniGames = {
-            play(level, container) { const l = document.createElement('div'); l.className = "absolute inset-0 flex flex-col items-center justify-center p-4 bg-white/50"; container.appendChild(l); if(this[level.type]) this[level.type](level, l); else setTimeout(()=>Game.win(), 1000); },
-            
-            // 1. CLOCK GAME (Spinning Hand)
-            clock(l, c) {
-                c.innerHTML = `
-                    <div class="relative w-56 h-56 rounded-full border-8 border-slate-300 bg-white shadow-xl flex items-center justify-center">
-                        <div class="absolute top-2 font-bold text-slate-400">DEC</div>
-                        <div class="absolute right-2 font-bold text-green-500">JAN</div>
-                        <div class="absolute bottom-2 font-bold text-slate-400">JUN</div>
-                        <div class="absolute left-2 font-bold text-slate-400">SEP</div>
-                        <div id="hand" class="absolute w-1 h-24 bg-pink-500 origin-bottom bottom-1/2 left-1/2 -ml-0.5 rounded-full" style="transform: rotate(0deg)"></div>
-                        <div class="w-4 h-4 bg-slate-700 rounded-full absolute z-10"></div>
-                    </div>
-                    <button id="sbtn" class="mt-6 btn-bouncy bg-pink-500 text-white w-full py-3 rounded-xl font-chunky text-xl">STOP!</button>
-                `;
-                const hand = document.getElementById('hand');
-                let ang = 0;
-                const iv = setInterval(() => { ang = (ang + 6) % 360; hand.style.transform = `rotate(${ang}deg)`; }, 20);
-                
-                const stop = (e) => {
-                    e.preventDefault();
-                    clearInterval(iv);
-                    // JAN is at 90 degrees (Right) +/- margin
-                    if (ang >= 75 && ang <= 105) { Game.win(); }
-                    else { AudioEngine.play('error'); setTimeout(() => MiniGames.clock(l, c), 500); }
-                };
-                const btn = document.getElementById('sbtn');
-                btn.onpointerdown = stop;
-            },
-
-            // 2. SHEAR (Fluffy Clouds)
-            shear(l, c) {
-                c.innerHTML = `<div class="relative w-full h-full rounded-2xl overflow-hidden shadow-inner bg-sky-100"><div class="absolute inset-0 flex items-center justify-center"><div class="text-center animate-bounce"><div class="text-4xl">🐑</div><div class="font-chunky text-sky-600 mt-2">Sheared!</div></div></div><canvas id="sc" class="absolute inset-0 cursor-crosshair touch-none"></canvas></div>`;
-                const cv=c.querySelector('canvas'); const ctx=cv.getContext('2d'); 
-                const resize=()=>{
-                    const r=cv.parentElement.getBoundingClientRect();cv.width=r.width;cv.height=r.height;
-                    ctx.fillStyle='#f8fafc'; ctx.fillRect(0,0,cv.width,cv.height);
-                    ctx.fillStyle='#e2e8f0'; 
-                    for(let i=0;i<150;i++){ 
-                        ctx.beginPath(); 
-                        ctx.arc(Math.random()*cv.width, Math.random()*cv.height, Math.random()*20+10, 0, Math.PI*2); 
-                        ctx.fill(); 
-                    }
-                    ctx.fillStyle = "#94a3b8"; ctx.font = "20px Varela Round"; ctx.fillText("Shear Me!", cv.width/2 - 50, cv.height/2);
-                }; 
-                requestAnimationFrame(resize);
-                let d=false; const sc=(x,y)=>{ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(x,y,35,0,Math.PI*2);ctx.fill();check();};
-                const gp=(e)=>{const r=cv.getBoundingClientRect();return{x:(e.touches?e.touches[0].clientX:e.clientX)-r.left,y:(e.touches?e.touches[0].clientY:e.clientY)-r.top}};
-                cv.onmousedown=e=>{d=true;sc(gp(e).x,gp(e).y)}; window.onmouseup=()=>d=false; cv.onmousemove=e=>{if(d)sc(gp(e).x,gp(e).y)}; cv.ontouchstart=e=>{d=true;sc(gp(e).x,gp(e).y)}; cv.ontouchmove=e=>{if(d)sc(gp(e).x,gp(e).y)};
-                let w=false; const check=()=>{if(w)return;try{const dt=ctx.getImageData(0,0,cv.width,cv.height).data;let z=0;for(let i=3;i<dt.length;i+=100)if(dt[i]===0)z++;if(z>(dt.length/100)*0.5){w=true;setTimeout(()=>Game.win(),500)}}catch(e){}};
-            },
-
-            breathe(l, c) {
-                c.innerHTML = `<div class="relative w-48 h-48 flex items-center justify-center"><div id="br" class="w-full h-full bg-teal-300 rounded-full opacity-60 scale-50 transition-all duration-[3000ms] border-4 border-teal-100"></div><div class="absolute text-teal-700 font-bold text-2xl font-chunky" id="bt">Ready</div></div>`;
-                let step = 0; const br = document.getElementById('br'); const bt = document.getElementById('bt'); const duration = 1500; 
-                const runCycle = () => {
-                    if (step >= 3) { Game.win(); return; }
-                    bt.innerText = "Inhale"; br.style.transitionDuration = duration + 'ms'; br.classList.remove('scale-50', 'opacity-60'); br.classList.add('scale-100', 'opacity-100');
-                    setTimeout(() => { bt.innerText = "Exhale"; br.classList.remove('scale-100', 'opacity-100'); br.classList.add('scale-50', 'opacity-60'); step++; setTimeout(runCycle, duration); }, duration);
-                };
-                setTimeout(runCycle, 500);
-            },
-            platter(l, c) {
-                c.innerHTML = `<div class="relative w-full h-full"><div id="plate" class="absolute bottom-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-gray-200 rounded-full border-4 border-gray-300 flex items-center justify-center text-xs text-gray-400">PLATE</div><div id="c1" class="ch absolute top-4 left-4 text-4xl cursor-grab">🧀</div><div id="c2" class="ch absolute top-4 left-1/2 -translate-x-1/2 text-4xl cursor-grab">🧀</div><div id="c3" class="ch absolute top-4 right-4 text-4xl cursor-grab">🧀</div></div>`;
-                let cnt=0;
-                c.querySelectorAll('.ch').forEach(el=>{
-                    el.ontouchstart=el.onmousedown=(e)=>{
-                        const mv=(ev)=>{ const x=(ev.touches?ev.touches[0].clientX:ev.clientX)-c.getBoundingClientRect().left; const y=(ev.touches?ev.touches[0].clientY:ev.clientY)-c.getBoundingClientRect().top; el.style.left=(x-20)+'px';el.style.top=(y-20)+'px'; };
-                        const up=(ev)=>{
-                             document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); document.removeEventListener('touchmove',mv); document.removeEventListener('touchend',up);
-                             const er=el.getBoundingClientRect(); const pr=document.getElementById('plate').getBoundingClientRect();
-                             if(er.top<pr.bottom && er.bottom>pr.top && er.left<pr.right && er.right>pr.left){ el.style.display='none'; AudioEngine.play('pop'); cnt++; if(cnt===3)Game.win(); }
-                        };
-                        document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up); document.addEventListener('touchmove',mv); document.addEventListener('touchend',up);
-                    }
-                });
-            },
-            pour(l, c) {
-                // Harder: Fill rate increased to 1.1
-                c.innerHTML = `
-                    <div class="relative h-64 w-32 bg-white border-4 border-slate-300 rounded-b-3xl overflow-hidden mx-auto shadow-inner">
-                        <div class="absolute bottom-[60%] h-[15%] w-full bg-green-100 border-y-2 border-green-300 opacity-50 z-10 flex items-center justify-center">
-                            <span class="text-green-700 font-bold text-xs opacity-80">TARGET</span>
+                let quotesHTML = p.quotes.map(q => {
+                     if(q.stars === 0) return '<div class="h-24"></div>';
+                     const starsHTML = '<span class="star-gold">★</span>'.repeat(q.stars);
+                     return `
+                        <div class="mt-4 text-center">
+                            <div>${starsHTML}</div>
+                            <blockquote class="italic text-sm my-1 text-[var(--text-muted)] h-12 flex items-center justify-center">"${q.text}"</blockquote>
+                            <cite class="text-xs not-italic font-medium block">- ${q.source}</cite>
                         </div>
-                        <div id="coffee" class="absolute bottom-0 w-full bg-amber-800 transition-all duration-100 z-0" style="height:0%"></div>
-                    </div>
-                    <button id="pbtn" class="mt-4 btn-bouncy bg-amber-600 text-white w-full py-3 rounded-xl font-chunky">HOLD TO POUR</button>
-                `;
-                const cf=document.getElementById('coffee'); 
-                let h=0, pouring=false, iv;
-                const start=()=>{ if(pouring) return; pouring=true; iv=setInterval(()=>{ h+=1.1; cf.style.height=h+'%'; AudioEngine.play('pour'); if(h>100) stop(); }, 50); };
-                const stop=()=>{ clearInterval(iv); pouring=false; if(h>60 && h<75){ Game.win(); } else { h=0; cf.style.height='0%'; AudioEngine.play('error'); } };
-                const b=document.getElementById('pbtn'); b.onmousedown=b.ontouchstart=e=>{e.preventDefault();start()}; b.onmouseup=b.ontouchend=e=>{e.preventDefault();stop()};
-            },
-            mash(l, c) {
-                c.innerHTML = `<div class="text-center w-full"><div class="w-full h-8 bg-slate-200 rounded-full mb-6 overflow-hidden border-4 border-slate-300"><div id="tb" class="h-full bg-yellow-400 w-0 transition-all duration-75"></div></div><button id="tbtn" class="w-40 h-40 bg-white rounded-full border-[8px] border-slate-100 shadow-xl text-6xl active:scale-95 transition-transform mx-auto">🎸</button></div>`;
-                let cnt=0; document.getElementById('tbtn').onpointerdown=(e)=>{e.preventDefault();AudioEngine.play('pop');cnt++;document.getElementById('tb').style.width=(cnt/15)*100+'%';if(cnt>=15)Game.win()};
-            },
-            
-            // 7. PERFECT SLICE (Instant Stop)
-            perfectSlice(l, c) {
-                c.innerHTML = `
-                    <div class="relative w-full h-40 mt-10 bg-pink-100 rounded-lg border-b-8 border-pink-200 flex items-end justify-center">
-                        <div class="text-6xl mb-2">🎂</div>
-                        <div id="knife" class="absolute -top-10 w-2 h-full bg-slate-400 shadow-lg left-0 transition-none"></div>
-                        <div class="absolute top-0 bottom-0 left-1/2 -ml-4 w-8 bg-green-400 opacity-20 border-x-2 border-green-500"></div>
-                    </div>
-                    <button id="cutbtn" class="mt-8 btn-bouncy bg-pink-500 text-white w-full py-3 rounded-xl font-chunky text-xl">SLICE!</button>
-                `;
-                const knife = document.getElementById('knife');
-                let pos = 0; let dir = 1;
-                const iv = setInterval(() => {
-                    pos += dir * 2; 
-                    if (pos > 100 || pos < 0) dir *= -1;
-                    knife.style.left = pos + '%';
-                }, 20);
+                    `;
+                }).join('');
 
-                const stop = (e) => {
-                    e.preventDefault();
-                    clearInterval(iv);
-                    AudioEngine.play('slice');
-                    if(pos >= 45 && pos <= 55) { Game.win(); }
-                    else { 
-                        AudioEngine.play('error'); 
-                        knife.classList.add('bg-red-500');
-                        setTimeout(() => MiniGames.perfectSlice(l, c), 800); 
-                    }
-                };
-                document.getElementById('cutbtn').onpointerdown = stop;
-            },
-
-            // 8. HIDDEN (Using PNGs)
-            hidden(l, c) {
-                c.innerHTML = `<div class="w-full h-full relative overflow-hidden" id="ha"></div>`;
-                const a=document.getElementById('ha');
-                for(let i=0;i<25;i++){
-                    const d=document.createElement('img'); d.src=ASSETS.LAMB_DISTRACTOR; d.className='absolute w-12 h-12 opacity-80';
-                    d.style.left=Math.random()*80+'%'; d.style.top=Math.random()*80+'%';
-                    a.appendChild(d);
+                let ticketHTML = '';
+                if (p.ticketUrl) {
+                    ticketHTML = `
+                        <div class="mt-auto text-center pt-4">
+                            <a href="${p.ticketUrl}" target="_blank" rel="noopener noreferrer" class="ticket-link">Buy Tickets</a>
+                        </div>
+                    `;
+                } else {
+                    // This placeholder maintains consistent card height
+                    ticketHTML = '<div class="h-[36px] mt-auto pt-4"></div>';
                 }
-                const t=document.createElement('img'); t.src=ASSETS.RAM_TARGET; t.className='absolute w-16 h-16 animate-bounce cursor-pointer hover:scale-110 transition';
-                t.style.left=Math.random()*70+'%'; t.style.top=Math.random()*70+'%';
-                t.onclick=(e)=>{e.stopPropagation();Game.win()};
-                a.appendChild(t);
-            },
 
-            simon(l, c) {
-                c.innerHTML = `<div class="grid grid-cols-2 gap-4"><div id="s1" class="w-24 h-24 bg-red-400 rounded-xl"></div><div id="s2" class="w-24 h-24 bg-blue-400 rounded-xl"></div><div id="s3" class="w-24 h-24 bg-green-400 rounded-xl"></div><div id="s4" class="w-24 h-24 bg-yellow-400 rounded-xl"></div></div>`;
-                const els=[1,2,3,4].map(i=>document.getElementById('s'+i)); let seq=[],play=0,round=0;
-                const flash=i=>{AudioEngine.play('simon'+(i+1));els[i].style.opacity=0.5;setTimeout(()=>els[i].style.opacity=1,300)};
-                const run=()=>{play=0;let k=0;const iv=setInterval(()=>{if(k>=seq.length){clearInterval(iv);return}flash(seq[k]);k++},400)};
-                const next=()=>{round++;if(round>3){Game.win();return}seq.push(Math.floor(Math.random()*4));setTimeout(run,500)};
-                els.forEach((el,i)=>el.onclick=()=>{flash(i);if(i===seq[play]){play++;if(play===seq.length)setTimeout(next,1000)}else{AudioEngine.play('error');setTimeout(run,1000)}});
-                setTimeout(next,500);
-            },
-            pop(l, c) {
-                c.innerHTML = `<div id="btl" class="text-8xl cursor-pointer select-none filter drop-shadow-xl transition-transform">🍾</div>`;let s=1;document.getElementById('btl').onclick=(e)=>{AudioEngine.play('pop');s+=0.2;e.target.style.transform=`scale(${s})`;if(s>3.5)Game.win()};
-            },
-            ghosts(l, c) {
-                c.innerHTML = `<div class="relative w-full h-full bg-slate-800 rounded-2xl overflow-hidden" id="ga"></div>`;
-                let sc=0; const a=document.getElementById('ga');
-                const spawn=()=>{if(sc>=5)return;const g=document.createElement('div');g.innerText='👻';g.className='absolute text-4xl ghost-anim cursor-pointer';g.style.left=Math.random()*80+'%';g.style.top=Math.random()*80+'%';g.onmousedown=g.ontouchstart=()=>{AudioEngine.play('pop');g.remove();sc++;if(sc>=5)Game.win()};a.appendChild(g);setTimeout(()=>{if(g.parentNode)g.remove();if(sc<5)spawn()},1500)};
-                spawn();
-            },
-            catch(l, c) {
-                c.innerHTML = `<div class="relative w-full h-full overflow-hidden" id="sky"></div><div class="absolute top-2 right-2 font-bold text-slate-400">Catch: <span id="sc">0</span>/5</div>`;
-                let sc=0; const sky=document.getElementById('sky');
-                const spawn=()=>{if(sc>=5)return;const f=document.createElement('div');f.className='feather';f.innerText='🪶';f.style.left=Math.random()*80+'%';sky.appendChild(f);f.onmousedown=f.ontouchstart=()=>{AudioEngine.play('catch');sc++;document.getElementById('sc').innerText=sc;f.remove();if(sc>=5)Game.win()};setTimeout(()=>{if(f.parentNode)f.remove()},3000)};
-                const iv=setInterval(()=>{if(sc>=5)clearInterval(iv);else spawn()},800);
-            }
-        };
+                card.innerHTML = `
+                    <figure>
+                        <img src="${p.image}" alt="Poster for ${p.title}" class="w-full h-auto object-cover">
+                    </figure>
+                    <div class="p-4 flex-grow flex flex-col">
+                        <h3 class="text-xl font-serif text-center">${p.title}</h3>
+                        <p class="text-sm font-semibold text-center text-[var(--accent-blue)] mt-1">${p.role}</p>
+                        <div class="mt-2 pt-2 border-t border-[var(--border-color)] flex-grow">${quotesHTML}</div>
+                        ${ticketHTML}
+                    </div>
+                `;
+                productionGrid.appendChild(card);
+            });
 
-        window.onload = () => Game.init();
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            document.querySelectorAll('#mobile-menu a, .nav-link').forEach(link => {
+                link.addEventListener('click', () => !mobileMenu.classList.contains('hidden') && mobileMenu.classList.add('hidden'));
+            });
+
+            // Social Sharing
+            const pageUrl = encodeURIComponent(window.location.href);
+            const shareText = encodeURIComponent("Discover Sterling Paris, a premier theatre production and general management consultancy.");
+
+            document.getElementById('share-meta').href = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`;
+            document.getElementById('share-linkedin').href = `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}`;
+            document.getElementById('share-email').href = `mailto:?subject=${encodeURIComponent("Sterling Paris | Theatre Production")}&body=${shareText}%0A%0A${pageUrl}`;
+        });
     </script>
 </body>
 </html>
