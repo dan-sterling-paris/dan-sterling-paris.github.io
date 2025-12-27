@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For Narky Shark</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #ecfccb; /* Lime-100 */
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bounce-slow {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(-5%); }
+            50% { transform: translateY(5%); }
+        }
+
+        /* Card Styles */
+        .card {
+            perspective: 1000px;
+            cursor: pointer;
+            aspect-ratio: 1 / 1;
+            position: relative;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched .card-inner {
+            transform: rotateY(180deg);
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.8);
+            border-color: #eab308;
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            user-select: none;
+        }
+
+        .card-front {
+            background-color: #ffffff;
+            color: #84cc16; 
+            font-size: 2.5rem; 
+            font-weight: bold;
+            border: 3px solid #bef264;
+        }
+        
+        .card-front::after {
+            content: '🎁';
+            font-size: 1.8rem;
+        }
+
+        .card-back {
+            background-color: #f7fee7;
+            transform: rotateY(180deg);
+            border: 3px solid #84cc16;
+        }
+        
+        .emoji-content {
+            font-size: clamp(24px, 10vw, 42px);
+            line-height: 1;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
+        }
+
+        /* Paris Modal */
+        .paris-bg {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col overflow-hidden bg-lime-50 text-slate-800">
+
+    <!-- INTRO CONTAINER -->
+    <div id="intro-container" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-6 text-center">
+        
+        <!-- SLIDE 1: Birthday Greeting -->
+        <div id="slide-1" class="w-full max-w-sm flex flex-col items-center fade-in">
+            <div class="text-8xl mb-6 bounce-slow">🦈</div>
+            <h1 class="text-4xl font-bold text-slate-800 mb-4">Happy Birthday<br><span class="text-lime-600">Narky Shark!</span></h1>
+            <p class="text-slate-500 text-lg mb-10">It's your special day...</p>
+            <button onclick="nextSlide(2)" class="bg-lime-500 hover:bg-lime-600 text-white font-bold text-lg py-3 px-10 rounded-full shadow-lg transition transform active:scale-95">
+                Next ➜
+            </button>
+        </div>
+
+        <!-- SLIDE 2: The Setup -->
+        <div id="slide-2" class="w-full max-w-sm flex flex-col items-center hidden">
+            <div class="text-6xl mb-6 flex gap-4">
+                <span class="animate-bounce" style="animation-delay: 0.1s">🦈</span>
+                <span class="animate-bounce" style="animation-delay: 0.2s">❤️</span>
+                <span class="animate-bounce" style="animation-delay: 0.3s">🐂</span>
+            </div>
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">You deserve a treat!</h2>
+            <div class="bg-lime-50 p-6 rounded-2xl border-2 border-lime-100 mb-10">
+                <p class="text-slate-600 text-lg">Since you've been working so hard, I planned a little surprise adventure for us.</p>
+            </div>
+            <button onclick="nextSlide(3)" class="bg-lime-500 hover:bg-lime-600 text-white font-bold text-lg py-3 px-10 rounded-full shadow-lg transition transform active:scale-95">
+                What is it? ➜
+            </button>
+        </div>
+
+        <!-- SLIDE 3: The Challenge -->
+        <div id="slide-3" class="w-full max-w-sm flex flex-col items-center hidden">
+            <div class="text-8xl mb-6 animate-pulse">🎁</div>
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">The Mission</h2>
+            <p class="text-slate-600 text-lg mb-8">Your gift is locked behind this puzzle.<br><strong>Match all the cards</strong> to pack your bags!</p>
+            
+            <button onclick="startGame()" class="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold text-xl py-4 rounded-2xl shadow-xl shadow-lime-600/30 transform transition active:scale-95">
+                Unlock My Gift! 🗝️
+            </button>
+        </div>
+
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-screen" class="hidden h-full flex flex-col items-center justify-between py-6">
+        <!-- Header -->
+        <header class="w-full max-w-sm px-6 flex justify-between items-center mb-2">
+            <div>
+                <h2 class="text-xl font-bold text-slate-700">Find the pairs</h2>
+                <p class="text-xs text-slate-500">Solve the puzzle!</p>
+            </div>
+            <div class="bg-white px-4 py-2 rounded-xl shadow-sm border border-lime-200">
+                <span id="move-counter" class="text-lime-600 font-bold text-xl">0</span> <span class="text-xs text-slate-400 uppercase">Moves</span>
+            </div>
+        </header>
+
+        <!-- Game Board: 4x4 Grid -->
+        <main class="flex-grow flex items-center justify-center w-full px-4 max-w-sm">
+            <div id="game-board" class="grid grid-cols-4 gap-3 w-full aspect-square bg-white p-3 rounded-2xl shadow-xl border-4 border-lime-200">
+                <!-- Cards generated by JS -->
+            </div>
+        </main>
+
+        <!-- Hint Footer -->
+        <footer class="w-full max-w-sm px-6 mt-4 mb-4 text-center">
+            <p class="text-sm text-lime-700 font-medium opacity-70">You got this, Narky Shark!</p>
+        </footer>
+    </div>
+
+    <!-- PRIZE MODAL -->
+    <div id="prize-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center hidden backdrop-blur-md">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-[90%] text-center shadow-2xl relative overflow-hidden paris-bg mx-auto fade-in">
+            
+            <!-- Decorative Strip -->
+            <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-600 via-white to-red-600"></div>
+
+            <div class="mt-6 mb-2 text-8xl animate-bounce">🗼</div>
+            
+            <h2 class="text-3xl font-bold text-slate-800 mb-2">SURPRISE!</h2>
+            <p class="text-slate-600 mb-6 text-lg">Pack your bags, Narky Shark...</p>
+            
+            <div class="bg-white p-5 rounded-xl shadow-inner border border-blue-100 mb-6 transform rotate-1">
+                <p class="text-xs text-slate-400 uppercase tracking-widest mb-1 font-bold">Destination</p>
+                <div class="text-4xl font-extrabold text-blue-600 tracking-tight">PARIS! 🇫🇷</div>
+                <div class="text-sm text-slate-500 mt-2 font-medium">Croissants, Wine & Us</div>
+            </div>
+
+            <button onclick="location.reload()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/30">
+                Best Birthday Ever! ❤️
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Intro Logic ---
+        function nextSlide(slideNumber) {
+            // Hide all slides first (simple approach)
+            document.getElementById('slide-1').classList.add('hidden');
+            document.getElementById('slide-2').classList.add('hidden');
+            document.getElementById('slide-3').classList.add('hidden');
+
+            // Show requested slide with animation
+            const nextEl = document.getElementById('slide-' + slideNumber);
+            nextEl.classList.remove('hidden');
+            nextEl.classList.add('fade-in');
+        }
+
+        function startGame() {
+            const introContainer = document.getElementById('intro-container');
+            // Fade out intro
+            introContainer.style.transition = 'opacity 0.5s';
+            introContainer.style.opacity = '0';
+            
+            setTimeout(() => {
+                introContainer.classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+                document.getElementById('game-screen').classList.add('fade-in');
+                initBoard();
+            }, 500);
+        }
+
+        // --- Game Logic ---
+        const emojis = [
+            '🦈', // Narky Shark
+            '🐂', // Highland Cow 
+            '🗼', // Paris
+            '🥐', // Croissant
+            '🎂', // Cake
+            '🇫🇷', // Flag
+            '🍷', // Wine
+            '🧀', // Cheese (Swapped Love for Cheese as it feels more French/Cute!)
+        ];
+
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let matchesFound = 0;
+        let moves = 0;
+
+        const boardEl = document.getElementById('game-board');
+        const moveCounterEl = document.getElementById('move-counter');
+        const prizeModal = document.getElementById('prize-modal');
+
+        function initBoard() {
+            boardEl.innerHTML = '';
+            matchesFound = 0;
+            moves = 0;
+            moveCounterEl.innerText = '0';
+            
+            const gamePairs = [...emojis, ...emojis];
+            gamePairs.sort(() => 0.5 - Math.random());
+
+            gamePairs.forEach((emoji, index) => {
+                const card = createCard(emoji, index);
+                boardEl.appendChild(card);
+            });
+        }
+
+        function createCard(emoji, index) {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.dataset.emoji = emoji;
+
+            card.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-front"></div>
+                    <div class="card-back">
+                        <span class="emoji-content">${emoji}</span>
+                    </div>
+                </div>
+            `;
+
+            card.addEventListener('click', flipCard);
+            return card;
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+            if (this.classList.contains('matched')) return;
+
+            this.classList.add('flipped');
+
+            if (!firstCard) {
+                firstCard = this;
+                return;
+            }
+
+            secondCard = this;
+            incrementMoves();
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards() {
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+            matchesFound++;
+            resetBoardVars();
+
+            if (matchesFound === emojis.length) {
+                revealPrize();
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                resetBoardVars();
+            }, 1000);
+        }
+
+        function resetBoardVars() {
+            [firstCard, secondCard] = [null, null];
+            lockBoard = false;
+        }
+
+        function incrementMoves() {
+            moves++;
+            moveCounterEl.innerText = moves;
+        }
+
+        function revealPrize() {
+            setTimeout(() => {
+                // Launch Confetti
+                const duration = 5000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 7,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#ef4444', '#3b82f6', '#ffffff']
+                    });
+                    confetti({
+                        particleCount: 7,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#ef4444', '#3b82f6', '#ffffff']
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+
+                prizeModal.classList.remove('hidden');
+            }, 800);
+        }
+    </script>
+</body>
+</html>
