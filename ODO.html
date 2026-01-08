@@ -126,6 +126,48 @@
             border-left: 4px solid var(--odo-black);
             padding-left: 1rem;
         }
+
+        /* Detailed Budget Table Styling */
+        .budget-table {
+            width: 100%;
+            font-size: 0.875rem;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .budget-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            background-color: #f3f4f6;
+            color: #374151;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .budget-table td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            color: #4b5563;
+        }
+        .budget-table tr:last-child td {
+            border-bottom: none;
+        }
+        .budget-table .sub-header td {
+            background-color: #f9fafb;
+            font-weight: 700;
+            color: #111827;
+            font-size: 0.8rem;
+            padding-top: 1rem;
+        }
+        .budget-table .total-row td {
+            background-color: #1a1a1a;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .indent {
+            padding-left: 2rem !important;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -218,11 +260,11 @@
 
                         <div class="grid grid-cols-3 gap-4 text-center">
                             <div>
-                                <p class="text-3xl font-bold">96</p>
+                                <p class="text-3xl font-bold" id="hero-perf">--</p>
                                 <p class="text-xs uppercase font-bold mt-1">Performances</p>
                             </div>
                             <div>
-                                <p class="text-3xl font-bold">600</p>
+                                <p class="text-3xl font-bold" id="hero-seats">--</p>
                                 <p class="text-xs uppercase font-bold mt-1">Seats</p>
                             </div>
                             <div>
@@ -315,18 +357,18 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-2 gap-16 items-center">
                 <div>
-                    <h2 class="text-4xl font-bold mb-6">The Venue: Cowbarn</h2>
+                    <h2 class="text-4xl font-bold mb-6">The Venue: Udderbelly</h2>
                     <p class="text-lg text-gray-600 mb-6">
-                        Located in the heart of the festival at <strong>Bristo Square</strong>, Cowbarn (Reid Concert Hall) is a prestigious, high-capacity venue perfectly suited for ambitious mid-to-large scale performances.
+                        The Udderbelly is Underbelly’s purpose-built venue inside an enormous upside-down purple cow which has been a focal point of the Edinburgh Fringe since 2006. This is the most talked about and most photographed venue of the Fringe. An exciting performance space that seats 410 in three raked seating banks on three sides. Perfect for a wide range of large-scale productions.
                     </p>
                     <ul class="space-y-4 text-gray-600">
                         <li class="flex items-center gap-3">
                             <i data-lucide="map-pin" class="text-odo-red"></i>
-                            <span><strong>Prime Location:</strong> Next to the bustling Bristo Square hub.</span>
+                            <span><strong>Prime Location:</strong> In the heart of Underbelly's location at George Square.</span>
                         </li>
                         <li class="flex items-center gap-3">
                             <i data-lucide="users" class="text-odo-red"></i>
-                            <span><strong>Capacity:</strong> 276 seats (204 fixed rake, 72 front rows).</span>
+                            <span><strong>Capacity:</strong> 410 seats</span>
                         </li>
                         <li class="flex items-center gap-3">
                             <i data-lucide="mic" class="text-odo-red"></i>
@@ -334,14 +376,14 @@
                         </li>
                         <li class="flex items-center gap-3">
                             <i data-lucide="maximize" class="text-odo-red"></i>
-                            <span><strong>Stage:</strong> Large raised stage (6m x 4m) allowing for impressive set design.</span>
+                            <span><strong>Stage:</strong> Large stage allowing for impressive set design.</span>
                         </li>
                     </ul>
                 </div>
                 <div class="relative rounded-2xl overflow-hidden shadow-2xl transform rotate-2 border-4 border-black">
-                    <img src="ODO-images/Cowbarn.jpg" alt="Underbelly Cowbarn Venue" class="w-full h-full object-cover">
+                    <img src="ODO-images/TheCow.png" alt="Underbelly Udderbelly Venue" class="w-full h-full object-cover">
                     <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black to-transparent p-6">
-                        <p class="text-white font-bold">Underbelly Cowbarn • Edinburgh</p>
+                        <p class="text-white font-bold">Underbelly Udderbelly • Edinburgh</p>
                     </div>
                 </div>
             </div>
@@ -374,7 +416,7 @@
                     <div class="relative flex flex-col md:flex-row-reverse items-center justify-between group">
                         <div class="md:w-5/12 text-left pl-8 mb-4 md:mb-0">
                             <h3 class="text-2xl font-bold text-white group-hover:text-odo-yellow transition">Edinburgh Fringe Premiere</h3>
-                            <p class="text-gray-400 mt-2">Exclusive run at Underbelly Cowbarn (5th - 31st Aug). Critical reviews, industry showcases, and brand launch.</p>
+                            <p class="text-gray-400 mt-2">Exclusive run at Underbelly Udderbelly (7th - 31st Aug). Critical reviews, industry showcases, and brand launch.</p>
                         </div>
                         <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-white rounded-full border-4 border-gray-900 z-10 hidden md:block"></div>
                         <div class="md:w-5/12 text-right pr-8">
@@ -719,6 +761,9 @@
 
             </div>
         </div>
+        
+        <!-- SVG Zig Zag Divider -->
+        <div class="zigzag-divider"></div>
     </section>
 
     <!-- Capitalisation Section (Refined) -->
@@ -739,15 +784,15 @@
                                     <span class="text-gray-600 font-semibold">Phase 1: Pre-Production & Edinburgh Season</span>
                                     <span class="text-xs text-gray-400">Includes Creative Fees, Workshop, Physical Build & Festival Run</span>
                                 </div>
-                                <span class="font-bold text-xl">£135,028</span>
+                                <span class="font-bold text-xl" id="ask-p1">--</span>
                             </div>
                             <div class="flex justify-between items-center border-b border-gray-100 pb-3">
                                 <span class="text-gray-600 font-semibold">Phase 2: Mid-Scale UK Tour</span>
-                                <span class="font-bold text-xl">£291,223</span>
+                                <span class="font-bold text-xl" id="ask-p2">--</span>
                             </div>
                             <div class="flex justify-between items-center pt-2">
                                 <span class="font-bold text-lg text-black">Total Capitalisation</span>
-                                <span class="font-bold text-3xl text-odo-red">£426,251</span>
+                                <span class="font-bold text-3xl text-odo-red" id="ask-total">--</span>
                             </div>
                         </div>
                         <p class="text-sm text-gray-500 mt-4">We are seeking subscriptions in multiples of £10,000 (a number of half units may be available).</p>
@@ -790,7 +835,7 @@
                             <div class="h-4 bg-gray-800 rounded-full overflow-hidden">
                                 <div class="h-full bg-green-500 w-[32%]"></div>
                             </div>
-                            <div class="text-right mt-1 font-bold text-xl">£42,832</div>
+                            <div class="text-right mt-1 font-bold text-xl" id="ttr-p1">--</div>
                         </div>
 
                         <div>
@@ -801,13 +846,13 @@
                             <div class="h-4 bg-gray-800 rounded-full overflow-hidden">
                                 <div class="h-full bg-green-500 w-[25%]"></div>
                             </div>
-                            <div class="text-right mt-1 font-bold text-xl">£25,884</div>
+                            <div class="text-right mt-1 font-bold text-xl" id="ttr-p2">--</div>
                         </div>
                     </div>
 
                     <div class="mt-8 p-4 bg-white/10 rounded-xl border border-white/10">
                         <p class="text-sm text-gray-300">
-                            <strong>Impact:</strong> This rebate effectively lowers the net cost of the production, accelerating the path to recoupment for investors. The estimated amount of relief claimable is approx. £68,716 which will be applied to the recoupment of capital.
+                            <strong>Impact:</strong> This rebate effectively lowers the net cost of the production, accelerating the path to recoupment for investors. The estimated amount of relief claimable is approx. <span id="ttr-total">--</span> which will be applied to the recoupment of capital.
                         </p>
                     </div>
                 </div>
@@ -815,115 +860,130 @@
         </div>
     </section>
 
-    <!-- Top Sheet Budget Section (New) -->
+    <!-- Top Sheet Budget Section (Detailed) -->
     <section id="budget" class="py-20 bg-white border-b border-gray-100">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold mb-4">Top Sheet Budget</h2>
-                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Breakdown of estimated production costs for both phases.</p>
+                <h2 class="text-4xl font-bold mb-4">Detailed Budget Breakdown</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Comprehensive line-item estimates for production and running costs.</p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-12">
+            <div class="grid lg:grid-cols-2 gap-12">
                 
                 <!-- Edinburgh Budget Table -->
-                <div class="bg-gray-50 rounded-2xl p-8 border border-gray-200">
-                    <div class="flex items-center justify-between mb-6 border-b border-gray-200 pb-4">
-                        <h3 class="text-xl font-bold">Phase 1: Edinburgh</h3>
-                        <span class="bg-odo-yellow text-black text-xs font-bold px-2 py-1 rounded">2026</span>
+                <div class="bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="bg-odo-yellow p-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-bold text-black">Edinburgh 2026</h3>
+                            <span class="bg-black text-white text-xs font-bold px-2 py-1 rounded">PHASE 1</span>
+                        </div>
+                        <p class="text-xs text-black/80 mt-1">Pre-Production & Festival Run</p>
                     </div>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Fees</span>
-                            <span class="font-medium">£23,786</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Physical Production</span>
-                            <span class="font-medium">£27,000</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Salaries</span>
-                            <span class="font-medium">£29,605</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Rehearsals & Casting</span>
-                            <span class="font-medium">£5,500</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Allowances</span>
-                            <span class="font-medium">£19,561</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Marketing & PR</span>
-                            <span class="font-medium">£8,100</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">General & Admin / Insurance</span>
-                            <span class="font-medium">£11,950</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Contingency</span>
-                            <span class="font-medium">£9,526</span>
-                        </div>
-                        <div class="flex justify-between border-t border-gray-300 pt-3 mt-3">
-                            <span class="font-bold text-gray-900">Total Estimated Budget</span>
-                            <span class="font-bold text-gray-900">£135,028</span>
-                        </div>
-                    </div>
+                    
+                    <table class="budget-table" id="table-p1">
+                        <!-- Content Generated by JS -->
+                    </table>
                 </div>
 
                 <!-- Tour Budget Table -->
-                <div class="bg-gray-50 rounded-2xl p-8 border border-gray-200">
-                    <div class="flex items-center justify-between mb-6 border-b border-gray-200 pb-4">
-                        <h3 class="text-xl font-bold">Phase 2: UK Tour</h3>
-                        <span class="bg-odo-blue text-white text-xs font-bold px-2 py-1 rounded">2027</span>
+                <div class="bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="bg-odo-blue p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-bold">UK Tour 2027</h3>
+                            <span class="bg-white text-odo-blue text-xs font-bold px-2 py-1 rounded">PHASE 2</span>
+                        </div>
+                        <p class="text-xs opacity-90 mt-1">Mid-Scale Touring Production</p>
                     </div>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Fees</span>
-                            <span class="font-medium">£35,500</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Physical Production</span>
-                            <span class="font-medium">£50,300</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Salaries</span>
-                            <span class="font-medium">£87,877</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Rehearsals</span>
-                            <span class="font-medium">£5,500</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Allowances</span>
-                            <span class="font-medium">£24,570</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Marketing & PR</span>
-                            <span class="font-medium">£62,500</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">General & Admin / Insurance</span>
-                            <span class="font-medium">£8,900</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Contingency</span>
-                            <span class="font-medium">£16,076</span>
-                        </div>
-                        <div class="flex justify-between border-t border-gray-300 pt-3 mt-3">
-                            <span class="font-bold text-gray-900">Total Estimated Budget</span>
-                            <span class="font-bold text-gray-900">£291,223</span>
-                        </div>
-                    </div>
+                    
+                    <table class="budget-table" id="table-p2">
+                         <!-- Content Generated by JS -->
+                    </table>
                 </div>
 
             </div>
         </div>
     </section>
 
+    <!-- Key Box Office Metrics Section (New) -->
+    <section class="py-20 bg-gray-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Key Box Office Metrics</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">Revenue potential based on conservative average ticket yields.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12">
+                <!-- Edinburgh Metrics -->
+                <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-odo-yellow rounded-bl-full -mr-4 -mt-4 opacity-20 group-hover:opacity-40 transition"></div>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-odo-yellow rounded-full flex items-center justify-center border-2 border-black text-black">
+                            <i data-lucide="map-pin" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold">Edinburgh Season</h3>
+                            <p class="text-sm text-gray-500 font-bold uppercase">Underbelly Udderbelly</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-y-6 gap-x-4">
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Capacity</p>
+                            <p class="text-2xl font-bold text-black"><span id="metric-p1-seats">--</span> <span class="text-sm text-gray-400 font-normal">Seats</span></p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Performances</p>
+                            <p class="text-2xl font-bold text-black" id="metric-p1-perf">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Avg. Ticket</p>
+                            <p class="text-2xl font-bold text-black" id="metric-p1-yield">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Gross Potential</p>
+                            <p class="text-2xl font-bold text-odo-red" id="metric-p1-gross">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tour Metrics -->
+                <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-odo-blue rounded-bl-full -mr-4 -mt-4 opacity-20 group-hover:opacity-40 transition"></div>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-odo-blue rounded-full flex items-center justify-center border-2 border-black text-white">
+                            <i data-lucide="truck" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold">UK Tour</h3>
+                            <p class="text-sm text-gray-500 font-bold uppercase">Mid-Scale Venues</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-y-6 gap-x-4">
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Capacity</p>
+                            <p class="text-2xl font-bold text-black"><span id="metric-p2-seats">--</span> <span class="text-sm text-gray-400 font-normal">Seats</span></p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Performances</p>
+                            <p class="text-2xl font-bold text-black" id="metric-p2-perf">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Avg. Ticket</p>
+                            <p class="text-2xl font-bold text-black" id="metric-p2-yield">--</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Gross Potential</p>
+                            <p class="text-2xl font-bold text-odo-blue" id="metric-p2-gross">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Financial Breakdown -->
     <section id="financials" class="py-20 bg-gray-50">
-        <!-- ... (Existing Financial Content) ... -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <h2 class="text-4xl font-bold mb-4">Financial Overview</h2>
@@ -936,7 +996,7 @@
                     <div class="bg-black p-6 text-white flex justify-between items-center">
                         <div>
                             <h3 class="text-xl font-bold">Phase 1: Pre-Production & Edinburgh Season</h3>
-                            <p class="text-sm text-gray-400">Underbelly Cowbarn (2026)</p>
+                            <p class="text-sm text-gray-400">Underbelly Udderbelly (2026)</p>
                         </div>
                         <span class="px-3 py-1 bg-odo-yellow text-black text-xs font-bold rounded uppercase">Launch Pad</span>
                     </div>
@@ -949,15 +1009,15 @@
                             <div class="space-y-4 mb-8">
                                 <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-2">
                                     <span class="text-gray-500 font-medium">Total Capitalization</span>
-                                    <span class="font-bold text-xl">£135,028</span>
+                                    <span class="font-bold text-xl" id="summ-p1-total">--</span>
                                 </div>
                                 <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-2">
                                     <span class="text-gray-500 font-medium">Est. Theatre Tax Relief (TTR)</span>
-                                    <span class="font-bold text-green-600">£42,832</span>
+                                    <span class="font-bold text-green-600" id="summ-p1-ttr">--</span>
                                 </div>
                                 <div class="flex justify-between items-end bg-gray-50 p-3 rounded-lg">
                                     <span class="font-bold text-gray-900">Net Investment (Post TTR)</span>
-                                    <span class="font-bold text-xl">~£92,196</span>
+                                    <span class="font-bold text-xl" id="summ-p1-net">--</span>
                                 </div>
                             </div>
                         </div>
@@ -989,7 +1049,7 @@
                             <input type="range" min="10" max="100" step="10" value="70" id="capacity-slider" class="mb-2">
                             <div class="flex justify-between text-xs text-gray-400 px-1">
                                 <span>10%</span>
-                                <span>Break Even (~60%)</span>
+                                <span>Break Even (~55%)</span>
                                 <span>100%</span>
                             </div>
                         </div>
@@ -1012,7 +1072,7 @@
 
                             <!-- Breakdown of Deductions -->
                             <div class="financial-row bg-gray-50/50">
-                                <span class="text-gray-500 pl-2 border-l-2 border-gray-300 text-xs">Theatre Split (30%)</span>
+                                <span class="text-gray-500 pl-2 border-l-2 border-gray-300 text-xs">Theatre Split (Min. Guarantee Applies)</span>
                                 <span class="text-gray-500 text-xs" id="split-display">(£0)</span>
                             </div>
                             <div class="financial-row bg-gray-50/50 border-b border-gray-100">
@@ -1026,12 +1086,12 @@
                             </div>
                             
                             <div class="financial-row">
-                                <span class="text-gray-600">Budget (Post TTR & Edin Recoup)</span>
-                                <span class="text-red-500">£225,933</span> <!-- (291,223 - 22,458 Edin Recoup - 42,832 Edin TTR) Approx -->
+                                <span class="text-gray-600">Recoupment Budget (Budget minus TTR and 70% Edinburgh receipts)</span>
+                                <span class="text-red-500" id="recoupment-point-display">--</span>
                             </div>
 
                             <div class="financial-row result" id="result-row">
-                                <span class="font-bold">Net Profit / (Loss)</span>
+                                <span class="font-bold">Tour Profit / (Loss)</span>
                                 <span class="font-bold" id="pnl-display">£0</span>
                             </div>
                         </div>
@@ -1053,131 +1113,22 @@
                                 <th class="px-4 py-3 font-bold text-gray-700">Capacity</th>
                                 <th class="px-4 py-3 font-medium text-gray-500">Gross Box Office</th>
                                 <th class="px-4 py-3 font-medium text-gray-500">Net Box Office</th>
-                                <th class="px-4 py-3 font-medium text-gray-500">Split (30%)</th>
+                                <th class="px-4 py-3 font-medium text-gray-500">Split (30% or MG)</th>
                                 <th class="px-4 py-3 font-medium text-gray-500">Royalties (15.4%)</th>
                                 <th class="px-4 py-3 font-bold text-odo-blue">Net Receipts</th>
-                                <th class="px-4 py-3 font-medium text-gray-500">Budget (Post TTR & Edin Recoup)</th>
+                                <th class="px-4 py-3 font-medium text-gray-500">Recoupment Budget</th>
                                 <th class="px-4 py-3 font-bold text-gray-900">Profit / (Loss)</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <!-- 100% -->
-                            <tr class="hover:bg-gray-50 bg-green-100">
-                                <td class="px-4 py-3 font-bold">100%</td>
-                                <td class="px-4 py-3">£950,400</td>
-                                <td class="px-4 py-3">£744,480</td>
-                                <td class="px-4 py-3 text-red-400">(£223,344)</td>
-                                <td class="px-4 py-3 text-red-400">(£114,650)</td>
-                                <td class="px-4 py-3 font-medium">£406,486</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-green-700">£163,605</td>
-                            </tr>
-                            <!-- 90% -->
-                            <tr class="hover:bg-gray-50 bg-green-50/70">
-                                <td class="px-4 py-3 font-bold">90%</td>
-                                <td class="px-4 py-3">£855,360</td>
-                                <td class="px-4 py-3">£670,032</td>
-                                <td class="px-4 py-3 text-red-400">(£201,010)</td>
-                                <td class="px-4 py-3 text-red-400">(£103,185)</td>
-                                <td class="px-4 py-3 font-medium">£365,838</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-green-600">£122,957</td>
-                            </tr>
-                            <!-- 80% -->
-                            <tr class="hover:bg-gray-50 bg-green-50/50">
-                                <td class="px-4 py-3 font-bold">80%</td>
-                                <td class="px-4 py-3">£760,320</td>
-                                <td class="px-4 py-3">£595,584</td>
-                                <td class="px-4 py-3 text-red-400">(£178,675)</td>
-                                <td class="px-4 py-3 text-red-400">(£91,720)</td>
-                                <td class="px-4 py-3 font-medium">£325,189</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-green-600">£82,308</td>
-                            </tr>
-                            <!-- 70% -->
-                            <tr class="hover:bg-gray-50 bg-green-50/30">
-                                <td class="px-4 py-3 font-bold">70%</td>
-                                <td class="px-4 py-3">£665,280</td>
-                                <td class="px-4 py-3">£521,136</td>
-                                <td class="px-4 py-3 text-red-400">(£156,341)</td>
-                                <td class="px-4 py-3 text-red-400">(£80,255)</td>
-                                <td class="px-4 py-3 font-medium">£284,541</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-green-600">£41,660</td>
-                            </tr>
-                            <!-- 60% -->
-                            <tr class="hover:bg-gray-50 bg-yellow-50/30">
-                                <td class="px-4 py-3 font-bold">60%</td>
-                                <td class="px-4 py-3">£570,240</td>
-                                <td class="px-4 py-3">£446,688</td>
-                                <td class="px-4 py-3 text-red-400">(£134,006)</td>
-                                <td class="px-4 py-3 text-red-400">(£68,790)</td>
-                                <td class="px-4 py-3 font-medium">£243,892</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-green-600">£1,011</td>
-                            </tr>
-                            <!-- 50% -->
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-bold">50%</td>
-                                <td class="px-4 py-3">£475,200</td>
-                                <td class="px-4 py-3">£372,240</td>
-                                <td class="px-4 py-3 text-red-400">(£111,672)</td>
-                                <td class="px-4 py-3 text-red-400">(£57,325)</td>
-                                <td class="px-4 py-3 font-medium">£203,243</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£39,638)</td>
-                            </tr>
-                            <!-- 40% -->
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-bold">40%</td>
-                                <td class="px-4 py-3">£380,160</td>
-                                <td class="px-4 py-3">£297,792</td>
-                                <td class="px-4 py-3 text-red-400">(£89,338)</td>
-                                <td class="px-4 py-3 text-red-400">(£45,860)</td>
-                                <td class="px-4 py-3 font-medium">£162,595</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£80,286)</td>
-                            </tr>
-                            <!-- 30% -->
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-bold">30%</td>
-                                <td class="px-4 py-3">£285,120</td>
-                                <td class="px-4 py-3">£223,344</td>
-                                <td class="px-4 py-3 text-red-400">(£67,003)</td>
-                                <td class="px-4 py-3 text-red-400">(£34,395)</td>
-                                <td class="px-4 py-3 font-medium">£121,946</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£120,935)</td>
-                            </tr>
-                            <!-- 20% -->
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-bold">20%</td>
-                                <td class="px-4 py-3">£190,080</td>
-                                <td class="px-4 py-3">£148,896</td>
-                                <td class="px-4 py-3 text-red-400">(£44,669)</td>
-                                <td class="px-4 py-3 text-red-400">(£22,930)</td>
-                                <td class="px-4 py-3 font-medium">£81,297</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£161,584)</td>
-                            </tr>
-                            <!-- 10% -->
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-bold">10%</td>
-                                <td class="px-4 py-3">£95,040</td>
-                                <td class="px-4 py-3">£74,448</td>
-                                <td class="px-4 py-3 text-red-400">(£22,334)</td>
-                                <td class="px-4 py-3 text-red-400">(£11,465)</td>
-                                <td class="px-4 py-3 font-medium">£40,649</td>
-                                <td class="px-4 py-3 text-gray-400">£242,881</td>
-                                <td class="px-4 py-3 font-bold text-red-600">(£202,232)</td>
-                            </tr>
+                        <tbody class="divide-y divide-gray-100" id="recoupment-table-body">
+                            <!-- JS Generated Rows -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <p class="text-center text-xs text-gray-400 mt-6">
-                *Figures based on Budget V21.11.25. Strictly Confidential. TTR estimated at 45%. 
+                *Figures based on current budget estimates. Strictly Confidential. TTR estimated at 45%. 
                 Net Box Office calculated after VAT and commissions.
             </p>
         </div>
@@ -1279,10 +1230,280 @@
     </div>
 
     <script>
+        // =========================================================================
+        //  FINANCIAL DATA CONFIGURATION
+        //  Edit these figures to update the prospectus tables and calculations
+        // =========================================================================
+        
+        const FINANCIAL_DATA = {
+            // PHASE 1: Edinburgh
+            phase1: {
+                ttrEstimate: 42832,
+                metrics: {
+                    capacity:410,
+                    performances:22,
+                    avgTicket:14.00
+                },
+                breakdown: [
+                    { name: "FEES", cost:27736},
+                    { name: "PHYSICAL PRODUCTION", cost:28000},
+                    { name: "SALARIES", cost:29605},
+                    { name: "ALLOWANCES", cost:19561},
+                    { name: "BENEFITS", cost:8526},
+                    { name: "CASTING & REHEARSALS", cost:5500},
+                    { name: "THEATRE", cost:7500},
+                    { name: "PRESS & MARKETING", cost:8100},
+                    { name: "SUNDRY", cost:0},
+                    { name: "GENERAL & ADMINISTRATIVE", cost:500}
+                ]
+            },
+
+            // PHASE 2: Tour
+            phase2: {
+                ttrEstimate: 63276,
+                metrics: {
+                    capacity:600,
+                    performances:96,
+                    avgTicket:20.00
+                },
+                breakdown: [
+                    { name: "FEES", cost:33500},
+                    { name: "PHYSICAL PRODUCTION", cost:32900},
+                    { name: "SALARIES", cost:101905},
+                    { name: "ALLOWANCES", cost:24570},
+                    { name: "BENEFITS", cost:29349},
+                    { name: "CASTING & REHEARSALS", cost:5500},
+                    { name: "THEATRE", cost:0},
+                    { name: "PRESS & MARKETING", cost:83668},
+                    { name: "SUNDRY", cost:0},
+                    { name: "GENERAL & ADMINISTRATIVE", cost:12000}
+                ]
+            },
+
+            // RECOUPMENT LOGIC (Tour Phase)
+            recoupment: {
+                // How much of the Gross Box Office remains after VAT, Commissions, Credit Card fees?
+                // Default: ~78.33% based on historical data (902,400 Net / 1,152,000 Gross)
+                netBoxOfficeMargin: 0.78333333, 
+                minGuarantee: 81216,
+                theatreSplitPercent: 0.30,
+                royaltiesPercent: 0.154
+            }
+        };
+        // =========================================================================
+        //  APPLICATION LOGIC
+        // =========================================================================
+
         // Initialize Icons
         lucide.createIcons();
 
-        // Mobile Menu
+        // Helper: Format Currency
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(num);
+        }
+
+        // Helper: Calculate Total Budget from Breakdown
+        function calculateTotalBudget(phase) {
+            let total = 0;
+            phase.breakdown.forEach(item => {
+                total += item.cost;
+            });
+            return total;
+        }
+
+        // Helper: Calculate Gross Potential
+        function calculateGross(metrics) {
+            return metrics.capacity * metrics.performances * metrics.avgTicket;
+        }
+
+        // Global computed values for reuse
+        let COMPUTED = {
+            p1TotalBudget: 0,
+            p2TotalBudget: 0,
+            p1Gross: 0,
+            p2Gross: 0,
+            maxNetBoxOffice: 0,
+            recoupmentPoint: 0
+        };
+
+        // 1. POPULATE STATIC DATA
+        function populateStaticData() {
+            // --- CALCULATION PHASE ---
+            
+            // Calculate Totals
+            COMPUTED.p1TotalBudget = calculateTotalBudget(FINANCIAL_DATA.phase1);
+            COMPUTED.p2TotalBudget = calculateTotalBudget(FINANCIAL_DATA.phase2);
+            
+            // Calculate Gross Potentials
+            COMPUTED.p1Gross = calculateGross(FINANCIAL_DATA.phase1.metrics);
+            COMPUTED.p2Gross = calculateGross(FINANCIAL_DATA.phase2.metrics);
+
+            // Calculate Recoupment Baseline (Using Phase 2 Max Potential)
+            // Net Box Office is Gross * Margin (deducting VAT/Fees)
+            COMPUTED.maxNetBoxOffice = COMPUTED.p2Gross * FINANCIAL_DATA.recoupment.netBoxOfficeMargin;
+            
+            // Recoupment Point = Total Tour Budget - Tax Relief
+            COMPUTED.recoupmentPoint = COMPUTED.p2TotalBudget - FINANCIAL_DATA.phase2.ttrEstimate;
+
+
+            // --- DOM UPDATE PHASE ---
+
+            // Hero Stats
+            document.getElementById('hero-seats').innerText = FINANCIAL_DATA.phase2.metrics.capacity;
+            document.getElementById('hero-perf').innerText = FINANCIAL_DATA.phase2.metrics.performances;
+
+            // Phase 1 Metrics Display
+            document.getElementById('metric-p1-seats').innerText = FINANCIAL_DATA.phase1.metrics.capacity;
+            document.getElementById('metric-p1-perf').innerText = FINANCIAL_DATA.phase1.metrics.performances;
+            document.getElementById('metric-p1-yield').innerText = '£' + FINANCIAL_DATA.phase1.metrics.avgTicket.toFixed(2);
+            document.getElementById('metric-p1-gross').innerText = formatCurrency(COMPUTED.p1Gross);
+            
+            // Phase 2 Metrics Display
+            document.getElementById('metric-p2-seats').innerText = FINANCIAL_DATA.phase2.metrics.capacity;
+            document.getElementById('metric-p2-perf').innerText = FINANCIAL_DATA.phase2.metrics.performances;
+            document.getElementById('metric-p2-yield').innerText = '£' + FINANCIAL_DATA.phase2.metrics.avgTicket.toFixed(2);
+            document.getElementById('metric-p2-gross').innerText = formatCurrency(COMPUTED.p2Gross);
+
+            // Capitalisation Section (The Ask)
+            document.getElementById('ask-p1').innerText = formatCurrency(COMPUTED.p1TotalBudget);
+            document.getElementById('ask-p2').innerText = formatCurrency(COMPUTED.p2TotalBudget);
+            
+            const totalCap = COMPUTED.p1TotalBudget + COMPUTED.p2TotalBudget;
+            document.getElementById('ask-total').innerText = formatCurrency(totalCap);
+
+            // TTR Display
+            document.getElementById('ttr-p1').innerText = formatCurrency(FINANCIAL_DATA.phase1.ttrEstimate);
+            document.getElementById('ttr-p2').innerText = formatCurrency(FINANCIAL_DATA.phase2.ttrEstimate);
+            document.getElementById('ttr-total').innerText = formatCurrency(FINANCIAL_DATA.phase1.ttrEstimate + FINANCIAL_DATA.phase2.ttrEstimate);
+
+            // Financial Summary Card Phase 1
+            document.getElementById('summ-p1-total').innerText = formatCurrency(COMPUTED.p1TotalBudget);
+            document.getElementById('summ-p1-ttr').innerText = formatCurrency(FINANCIAL_DATA.phase1.ttrEstimate);
+            document.getElementById('summ-p1-net').innerText = "~" + formatCurrency(COMPUTED.p1TotalBudget - FINANCIAL_DATA.phase1.ttrEstimate);
+        }
+
+        // 2. GENERATE BUDGET TABLES
+        function renderBudgetTable(containerId, phaseData, totalBudget) {
+            const table = document.getElementById(containerId);
+            table.innerHTML = '';
+            
+            let html = '';
+            
+            // Header for aesthetics
+            html += `<tr class="sub-header"><td colspan="2">BUDGET CATEGORIES</td></tr>`;
+
+            phaseData.breakdown.forEach(item => {
+                html += `<tr><td class="indent">${item.name}</td><td class="text-right">${formatCurrency(item.cost)}</td></tr>`;
+            });
+
+            // Grand Total
+            html += `<tr class="total-row"><td>TOTAL BUDGET</td><td class="text-right">${formatCurrency(totalBudget)}</td></tr>`;
+
+            table.innerHTML = html;
+        }
+
+        // 3. RECOUPMENT SCENARIO CALCULATOR
+        function calculateScenario(percentage) {
+            // Gross at this % capacity
+            const currentGross = COMPUTED.p2Gross * (percentage / 100);
+            
+            // Net Box Office (deduct VAT/Commissions based on margin)
+            const currentNetBox = currentGross * FINANCIAL_DATA.recoupment.netBoxOfficeMargin;
+            
+            // Deductions
+            // Theatre split is higher of: Percentage share OR Minimum Guarantee
+            const theatreSplit = Math.max(currentNetBox * FINANCIAL_DATA.recoupment.theatreSplitPercent, FINANCIAL_DATA.recoupment.minGuarantee);
+            
+            const royalties = currentNetBox * FINANCIAL_DATA.recoupment.royaltiesPercent;
+            
+            const netReceipts = currentNetBox - theatreSplit - royalties;
+            const profit = netReceipts - COMPUTED.recoupmentPoint;
+
+            return {
+                capacity: percentage,
+                gross: currentGross,
+                netBox: currentNetBox,
+                split: theatreSplit,
+                royalties: royalties,
+                receipts: netReceipts,
+                profit: profit
+            };
+        }
+
+        // 4. GENERATE RECOUPMENT TABLE
+        function renderRecoupmentTable() {
+            const tbody = document.getElementById('recoupment-table-body');
+            tbody.innerHTML = '';
+            
+            // Percentages from 100 down to 10
+            for (let i = 100; i >= 10; i -= 10) {
+                const data = calculateScenario(i);
+                
+                // Styling Logic
+                const isProfit = data.profit > 0;
+                const profitColorClass = isProfit ? 'text-green-600' : 'text-red-600';
+                const bracketClass = !isProfit ? 'text-red-400' : 'text-gray-500';
+                
+                // Background Highlight
+                let bgClass = 'hover:bg-gray-50';
+                if (i >= 80) bgClass += ' bg-green-50/50';
+                if (i === 100) bgClass = 'hover:bg-gray-50 bg-green-100';
+
+                const row = `
+                    <tr class="${bgClass}">
+                        <td class="px-4 py-3 font-bold">${i}%</td>
+                        <td class="px-4 py-3">${formatCurrency(data.gross)}</td>
+                        <td class="px-4 py-3">${formatCurrency(data.netBox)}</td>
+                        <td class="px-4 py-3 ${bracketClass}">(${formatCurrency(data.split)})</td>
+                        <td class="px-4 py-3 ${bracketClass}">(${formatCurrency(data.royalties)})</td>
+                        <td class="px-4 py-3 font-medium ${data.receipts < 0 ? 'text-red-500' : ''}">${formatCurrency(data.receipts)}</td>
+                        <td class="px-4 py-3 text-gray-400">${formatCurrency(COMPUTED.recoupmentPoint)}</td>
+                        <td class="px-4 py-3 font-bold ${profitColorClass}">${data.profit < 0 ? '(' + formatCurrency(Math.abs(data.profit)) + ')' : formatCurrency(data.profit)}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            }
+        }
+
+        // 5. INTERACTIVE SLIDER LOGIC
+        const slider = document.getElementById('capacity-slider');
+        const capDisplay = document.getElementById('capacity-display');
+        const grossDisplay = document.getElementById('gross-display');
+        const netBoxDisplay = document.getElementById('net-box-display');
+        const splitDisplay = document.getElementById('split-display');
+        const royaltiesDisplay = document.getElementById('royalties-display');
+        const recDisplay = document.getElementById('receipts-display');
+        const pnlDisplay = document.getElementById('pnl-display');
+        const resultRow = document.getElementById('result-row');
+        const recoupDisplay = document.getElementById('recoupment-point-display');
+
+        function updateInteractiveFinancials() {
+            let val = parseInt(slider.value);
+            // Snap to nearest 10
+            val = Math.round(val / 10) * 10;
+            
+            const data = calculateScenario(val);
+
+            // Update DOM
+            capDisplay.innerText = val + "%";
+            grossDisplay.innerText = formatCurrency(data.gross);
+            netBoxDisplay.innerText = formatCurrency(data.netBox);
+            splitDisplay.innerText = "(" + formatCurrency(data.split) + ")";
+            royaltiesDisplay.innerText = "(" + formatCurrency(data.royalties) + ")";
+            recDisplay.innerText = formatCurrency(data.receipts);
+            recoupDisplay.innerText = formatCurrency(COMPUTED.recoupmentPoint);
+
+            // P&L Styling
+            if(data.profit < 0) {
+                pnlDisplay.innerText = "(" + formatCurrency(Math.abs(data.profit)) + ")";
+                resultRow.style.backgroundColor = '#DC2626'; // Red
+            } else {
+                pnlDisplay.innerText = formatCurrency(data.profit);
+                resultRow.style.backgroundColor = '#16A34A'; // Green
+            }
+        }
+
+        // 6. MOBILE MENU HANDLERS
         const btn = document.getElementById('mobile-menu-btn');
         const menu = document.getElementById('mobile-menu');
         const closeBtn = document.getElementById('close-menu');
@@ -1294,76 +1515,17 @@
             link.addEventListener('click', () => menu.classList.remove('open'));
         });
 
-        // Financial Data Logic (Recoupment Schedule)
-        // Base figures at 100% Capacity (derived from PDF Page 4)
-        const MAX_GROSS_BOX_OFFICE = 950400;
-        const MAX_NET_BOX_OFFICE = 744480;
-        // Updated Fixed Budget logic: Tour Budget (291223) - Edin Receipts (22458) - TTR (25884) = ~242881
-        const FIXED_BUDGET = 242881; 
+        // 7. INITIALIZATION SEQUENCE
+        populateStaticData(); // Calculates totals and grosses first
         
-        // Elements
-        const slider = document.getElementById('capacity-slider');
-        const capDisplay = document.getElementById('capacity-display');
-        const grossDisplay = document.getElementById('gross-display');
-        const netBoxDisplay = document.getElementById('net-box-display');
-        const splitDisplay = document.getElementById('split-display');
-        const royaltiesDisplay = document.getElementById('royalties-display');
-        const recDisplay = document.getElementById('receipts-display');
-        const pnlDisplay = document.getElementById('pnl-display');
-        const resultRow = document.getElementById('result-row');
-
-        function formatCurrency(num) {
-            return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(num);
-        }
-
-        function updateFinancials() {
-            let val = parseInt(slider.value);
-            // Snap to nearest 10 for cleaner chart usage, though slider is smooth
-            val = Math.round(val / 10) * 10;
-            
-            const percentage = val / 100;
-
-            // Dynamic Calculations
-            const currentGross = MAX_GROSS_BOX_OFFICE * percentage;
-            const currentNetBox = MAX_NET_BOX_OFFICE * percentage;
-            
-            // Deductions Breakdown
-            const theatreSplit = currentNetBox * 0.30;
-            const royalties = currentNetBox * 0.154; // 15.4%
-            const netReceipts = currentNetBox - theatreSplit - royalties;
-            
-            const profit = netReceipts - FIXED_BUDGET;
-
-            // Update DOM
-            capDisplay.innerText = val + "%";
-            grossDisplay.innerText = formatCurrency(currentGross);
-            netBoxDisplay.innerText = formatCurrency(currentNetBox);
-            
-            splitDisplay.innerText = "(" + formatCurrency(theatreSplit) + ")";
-            royaltiesDisplay.innerText = "(" + formatCurrency(royalties) + ")";
-            
-            recDisplay.innerText = formatCurrency(netReceipts);
-
-            // P&L Styling
-            if(profit < 0) {
-                pnlDisplay.innerText = "(" + formatCurrency(Math.abs(profit)) + ")";
-                resultRow.classList.add('bg-red-600');
-                resultRow.classList.remove('bg-green-600');
-                resultRow.classList.remove('bg-gray-900'); // fallback remove
-                resultRow.style.backgroundColor = '#DC2626'; // Tailwind red-600
-            } else {
-                pnlDisplay.innerText = formatCurrency(profit);
-                resultRow.classList.add('bg-green-600');
-                resultRow.classList.remove('bg-red-600');
-                resultRow.classList.remove('bg-gray-900');
-                resultRow.style.backgroundColor = '#16A34A'; // Tailwind green-600
-            }
-        }
-
-        slider.addEventListener('input', updateFinancials);
-
-        // Init
-        updateFinancials();
+        // Pass the calculated totals to the budget renderers
+        renderBudgetTable('table-p1', FINANCIAL_DATA.phase1, COMPUTED.p1TotalBudget);
+        renderBudgetTable('table-p2', FINANCIAL_DATA.phase2, COMPUTED.p2TotalBudget);
+        
+        renderRecoupmentTable(); // Uses calculated totals
+        
+        slider.addEventListener('input', updateInteractiveFinancials);
+        updateInteractiveFinancials(); // Initial run
 
     </script>
 </body>
