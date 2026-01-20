@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battering Ram 🐏</title>
+    
+    <!-- FALLBACK STYLES (In case Tailwind is slow to load) -->
+    <style>
+        body { background-color: #131F24; color: white; font-family: sans-serif; margin: 0; }
+        #loading-screen { position: fixed; inset: 0; background: #131F24; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    </style>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                fontFamily: {
+                    sans: ['Nunito', 'sans-serif'],
+                },
+                extend: {
+                    colors: {
+                        ram: {
+                            bg: '#131F24',      /* Dark BG */
+                            card: '#202F36',    /* Card BG */
+                            primary: '#58CC02', /* Duo Green */
+                            primaryDark: '#46a302',
+                            secondary: '#CE82FF', /* Purple */
+                            accent: '#1CB0F6',  /* Blue */
+                            text: '#FFFFFF',
+                            muted: '#4B5563',
+                            border: '#37464F'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 3D Button Effect */
+        .btn-3d { transition: all 0.1s; border-bottom-width: 4px; }
+        .btn-3d:active { border-bottom-width: 0px; transform: translateY(4px); }
+        
+        /* Custom Range Slider */
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%;
+            background: #58CC02; cursor: pointer; border: 2px solid white;
+            margin-top: -10px; box-shadow: 0 4px 0 #46a302;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 6px; cursor: pointer; background: #37464F; border-radius: 99px;
+        }
+        
+        /* Utilities */
+        body::-webkit-scrollbar { width: 8px; }
+        body::-webkit-scrollbar-track { background: #131F24; }
+        body::-webkit-scrollbar-thumb { background: #37464F; border-radius: 4px; }
+        .exercise-enter { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        /* Modal Utilities */
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow: hidden; }
+    </style>
+</head>
+<body class="min-h-screen pb-32">
+
+    <!-- INITIAL LOADING SCREEN (Removes flash of unstyled content) -->
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="text-6xl animate-bounce mb-4">🐏</div>
+            <div class="text-ram-primary font-bold">Loading Pasture...</div>
+        </div>
+    </div>
+
+    <!-- LOGIN MODAL (Overlay) -->
+    <div id="loginModal" class="fixed inset-0 z-[60] bg-[#131F24] flex flex-col justify-center items-center p-4">
+        <div class="text-6xl mb-6 animate-bounce">🐏</div>
+        <h1 class="text-3xl font-black text-ram-primary mb-2">Battering Ram</h1>
+        <p class="text-ram-muted font-bold mb-8">Who is grazing today?</p>
+        
+        <div class="grid grid-cols-2 gap-4 w-full max-w-md">
+            <button onclick="login('Rammy')" class="btn-3d bg-ram-card hover:bg-[#2a3d46] border-ram-border text-white p-6 rounded-2xl flex flex-col items-center gap-2">
+                <span class="text-4xl">🐏</span>
+                <span class="font-extrabold text-xl">Rammy</span>
+            </button>
+            <button onclick="login('Lammy')" class="btn-3d bg-ram-card hover:bg-[#2a3d46] border-ram-border text-white p-6 rounded-2xl flex flex-col items-center gap-2">
+                <span class="text-4xl">🐑</span>
+                <span class="font-extrabold text-xl">Lammy</span>
+            </button>
+        </div>
+        
+        <div class="mt-8 w-full max-w-md">
+             <input type="text" id="customUser" placeholder="Or type name..." class="w-full bg-ram-bg border-2 border-ram-border rounded-xl p-3 text-center font-bold outline-none focus:border-ram-primary text-white">
+             <button onclick="login(document.getElementById('customUser').value)" class="mt-2 w-full text-ram-muted text-sm font-bold hover:text-white">Enter Guest Name</button>
+        </div>
+    </div>
+
+    <!-- CHART MODAL -->
+    <div id="chartModal" class="modal opacity-0 pointer-events-none fixed inset-0 z-[70] flex items-center justify-center">
+        <div class="modal-overlay absolute w-full h-full bg-black opacity-80" onclick="closeChart()"></div>
+        <div class="modal-container bg-ram-card w-11/12 md:max-w-lg mx-auto rounded-3xl shadow-lg z-50 overflow-hidden border-2 border-ram-border relative p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-black text-ram-primary truncate pr-4" id="chartTitle">Progress</h3>
+                <button onclick="closeChart()" class="text-ram-muted hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="h-64 w-full">
+                <canvas id="progressChart"></canvas>
+            </div>
+            <p class="text-xs text-center text-ram-muted mt-4 font-bold uppercase tracking-widest">Max Weight per Session</p>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <div class="sticky top-0 z-50 bg-[#131F24]/95 backdrop-blur border-b-2 border-ram-border">
+        <div class="max-w-4xl mx-auto px-4 py-2 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-ram-card px-3 py-1.5 rounded-xl border-2 border-ram-border flex items-center gap-2 cursor-pointer hover:bg-ram-border transition" onclick="logout()" title="Logout">
+                    <span class="text-xl" id="userAvatar">👤</span>
+                    <span id="userDisplay" class="font-bold text-sm hidden md:block">Guest</span>
+                </div>
+                <div class="flex items-center gap-1" title="Current Streak">
+                    <i class="fas fa-fire text-orange-500 animate-pulse"></i>
+                    <span id="streakDisplay" class="font-black text-orange-500 text-lg">0</span>
+                </div>
+            </div>
+            <div class="flex-1 mx-4 max-w-xs">
+                <div class="flex justify-between text-[10px] font-bold text-ram-muted mb-1">
+                    <span id="levelDisplay">Lvl 1</span>
+                    <span id="xpText">0 XP</span>
+                </div>
+                <div class="h-3 bg-ram-border rounded-full overflow-hidden">
+                    <div id="xpBar" class="h-full bg-yellow-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                 <button onclick="switchView('history')" class="text-ram-muted hover:text-white transition p-2"><i class="fas fa-scroll text-lg"></i></button>
+                <button onclick="resetApp()" class="text-ram-muted hover:text-white transition p-2"><i class="fas fa-redo text-lg"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN TRACKER -->
+    <main id="view-tracker" class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        <div class="text-center space-y-1">
+            <h1 class="text-3xl font-black text-ram-primary tracking-tight">Battering Ram 🐏</h1>
+        </div>
+
+        <!-- Preset Selector -->
+        <div class="bg-ram-card rounded-3xl p-6 border-2 border-ram-border shadow-xl">
+            <label class="block text-sm font-extrabold text-ram-muted uppercase tracking-wider mb-3">Select Mission</label>
+            <div class="relative">
+                <select id="presetSelect" onchange="loadPreset()" class="w-full bg-[#131F24] text-white border-2 border-ram-border rounded-2xl p-4 text-lg font-bold focus:border-ram-primary focus:ring-0 outline-none appearance-none cursor-pointer hover:bg-ram-border/50 transition">
+                    <option value="">Choose your workout...</option>
+                    <option value="A">💪 DAY A - PUSH (Chest, Shoulders)</option>
+                    <option value="B">🪜 DAY B - PULL (Back, Biceps)</option>
+                    <option value="C">🦵 DAY C - LEGS (Quads, Hams)</option>
+                </select>
+                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-ram-primary">
+                    <i class="fas fa-chevron-down text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workout Meta -->
+        <div id="workoutMeta" class="bg-ram-card rounded-3xl p-6 border-2 border-ram-border space-y-4 hidden">
+            <input type="text" id="workoutName" placeholder="Workout Name" class="w-full bg-transparent text-2xl font-black text-white placeholder-ram-muted outline-none border-b-2 border-transparent focus:border-ram-primary transition text-center" value="New Workout">
+            <div class="flex flex-wrap gap-2 justify-center">
+                <div class="bg-[#131F24] rounded-xl px-3 py-2 border-2 border-ram-border flex-1 min-w-[120px]">
+                    <label class="text-[10px] text-ram-muted font-bold uppercase block">Gym</label>
+                    <input type="text" id="gymName" value="The Barn" class="bg-transparent font-bold w-full outline-none text-sm text-white placeholder-ram-muted">
+                </div>
+                <div class="bg-[#131F24] rounded-xl px-3 py-2 border-2 border-ram-border w-1/3 min-w-[110px]">
+                    <label class="text-[10px] text-ram-muted font-bold uppercase block">Date</label>
+                    <input type="date" id="workoutDate" class="bg-transparent font-bold w-full outline-none text-sm text-white">
+                </div>
+                <div class="bg-[#131F24] rounded-xl px-3 py-2 border-2 border-ram-border w-1/4 min-w-[90px]">
+                    <label class="text-[10px] text-ram-muted font-bold uppercase block">Time</label>
+                    <input type="time" id="workoutTime" class="bg-transparent font-bold w-full outline-none text-sm text-white">
+                </div>
+            </div>
+            <textarea id="generalNotes" rows="1" class="w-full bg-[#131F24] border-2 border-ram-border rounded-2xl p-3 text-sm font-semibold focus:border-ram-primary outline-none resize-none text-white" placeholder="Add notes (e.g., 'Feeling woolly today...')"></textarea>
+        </div>
+
+        <!-- Exercises -->
+        <div id="exercisesContainer" class="space-y-6">
+            <div id="emptyState" class="text-center py-10 opacity-50">
+                <i class="fas fa-dumbbell text-6xl mb-4 text-ram-border"></i>
+                <p class="font-bold text-xl text-ram-muted">Select a workout to start!</p>
+            </div>
+        </div>
+
+        <!-- Add Button -->
+        <button id="addExerciseBtn" onclick="addExercise()" class="hidden w-full py-4 border-2 border-dashed border-ram-border text-ram-muted rounded-3xl hover:bg-ram-card hover:text-ram-primary hover:border-ram-primary transition flex items-center justify-center gap-2 font-extrabold text-lg uppercase tracking-wide">
+            <i class="fas fa-plus-circle"></i> Add Custom Exercise
+        </button>
+    </main>
+
+    <!-- HISTORY VIEW -->
+    <main id="view-history" class="hidden max-w-4xl mx-auto px-4 py-6 space-y-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-3xl font-black text-ram-primary">Past Grazing 🌿</h2>
+            <button onclick="switchView('tracker')" class="btn-3d bg-ram-border hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-xl border-slate-700">Back</button>
+        </div>
+        <div class="bg-ram-card rounded-3xl p-6 border-2 border-ram-border text-center">
+            <button onclick="loadHistory()" class="text-sm bg-[#131F24] px-4 py-2 rounded-xl border-2 border-ram-border font-bold hover:text-ram-primary"><i class="fas fa-sync animate-spin-hover"></i> Refresh History</button>
+            <div id="historyList" class="space-y-6 mt-6"></div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer id="actionFooter" class="fixed bottom-0 w-full bg-[#131F24] border-t-2 border-ram-border p-4 z-40 hidden">
+        <div class="max-w-4xl mx-auto">
+            <button onclick="finishWorkout()" id="finishBtn" class="w-full btn-3d bg-ram-primary hover:bg-ram-primaryDark text-white border-ram-primaryDark font-extrabold py-4 px-6 rounded-2xl shadow-xl transform transition flex justify-center items-center gap-3 text-xl uppercase tracking-wider">
+                <span>Finish & Claim XP</span> 🐏
+            </button>
+        </div>
+    </footer>
+
+    <!-- TEMPLATES -->
+    <template id="exercise-template">
+        <div class="exercise-card exercise-enter bg-ram-card rounded-3xl overflow-hidden shadow-lg border-2 border-ram-border mb-6">
+            <div class="p-4 bg-ram-card border-b-2 border-ram-border flex justify-between items-center gap-3">
+                <div class="flex-1">
+                    <input type="text" class="exercise-name w-full bg-transparent text-xl font-black text-white outline-none placeholder-ram-muted" placeholder="Exercise Name">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="showProgress(this)" class="text-ram-accent hover:text-white transition p-2 rounded-full hover:bg-[#131F24]"><i class="fas fa-chart-line"></i></button>
+                    <button onclick="deleteExercise(this)" class="text-ram-border hover:text-red-400 transition p-2 rounded-full hover:bg-[#131F24]"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+            <div class="sets-container p-2 space-y-2">
+                <div class="hidden md:grid grid-cols-12 gap-2 text-xs font-extrabold text-ram-muted px-4 mb-2 uppercase tracking-wider">
+                    <div class="col-span-1 text-center">Set</div>
+                    <div class="col-span-2 text-center">Kg</div>
+                    <div class="col-span-2 text-center">Reps</div>
+                    <div class="col-span-4 text-center">Intensity (RPE)</div>
+                    <div class="col-span-3">Notes</div>
+                </div>
+            </div>
+            <div class="p-3">
+                <button onclick="addSet(this)" class="w-full py-3 rounded-xl border-2 border-ram-border text-ram-secondary font-bold hover:bg-[#131F24] transition text-sm uppercase"><i class="fas fa-plus mr-1"></i> Add Set</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="set-template">
+        <div class="set-row bg-[#131F24] rounded-2xl p-3 border-2 border-ram-border relative group">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+                <div class="flex justify-between md:justify-center items-center col-span-1">
+                    <span class="set-number-display font-black text-ram-primary text-lg">1</span>
+                    <button onclick="deleteSet(this)" class="md:hidden text-ram-border hover:text-red-400"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="grid grid-cols-2 gap-2 col-span-1 md:col-span-4 md:grid-cols-2">
+                    <div class="relative">
+                        <input type="number" placeholder="0" class="set-weight w-full bg-ram-card border-2 border-ram-border rounded-xl px-2 py-2 text-lg font-bold text-center focus:border-ram-primary outline-none text-white">
+                        <span class="absolute right-3 top-2.5 text-xs text-ram-muted font-bold pointer-events-none">KG</span>
+                    </div>
+                    <div class="relative">
+                        <input type="number" placeholder="0" class="set-reps w-full bg-ram-card border-2 border-ram-border rounded-xl px-2 py-2 text-lg font-bold text-center focus:border-ram-primary outline-none text-white">
+                        <span class="absolute right-3 top-2.5 text-xs text-ram-muted font-bold pointer-events-none">REPS</span>
+                    </div>
+                </div>
+                <div class="col-span-1 md:col-span-4 flex items-center gap-3 px-2">
+                    <span class="rpe-value w-8 text-center text-lg font-black text-ram-primary">7</span>
+                    <div class="flex-1 relative h-6 flex items-center">
+                        <input type="range" min="1" max="10" step="0.5" value="7" class="set-rpe w-full z-10" oninput="updateRpeDisplay(this)">
+                    </div>
+                </div>
+                <div class="col-span-1 md:col-span-3 flex gap-2 items-center">
+                    <input type="text" placeholder="Easy? Hard?" class="set-notes w-full bg-transparent border-b-2 border-ram-border focus:border-ram-primary outline-none text-sm text-ram-muted font-semibold py-1 text-white">
+                    <button onclick="deleteSet(this)" class="hidden md:block text-ram-border hover:text-red-400 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION: SUPABASE (DB)
+        // ==========================================
+        var SUPABASE_URL = "https://oaltkxblacpjjecpauya.supabase.co"; 
+        var SUPABASE_KEY = "sb_publishable_TMGWYUqc50BRxAynmGZRoA_YJu1a02f"; 
+        // ==========================================
+
+        let dbClient = null;
+        let currentUser = null;
+        let currentChart = null;
+        
+        // Workout Data
+        const workoutPresets = {
+            "A": {
+                name: "DAY A - PUSH",
+                notes: "Tempo: 1-1-3. Rest: 90s. (Chest, Shoulders, Triceps)",
+                exercises: [
+                    { name: "Dumbbell Chest Press", sets: 3, reps: 12, weight: 18 },
+                    { name: "Dumbbell Shoulder Press", sets: 3, reps: 12, weight: 10 },
+                    { name: "Incline Dumbbell Fly", sets: 3, reps: 12, weight: 8 },
+                    { name: "Lateral Raises", sets: 3, reps: 12, weight: 5 },
+                    { name: "Tricep Cable Pushdown", sets: 3, reps: 12, weight: 12.5 }
+                ]
+            },
+            "B": {
+                name: "DAY B - PULL",
+                notes: "Tempo: 1-1-3. Rest: 90s. (Back, Biceps, Rear Delt)",
+                exercises: [
+                    { name: "Lat Pulldown", sets: 3, reps: 12, weight: 36.6 },
+                    { name: "Seated Cable Row", sets: 3, reps: 12, weight: 27.3 },
+                    { name: "Cable Face Pulls", sets: 3, reps: 15, weight: 0 },
+                    { name: "Standing Hammer Curls", sets: 3, reps: 12, weight: 10 },
+                    { name: "Seated Dumbbell Bicep Curls", sets: 3, reps: 12, weight: 6 }
+                ]
+            },
+            "C": {
+                name: "DAY C - LEGS",
+                notes: "Tempo: 1-1-3. Rest: 90s. (Quads, Hamstrings)",
+                exercises: [
+                    { name: "Barbell Squat", sets: 3, reps: 12, weight: 60 },
+                    { name: "Leg Extension", sets: 3, reps: 12, weight: 29.5 },
+                    { name: "Seated Leg Curl", sets: 3, reps: 12, weight: 29.6 },
+                    { name: "45° Back Extension", sets: 3, reps: 12, weight: 0 },
+                    { name: "Standing Calf Raises", sets: 3, reps: 15, weight: 0 }
+                ]
+            }
+        };
+
+        let userStats = { xp: 0, level: 1, streak: 0, lastWorkoutDate: null, defaultGym: "" };
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loading-screen').style.display = 'none';
+
+            if(typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_KEY) {
+                try {
+                    dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                } catch(e) { console.error("Supabase init failed:", e); }
+            }
+
+            setDateTime();
+
+            const storedUser = localStorage.getItem('ram_currentUser');
+            if (storedUser) {
+                login(storedUser);
+            } else {
+                document.getElementById('loginModal').classList.remove('hidden');
+            }
+            
+            document.getElementById('view-tracker').addEventListener('input', debounce(saveToLocalStorage, 1000));
+        });
+
+        // --- Functions ---
+        window.login = async function(username) {
+            if(!username) return;
+            currentUser = username;
+            localStorage.setItem('ram_currentUser', currentUser);
+            document.getElementById('userDisplay').textContent = currentUser;
+            document.getElementById('userAvatar').textContent = currentUser === 'Rammy' ? '🐏' : (currentUser === 'Lammy' ? '🐑' : '👤');
+            document.getElementById('loginModal').classList.add('hidden');
+            await loadUserStats();
+            loadFromLocalStorage();
+        }
+
+        window.logout = function() {
+            if(confirm("Sign out?")) {
+                localStorage.removeItem('ram_currentUser');
+                location.reload();
+            }
+        }
+
+        async function loadUserStats() {
+            if(dbClient) {
+                const { data, error } = await dbClient.from('user_stats').select('*').eq('username', currentUser).single();
+                if(data) {
+                    userStats = { xp: data.xp || 0, level: data.level || 1, streak: data.streak || 0, lastWorkoutDate: data.last_workout_date, defaultGym: data.default_gym };
+                }
+            } else {
+                const saved = localStorage.getItem(`ram_stats_${currentUser}`);
+                if(saved) userStats = JSON.parse(saved);
+            }
+            updateUIStats();
+            const gymInput = document.getElementById('gymName');
+            if(gymInput && (!gymInput.value || gymInput.value === 'The Barn') && userStats.defaultGym) {
+                gymInput.value = userStats.defaultGym;
+            } else if (!gymInput.value || gymInput.value === 'The Barn') {
+                if(currentUser === 'Rammy') gymInput.value = 'The Barn';
+                if(currentUser === 'Lammy') gymInput.value = 'The Meadow';
+            }
+        }
+
+        async function saveUserStats() {
+            updateUIStats();
+            if(dbClient) {
+                await dbClient.from('user_stats').upsert({ username: currentUser, xp: userStats.xp, level: userStats.level, streak: userStats.streak, last_workout_date: userStats.lastWorkoutDate, default_gym: document.getElementById('gymName').value });
+            }
+            localStorage.setItem(`ram_stats_${currentUser}`, JSON.stringify(userStats));
+        }
+
+        function updateUIStats() {
+            const level = Math.floor(userStats.xp / 100) + 1;
+            const currentLevelXP = userStats.xp % 100;
+            document.getElementById('streakDisplay').textContent = userStats.streak;
+            document.getElementById('levelDisplay').textContent = `Lvl ${level}`;
+            document.getElementById('xpText').textContent = `${currentLevelXP} / 100 XP`;
+            document.getElementById('xpBar').style.width = `${currentLevelXP}%`;
+        }
+
+        window.loadPreset = async function() {
+            if(!currentUser) return;
+            const select = document.getElementById('presetSelect');
+            const val = select.value;
+            if (!val || !workoutPresets[val]) return;
+
+            const presetData = workoutPresets[val];
+            document.getElementById('workoutName').value = presetData.name;
+            document.getElementById('generalNotes').value = presetData.notes;
+            document.getElementById('workoutMeta').classList.remove('hidden');
+            document.getElementById('addExerciseBtn').classList.remove('hidden');
+            document.getElementById('actionFooter').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+
+            const container = document.getElementById('exercisesContainer');
+            container.innerHTML = ''; 
+            const exerciseInputs = [];
+
+            presetData.exercises.forEach(ex => {
+                const card = createExerciseCard(ex.name);
+                container.appendChild(card);
+                const setsContainer = card.querySelector('.sets-container');
+                const setRows = [];
+                for(let i=0; i<ex.sets; i++) {
+                    const setRow = createSetRow(i+1, ex.weight, ex.reps);
+                    setsContainer.appendChild(setRow);
+                    setRows.push(setRow);
+                }
+                exerciseInputs.push({ name: ex.name, rows: setRows });
+            });
+
+            saveToLocalStorage();
+
+            if(dbClient) {
+                try {
+                    const { data, error } = await dbClient.from('workouts').select('*').eq('workout_name', presetData.name).eq('username', currentUser).order('date', { ascending: false }).limit(1);
+                    if(data && data.length > 0) {
+                        const lastWorkout = data[0];
+                        exerciseInputs.forEach(exItem => {
+                            const historyEx = lastWorkout.exercises.find(h => h.name === exItem.name);
+                            if(historyEx) {
+                                exItem.rows.forEach((row, idx) => {
+                                    if(historyEx.sets[idx]) {
+                                        const wInput = row.querySelector('.set-weight');
+                                        wInput.value = historyEx.sets[idx].weight;
+                                        const rInput = row.querySelector('.set-reps');
+                                        rInput.value = historyEx.sets[idx].reps;
+                                        wInput.classList.add('bg-ram-primary', 'bg-opacity-20');
+                                        setTimeout(() => wInput.classList.remove('bg-ram-primary', 'bg-opacity-20'), 1000);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                } catch(err) { console.error(err); }
+            }
+        }
+
+        window.createExerciseCard = function(name = "") {
+            const tmpl = document.getElementById('exercise-template');
+            const clone = tmpl.content.cloneNode(true);
+            const card = clone.querySelector('.exercise-card');
+            card.querySelector('.exercise-name').value = name;
+            return card;
+        }
+
+        window.createSetRow = function(number, weight = "", reps = "") {
+            const tmpl = document.getElementById('set-template');
+            const clone = tmpl.content.cloneNode(true);
+            const row = clone.querySelector('.set-row');
+            row.querySelector('.set-number-display').textContent = number;
+            row.querySelector('.set-weight').value = weight;
+            row.querySelector('.set-reps').value = reps;
+            return row;
+        }
+
+        window.addExercise = function() {
+            const container = document.getElementById('exercisesContainer');
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('actionFooter').classList.remove('hidden');
+            const card = createExerciseCard();
+            container.appendChild(card);
+            card.querySelector('.sets-container').appendChild(createSetRow(1));
+            saveToLocalStorage();
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        window.addSet = function(btn) {
+            const card = btn.closest('.exercise-card');
+            const setsContainer = card.querySelector('.sets-container');
+            const currentSets = setsContainer.querySelectorAll('.set-row');
+            let prevWeight = "", prevReps = "";
+            if(currentSets.length > 0) {
+                const lastSet = currentSets[currentSets.length - 1];
+                prevWeight = lastSet.querySelector('.set-weight').value;
+                prevReps = lastSet.querySelector('.set-reps').value;
+            }
+            setsContainer.appendChild(createSetRow(currentSets.length + 1, prevWeight, prevReps));
+            saveToLocalStorage();
+        }
+
+        window.deleteExercise = function(btn) {
+            if(confirm("Delete exercise?")) {
+                btn.closest('.exercise-card').remove();
+                saveToLocalStorage();
+            }
+        }
+        
+        window.deleteSet = function(btn) {
+            const row = btn.closest('.set-row');
+            const container = row.parentElement;
+            row.remove();
+            container.querySelectorAll('.set-row').forEach((r, i) => r.querySelector('.set-number-display').textContent = i + 1);
+            saveToLocalStorage();
+        }
+
+        window.updateRpeDisplay = function(rangeInput) {
+            const val = parseFloat(rangeInput.value);
+            const display = rangeInput.parentElement.previousElementSibling;
+            if(display) {
+                display.textContent = val;
+                if(val >= 9) display.className = "rpe-value w-8 text-center text-lg font-black text-red-500";
+                else if(val >= 7) display.className = "rpe-value w-8 text-center text-lg font-black text-ram-primary";
+                else display.className = "rpe-value w-8 text-center text-lg font-black text-ram-accent";
+            }
+        }
+
+        window.resetApp = function() {
+            if(confirm("Reset workout form?")) {
+                localStorage.removeItem(`ram_draft_${currentUser}`);
+                location.reload();
+            }
+        }
+
+        // --- CHARTING: UPDATED TO USE 'DATE' NOT 'CREATED_AT' ---
+        window.showProgress = async function(btn) {
+            const card = btn.closest('.exercise-card');
+            const exerciseName = card.querySelector('.exercise-name').value;
+            if(!exerciseName) return;
+            document.getElementById('chartTitle').textContent = `${exerciseName} (${currentUser})`;
+            
+            if(!dbClient) { alert("Please connect Database for charts."); return; }
+
+            // Order by DATE to ensure chronological order regardless of input time
+            const { data, error } = await dbClient.from('workouts')
+                .select('date, exercises')
+                .eq('username', currentUser)
+                .order('date', { ascending: true });
+
+            if(!data || data.length === 0) { alert("No history found for this exercise."); return; }
+
+            const labels = [], dataPoints = [];
+            data.forEach(workout => {
+                const exData = workout.exercises.find(e => e.name === exerciseName);
+                if(exData && exData.sets) {
+                    let maxWeight = 0;
+                    exData.sets.forEach(s => { const w = parseFloat(s.weight); if(w > maxWeight) maxWeight = w; });
+                    if(maxWeight > 0) { labels.push(workout.date); dataPoints.push(maxWeight); }
+                }
+            });
+
+            renderChart(labels, dataPoints);
+            const modal = document.getElementById('chartModal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            document.body.classList.add('modal-active');
+        }
+
+        function renderChart(labels, dataPoints) {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            if(currentChart) currentChart.destroy();
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Max Weight (kg)',
+                        data: dataPoints,
+                        borderColor: '#58CC02', backgroundColor: 'rgba(88, 204, 2, 0.1)', borderWidth: 3,
+                        pointBackgroundColor: '#FFFFFF', pointBorderColor: '#58CC02', pointRadius: 5, fill: true, tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false, grid: { color: '#37464F' }, ticks: { color: '#9CA3AF' } }, x: { grid: { display: false }, ticks: { color: '#9CA3AF' } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        window.closeChart = function() {
+            const modal = document.getElementById('chartModal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.classList.remove('modal-active');
+        }
+
+        window.finishWorkout = async function() {
+            const btn = document.getElementById('finishBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div> Saving...`;
+            btn.disabled = true;
+
+            const workoutData = getWorkoutDataFromDOM();
+            let setCounter = 0;
+            workoutData.exercises.forEach(ex => setCounter += ex.sets.length);
+            const xpGained = setCounter * 10;
+            userStats.xp += xpGained;
+            const today = new Date().toISOString().split('T')[0];
+            if(userStats.lastWorkoutDate !== today) { userStats.streak += 1; userStats.lastWorkoutDate = today; }
+            await saveUserStats();
+
+            if(dbClient) {
+                try {
+                    await dbClient.from('workouts').insert({ username: currentUser, workout_name: workoutData.name, date: workoutData.date, time: workoutData.time, gym_name: workoutData.gym, notes: workoutData.notes, exercises: workoutData.exercises });
+                } catch(err) { console.error("DB Error", err); }
+            }
+
+            let summary = `🐏 Battering Ram (${currentUser})\n`;
+            summary += `📅 ${workoutData.date} @ ${workoutData.time}\n`;
+            summary += `🏆 +${xpGained} XP (Total: ${userStats.xp})\n`;
+            if(workoutData.notes) summary += `📝 ${workoutData.notes}\n`;
+            summary += `-------------------------\n`;
+            workoutData.exercises.forEach(ex => {
+                summary += `🔹 ${ex.name}\n`;
+                ex.sets.forEach((set, idx) => {
+                    if(set.weight || set.reps) summary += `   Set ${idx+1}: ${set.weight}kg x ${set.reps} (RPE ${set.rpe})\n`;
+                });
+            });
+
+            navigator.clipboard.writeText(summary);
+            btn.classList.remove('bg-ram-primary', 'border-ram-primaryDark');
+            btn.classList.add('bg-ram-secondary', 'border-purple-800');
+            btn.innerHTML = `<span>+${xpGained} XP! Saved!</span> 🎉`;
+            setTimeout(() => {
+                btn.classList.add('bg-ram-primary', 'border-ram-primaryDark');
+                btn.classList.remove('bg-ram-secondary', 'border-purple-800');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                localStorage.removeItem(`ram_draft_${currentUser}`);
+            }, 3000);
+        }
+
+        // --- HISTORY: DETAILED SET VIEW ---
+        window.loadHistory = async function() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = `<div class="text-center py-4 text-ram-muted">Herding sheep...</div>`;
+            if(!dbClient) { list.innerHTML = `<div class="text-center py-4 text-ram-muted">DB not connected.</div>`; return; }
+
+            const { data, error } = await dbClient.from('workouts').select('*').eq('username', currentUser).order('date', { ascending: false }).limit(10);
+            if(!data || data.length === 0) { list.innerHTML = `<div class="text-center text-ram-muted">No grazing history.</div>`; return; }
+
+            list.innerHTML = '';
+            data.forEach(workout => {
+                const item = document.createElement('div');
+                item.className = 'bg-[#131F24] p-4 rounded-2xl border-2 border-ram-border text-left';
+                let stats = "";
+                if(workout.exercises) {
+                    workout.exercises.forEach(ex => {
+                        let setDetails = "";
+                        ex.sets.forEach((s, i) => {
+                             if(s.weight || s.reps) {
+                                 setDetails += `<div class="flex justify-between items-center"><span class="text-ram-muted w-10">Set ${i+1}</span> <span class="text-white font-bold w-20 text-right">${s.weight}kg</span> <span class="text-white w-16 text-right">x ${s.reps}</span> <span class="text-xs text-ram-muted w-16 text-right">RPE ${s.rpe}</span></div>`;
+                             }
+                        });
+                        stats += `
+                        <div class="mt-3 mb-2">
+                            <div class="font-bold text-ram-primary text-sm border-b border-ram-border pb-1 mb-1">${ex.name}</div>
+                            <div class="space-y-1 text-xs pl-1">
+                                ${setDetails}
+                            </div>
+                        </div>`;
+                    });
+                }
+                item.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-black text-white text-lg">${workout.workout_name}</h3>
+                        <div class="text-right">
+                             <div class="text-xs font-bold text-ram-primary">${workout.date}</div>
+                             <div class="text-[10px] text-ram-muted">${workout.gym_name || 'Gym'}</div>
+                        </div>
+                    </div>
+                    <div class="pl-2 border-l-2 border-ram-border">${stats}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.switchView = function(viewName) {
+            document.getElementById('view-tracker').classList.add('hidden');
+            document.getElementById('view-history').classList.add('hidden');
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            const footer = document.getElementById('actionFooter');
+            if(viewName === 'history') { footer.classList.add('hidden'); loadHistory(); }
+            else if (document.getElementById('exercisesContainer').children.length > 1) { footer.classList.remove('hidden'); }
+        }
+
+        function setDateTime() {
+            const now = new Date();
+            const dEl = document.getElementById('workoutDate');
+            const tEl = document.getElementById('workoutTime');
+            if(dEl && !dEl.value) dEl.value = now.toISOString().split('T')[0];
+            if(tEl && !tEl.value) tEl.value = now.toTimeString().substring(0, 5);
+        }
+
+        function getWorkoutDataFromDOM() {
+             return {
+                name: document.getElementById('workoutName').value,
+                date: document.getElementById('workoutDate').value,
+                time: document.getElementById('workoutTime').value,
+                gym: document.getElementById('gymName').value,
+                notes: document.getElementById('generalNotes').value,
+                preset: document.getElementById('presetSelect').value,
+                exercises: Array.from(document.querySelectorAll('.exercise-card')).map(card => ({
+                    name: card.querySelector('.exercise-name').value,
+                    sets: Array.from(card.querySelectorAll('.set-row')).map(row => ({
+                        weight: row.querySelector('.set-weight').value,
+                        reps: row.querySelector('.set-reps').value,
+                        rpe: row.querySelector('.set-rpe').value,
+                        notes: row.querySelector('.set-notes').value
+                    }))
+                }))
+            };
+        }
+
+        function saveToLocalStorage() {
+            if(!currentUser) return;
+            localStorage.setItem(`ram_draft_${currentUser}`, JSON.stringify(getWorkoutDataFromDOM()));
+        }
+
+        function loadFromLocalStorage() {
+            if(!currentUser) return;
+            const saved = localStorage.getItem(`ram_draft_${currentUser}`);
+            // draft restore logic
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+    </script>
+</body>
+</html>
