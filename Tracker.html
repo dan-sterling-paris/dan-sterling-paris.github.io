@@ -123,6 +123,18 @@
             <p class="text-xs text-center text-ram-muted mt-4 font-bold uppercase tracking-widest">Max Weight per Session</p>
         </div>
     </div>
+    
+    <!-- IMPORT MODAL -->
+    <div id="importModal" class="hidden fixed inset-0 z-[80] bg-[#131F24] flex flex-col p-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-black text-ram-primary">Import Log</h2>
+            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="text-ram-muted hover:text-white"><i class="fas fa-times text-2xl"></i></button>
+        </div>
+        <div class="flex-1 mb-4">
+            <textarea id="importText" class="w-full h-full bg-ram-card border-2 border-ram-border rounded-xl p-4 text-xs font-mono text-white focus:border-ram-primary outline-none resize-none" placeholder="Paste logs here..."></textarea>
+        </div>
+        <button onclick="processImport()" class="btn-3d bg-ram-primary text-white font-bold py-4 rounded-xl border-ram-primaryDark w-full">PROCESS & IMPORT</button>
+    </div>
 
     <!-- NAVBAR -->
     <div class="sticky top-0 z-50 bg-[#131F24]/95 backdrop-blur border-b-2 border-ram-border">
@@ -224,8 +236,12 @@
             <button onclick="switchView('tracker')" class="btn-3d bg-ram-border hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-xl border-slate-700">Back</button>
         </div>
         <div class="bg-ram-card rounded-3xl p-6 border-2 border-ram-border text-center">
-            <button onclick="loadHistory()" class="text-sm bg-[#131F24] px-4 py-2 rounded-xl border-2 border-ram-border font-bold hover:text-ram-primary"><i class="fas fa-sync animate-spin-hover"></i> Refresh History</button>
-            <div id="historyList" class="space-y-6 mt-6"></div>
+            <div class="flex flex-wrap justify-center gap-2 mb-6">
+                <button onclick="loadHistory()" class="text-sm bg-[#131F24] px-4 py-2 rounded-xl border-2 border-ram-border font-bold hover:text-ram-primary"><i class="fas fa-sync animate-spin-hover"></i> Refresh</button>
+                <button onclick="downloadCSV()" class="text-sm bg-[#131F24] px-4 py-2 rounded-xl border-2 border-ram-border font-bold hover:text-ram-primary"><i class="fas fa-file-csv"></i> Download CSV</button>
+                <button onclick="openImportModal()" class="text-sm bg-[#131F24] px-4 py-2 rounded-xl border-2 border-ram-border font-bold hover:text-ram-primary text-ram-secondary"><i class="fas fa-file-import"></i> Import Logs</button>
+            </div>
+            <div id="historyList" class="space-y-6"></div>
         </div>
     </main>
 
@@ -238,12 +254,17 @@
         </div>
     </footer>
 
+    <!-- SHARED DATALIST FOR AUTOCOMPLETE -->
+    <datalist id="exerciseList">
+        <!-- Populated via JS -->
+    </datalist>
+
     <!-- TEMPLATES -->
     <template id="exercise-template">
         <div class="exercise-card exercise-enter bg-ram-card rounded-3xl overflow-hidden shadow-lg border-2 border-ram-border mb-6">
             <div class="p-4 bg-ram-card border-b-2 border-ram-border flex justify-between items-center gap-3">
                 <div class="flex-1">
-                    <input type="text" class="exercise-name w-full bg-transparent text-xl font-black text-white outline-none placeholder-ram-muted" placeholder="Exercise Name">
+                    <input type="text" list="exerciseList" class="exercise-name w-full bg-transparent text-xl font-black text-white outline-none placeholder-ram-muted" placeholder="Exercise Name">
                 </div>
                 <div class="flex gap-2">
                     <button onclick="showProgress(this)" class="text-ram-accent hover:text-white transition p-2 rounded-full hover:bg-[#131F24]"><i class="fas fa-chart-line"></i></button>
@@ -320,7 +341,305 @@
         let currentUser = null;
         let currentChart = null;
         let currentUnit = 'kg'; // 'kg' or 'lbs'
+        let masterExerciseList = new Set();
         
+        // Massive Log Text for Import Convenience
+        const LEGACY_LOG_DATA = `Gym
+22/10
+Lat pull down - 3x12 - 25kg
+Hamstring curls - 3x12 - 27kg (the pins prongs on -1 and 6) 
+Bent over barbell row - 3x12 - 25kg
+Standing head cavers - 3x12 - 6kg
+Barbell deadlift - 3x12 - 30kg
+
+24/10
+Leg Extension- 3x12 -25kg (Difficulty: 6/10)
+Cable Bicep Curls - 3x12 - 5.7kg (Difficulty: 7/10) Didn’t like the exercise 
+Dumbbell Shoulder Press - 3x12 - 10kg (8/10) Left arm struggled at end
+Barbell Squat - 3x12 - 20kg (8/10) (mistake it was 20kg on each side)
+Lat Raises - 3x12 - 6kg (9/10) Form dropped off
+
+26/10
+Slight headache from too much beer last night
+Dumbbell chest press - 3x12 - 12kg - 8/10
+Incline dumbbell chest press - 3x12 - 8kg - 9/10
+Cable chest fly - 3x12 - 3.4kg - 8/10 (next weight on machine is 5.7kg)
+Triceps press down cable - 3x12 - 7.9kg - 7/10 but big jump in weight on machine
+Standing hammer dumbbell curls - 2x12 @ 8kg then 1x12 @ 6kg - struggled for form particularly with left arm after about rep 9 in both 2nd and 3rd set
+
+28/10
+Early morning with not much sleep because was at the theatre last night. But feeling good. In a different gym today with different weight levels and machines.
+
+Workout in this order: 
+
+Dumbbell RDL - 3x12 - 1st set: 12kg (6/10) 2nd set: 14kg (6/10) 3rd set: 16kg (8/10) (weights in each hand) - felt slightly sore in lower back, but not in pain
+
+Kneeling single leg Hamstring curls - 3x12 - 17.5kg - Left leg 9/10 - right leg 8/10 
+
+Lat pull down - 3x12 - 1st set: 26kg (5/10) - 2nd set: 33kg (8/10) - 3rd set: 33kg (9/10)
+
+Single arm dumbbell row - 3x12 - 1st set: 12kg (Left 9/10 - Right 8/10) - 2nd set: 12kg (Left 10/10 - Right 9/10) - 3rd set: 10kg (Left 10/10 - Right 9/10)
+
+31/10
+Tired. End of a long week. Dehydrated. No shower at home because no hot water so felt congested.
+
+All 1-1-3 tempo with ~ 60 seconds rest (but not strict). Workout needed to be a bit rushed because of work and needing to shower at gym.
+
+Barbell Squat - 3x12 - 1st set: 22.5kg (previous bad notation - previously 20kg each side) 5/10 - 2nd set: 40kg 8/10 - 3rd set: 42.5kg
+Leg Extension- 3x12 - 1st set: 30kg (9/10) - 2nd set: 30kg (10/10) - 3rd set: 27.5kg (9.5/10)
+Dumbbell Shoulder Press - 3x12 - All sets: 10kg - 1st set: 8/10 2nd set: 9/10 3rd set: 10/10 on left arm 
+Lat Raises - 3x12 - 5kg - ran out of time
+
+Gym
+1/11
+Day off work. Slept well. Bit dehydrated and congested but okay.
+ 
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Dumbbell chest press - 3x12 - 14kg e/h - 1st set 9/10 - 2nd set: 9/10 - 3rd set: 10/0
+Incline dumbbell chest press - 3x12 - 8kg e/h - all sets 9/10
+Dumbbell chest fly - 3x12 - 6kg e/h - 1st set: 9/10 - 2nd set: 9/10 - 3rd set
+Triceps press down cable - 3x15 - 1st set: 7.9kg (7/10) - 2nd set: 10.2kg (8/10) - 3rd set: 12.5kg (9.5/10)
+Standing hammer dumbbell curls - 7.5kg (only dumbbells available) - 1st set: 12 reps (9/10) - 2nd set: 10 reps (9/10) - 3rd set: 10 reps (9/10)
+
+Gym
+3/11
+Really tired. Too much to drink yesterday, but mainly the long drive and eating too late. Has made me feel really groggy anyway, then add 6 hours sleep after a long drive and the pub last night. Also, hot water still not working, so nose blocked and feeling gross. Shoulders sore from last time in the gym.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Dumbbell RDL - 3x12 - 16kg e/h - 1st set: 8/10 - 2nd set: 8/10 - 3rd set: 8/10
+Lat pull down - 3x12 - 1st set: 35.3kg 9/10 (it was the next weight up) - 2nd set: 35.3kg 9/10 - 3rd set: 35.3kg (thought about dropping weight, but wanted to see what I could do) 10/10 form and tempo was 7/10 on last set
+Prone leg curls (bilateral) - 3x12 - 1st set: 30.4kg 9/10 (paused to buy Powerade after 1st set) - 2nd set: 30.4kg (9.5/10) - 3rd set: 27kg 9/10
+Close grip Diverging seated row - 3x12 - 1st set: 23kg 9/10 (started at 30kg had to lower on rep 4) - 2nd set: 18kg (to focus on form) 9/10 - 3rd set: 18kg 10/10
+
+On the whole a tough session.
+
+Gym
+4/11
+Tired but much better than yesterday. Soreness in inner left thigh and left calf from workout. But feeling 7/10.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Barbell Squat - 3x12 - 45kg - 1st set: 8/10 - 2nd set: 8/10 - 3rd set: 9/10
+Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9.5/10 (felt like left arm improved)
+Leg Extension - 3x12 - 27.3kg - 1st set: 8.5/10 - 2nd set: 9/10 - 3rd set: 9/10
+Lat Raises - 3x12 - 5kg e/h - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set:  10/10 (left side definitely better)
+
+Gym
+7/11
+Hungover this morning but went to gym at 2.50pm after work. Feel okay. Not much food.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Dumbbell chest press - 14kg e/h - 1st set: 7/10 12 reps - 2nd set: 8/10 12 reps - 3rd set: 8.5/10 15 reps
+Incline dumbbell chest press - 3x12 - 8kg e/h - 1st set: 7/10 (left arm stability issues) - 2nd set: 7/10 (left arm stability) - 3rd set: 8/10 (left arm shaking)
+Dumbbell chest fly - 3x12 - 1st set: 6kg e/h 6/10 - 2nd set: 8kg e/h 8.5/10 (left side weaker) - 3rd set: 8kg e/h 9/10
+Triceps press down cable - 3x15 - 11.3kg (different machine with next weight up) - 1st set: 8.5/10 - 2nd set: 9.5/10 (had to pause on tenth rep then continue) - 3rd set: dropped to 9kg 9.75/10
+Standing hammer dumbbell curls - 3x12 - 7.5kg e/h (Goal: Beat 12, 10, 10 reps) - 1st set: 12 reps 7/10 - 2 set:  12 reps 8/10 (felt strong but burn) - 3rd set: 12 reps 10/10
+
+Gym
+8/11
+Feeling good. Lots of food and not too much to drink over the last two days. Decided not to do hamstrings because soreness not entirely gone since last workout. 
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Dumbbell RDL - 3x12 - 18kg e/h - not completed
+Lat pull down - 3x15 - 32kg (35.3kg not available so upped reps to 15 per set) - 1st set: 8/10 - 2nd set: 9/10 - 3rd set: 10/10
+Hamstring curls (bilateral) - 3x12 - 27.3kg - not completed
+Seated Cable Row - 3x12 - 1st set: 18kg 6/10 - 2nd set: 25kg 7/10 - 3rd set: 25kg 8/10 (next weight up is 32kg) 
+Standing dumbbell bicep curl (not hammer) - 1st set: 6kg e/h 12 reps 8/10 - 2nd set: 6kg e/h 12 reps 8.5/10 - 3rd set: 6kg e/h 11 reps 10/10 (left side fail at 11th rep)
+
+##LOCH TAY HOLIDAY BREAK 9/11 TO 13/11##
+
+Gym
+15/11
+9.45am. Feeling good. First workout back after holiday. In Bolton so not too much to drink and eating well.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Barbell Squat - 3x12 - 45kg plates and 11.3kg bar - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
+Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 6/10 - 2nd set: 8.5/10 (easy but burning for final few reps) - 3rd set: 9/10
+Leg Extension - 3x12 - 27.3kg - 1st set: 7/10 - 2nd set: 8.5/10 - 3rd set: 9/10
+Lat Raises - 3x12 - 5kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 10/10
+
+Body comp test: 86.7kg clothed - 26% BF 41% muscle 54% hydration 
+
+
+Gym
+18/11
+
+Not feeling too bad despite a bit of a late night. Very cold and rainy today. Did a five minute warm up on cross trainer.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+
+Dumbbell RDL - 3x12 - 20kg e/h (18kg not free) - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8/10 - as a general note, I hate how this exercise makes me feel. Feels awkward and clunky. Need to Google proper form.
+
+Lat pull down - 1st set: 32kg 15 reps 7/10- 2nd set:  (moved to new machine with better weight levels) 34.3kg 12 reps 8/20- 3rd set: 34.3kg 12 reps 9/10
+
+Prone leg curls - 3x12 - 29.3kg - 1st set: 8/10 - 2nd set: 9/10 (cramping in calves) - 3rd set: 10/10
+
+A little lightheadedness during the workout when looking down. Bought protein bar as hadn’t eaten today.
+
+Standing dumbbell bicep curl (not hammer) - 6kg - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set: 9.5/10
+
+Ears popping like I’m at altitude.
+
+Diverging Seated Row - 3x12 - 25.3kg - 1st set: 8/10 25.3kg - 2nd set: 25.3kg 10/10 (just feeling off) - 3rd set: 23kg 10/10
+
+Felt rough for second half of workout. Lightheaded and just rubbish. 
+
+Gym 20/11
+Slept well. ~9hrs. Afternoon tea (sandwiches cakes etc before workout). New gym with weird weights.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+
+Barbell chest press - 3x12 - 20kg bar + 10kg plates - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8/10
+Incline dumbbell chest press - 3x12 - 8kg e/h - 1st set: 8/10 - 2nd set: 8/10 - 3rd set: 9/10
+Dumbbell chest fly - 3x12 - 8kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8/10
+Triceps press down cable - 3x12 - 11.25kg - 1st set: 8/10 - 2nd set: 9/10 - 3rd set: 9.5/10
+Standing hammer dumbbell curls - 3x12 - 8kg e/h - 1st set: 8/10 - 2nd set: 9/10 (cramping right bicep) - 3rd set: 10/10 (right arm struggled)
+
+Gym - BasicFit Serris
+24/11/2025 - 3.20pm
+
+Hungover but looked after myself before going to gym.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+
+Barbell Squats - (60kg) 40kg plates and 20kg bar - 3x12 - 1st set: 7/10 - 2nd set: 7.5/10 - 3rd set:
+Dumbbell shoulder press - 10kg e/h - 3x12 - 1st set: 5.5/10 - 2nd set: 6.5/10 - 3rd set: 8.5/10 (strong enough but forearms burning)
+Leg Extension - 3x12 - 29.6kg - 1st set: 9/10 - 2nd set: 8/10 - 3rd set: 9/10
+Lat Raises - 3x12 - 5kg e/h - 1st set: 5/10 - 2nd set: 8/10 - 3rd set: 9/10
+
+Gym
+26/11/25 - BasicFit Serris 11.35am
+
+Feeling good, even though I had not much sleep. Had a coffee and a croissant this morning before the gym. High protein day yesterday even though I drank beer and wine.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Dumbbell RDL - 3x12 - 20kg e/h ("Shave the legs" cue) - 1st set: 7/10 - 2nd set: 7/10 - 3rd set: 8/10 (still sore in lower back on last set)
+Lat Pull Down - 3x12 - 34.3kg - 1st set: 7/10 - 2nd set: 8/10 (corrected tempo on second set) - 3rd set: 9.5/10 (started to lose tempo on last reps)
+Seated Leg Curl - 3x12 - 29.6kg (Toes up!) - 1st set: 6/10 - 2nd set: 6/10 - 3rd set: 7/10
+Cable Seated Row - 3x12 - 25kg - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8.5/10
+Bicep Curls - 3x12 - 6kg e/h - 1st set: 8/10 - 2nd set: 9/10 - 3rd set: 10/10 (had to take a break after 9 reps and struggled until the end)
+
+Gym
+28/11 - BasicFit Serris - 11.30am
+Feeling good despite thanksgiving indulgence and late night. Coffee and pain au chocolat this morning.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+
+Dumbbell Bench Press - 3x12 - 16kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
+Dumbbell Chest Fly - 3x12 - 8kg e/h 1st set: 6/10 - 2nd set: 8/10 - 3rd set: 8/10 (left arm better when breathing is disciplined)
+Incline Dumbbell Press - 3x12 - 1st set: 8kg 8/10 - 2nd set: 8kg 7/10 (felt light) - 3rd set: 10kg 8/10
+Triceps Pushdown - 3x12 - 11.3kg - 1st set: 7/10 - 2nd set: 8.5/10 (losing tempo) - 3rd set:  9/10
+Standing Hammer Curls - 3x12 - 8kg e/h - 1st set: 8/10 - 2nd set: 9/10 - 3rd set: 9.5/10
+
+Gym
+1/12/25 - BasicFit Bastille ~1.30pm
+Went out with the boys last night so had a chilled morning. Have eaten a muffin and protein bar. Have drunk 1.5l of water.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Barbell Squat - 3x12 - 60kg (Total weight) - 1st set: 7/10 - 2nd set: 7/10 - 3rd set: 8/10
+Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8/10
+Leg Extension - 3x12 - 29.6kg - 1st set: 6/10 (Strength there but legs shaking massively) - 2nd set: 8/10 (Adjusted seat position which helped but shaking still there) - 3rd set: 8/10
+Lat Raises - 3x12 - 5kg e/h - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 9/10
+
+Gym
+2/12/25
+
+Tired and groggy. Pain au chocolat, pineapple juice and two coffees before working out.
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+
+Dumbbell chest press - 3x12 - 16kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
+Incline dumbbell press - 3x12 - 10kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8/10
+Lat pull down - 3x12 - 34.3kg - 1st set: 7/10 - 2nd set: 7/10 - 3rd set: 8/10
+Hammer curls - 3x12 - 8kg e/h - 1st set: 7/10 - 2nd set: 8/10 (felt strong, but burning) - 3rd set: 9/10
+Tricep push down - 3x12 - 11.3kg - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
+
+##SOUTHPORT TRIP 3/12/25 to 10/12/25 - was ill with a fever and chest infection so didn’t workout at all##
+
+Gym
+14/12/25 - 1.45pm at Gym Group Charing Cross
+Feeling okay, but will have a runny nose and cough. Ate a PBJ sandwich at 11am.
+
+Recovery Session: Focus on form, not intensity. Stop if dizzy.
+Tempo: 1-1-3 on all. Rest: 90s+ b/w sets.
+45° Back Extension - 3x12 - Bodyweight - skipped exercise because not feeling 100%
+
+Lat Pulldown - 3x12 - 34.3kg - 1st set: 6/10 - 2nd set: 6/10 - 3rd set: 7/10
+
+Bicep Curls - 3x12 - 6kg e/h - 1st set: 6/10 - 2nd set: 6.5/10 - 3rd set: 7/10
+
+Seated Leg Extension - 3x12 - 29.5kg (Toes up) - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 7/10
+Cable Seated Row - 3x12 - 25kg - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 7.5/10
+
+Gym
+24/12/25 - Gym Group Stevenage - 10.45am
+
+Drank a lot yesterday but feeling good.
+
+Tempo: 1-1-3 on all
+Rest: 90s b/w sets
+Dumbbell Chest Press - 3x12 - 16kg - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8.5/10
+Incline Dumbbell Press - 3x12 - 12kg (no 10s available) - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set: 9/10
+Dumbbell Chest Fly - 3x12 - 8kg - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set: 9/10
+Standing Hammer Curls - 3x12 - 8kg - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8.5/10 (strength there but burning)
+Triceps Press Down (Cable) - 3x12 - 12.5kg - 1st set: 6/10 - 2nd set: 8/10 - 3rd set: 9/10
+
+Gym
+27/12 - Gym Group Stevenage - 9.20am
+
+Feel good despite overindulging over Christmas on food, alcohol etc. Had a banana about 45 minutes before working out. 
+
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 6/10 - 2nd set: 6/10 - 3rd set: 8/10
+Lat Pull Down - 3x12 - 36.9kg - 1st set: 7/10 - 2nd set: 8/10 (hands badly placed on bar) - 3rd set: 8.5/10 (couldn’t stick to tempo at the end)
+Cable Row - 3x12 - 27.3kg - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set: 9.75/10
+Lat Raises - 3x12 - 5kg e/h - 1st set: 6/10 - 2nd set: 7/10 (caught myself being mentally weak and lazy on tempo) - 3rd set: 8.5/10
+
+Gym
+3/1/26 - BasicFit Serris
+
+Two glasses of wine over two days because I’m mirroring girlfriend’s good habits. Ego day in the gym.
+
+Tempo 1-1-3 and 90s rest on all sets. Ego day in the gym.
+
+Hammer curls - 3x12 - 10kg e/h - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 9/10 (left arm form breakdown)
+Dumbbell chest pres - 3x12 - 18kg e/h - 1st set: 7/10 - 2nd set: 8.5/10 - 3rd set: 9.5/10
+Lat pull down - 3x12 - 36.6kg - 1st set: 6/10 (slight cramping on left side) - 2nd set: 8/10 - 3rd set: 9.5/10 (cramping behind left shoulder blade)
+
+Gym
+13/1/26 - Gym Group Stevenage - 3pm
+Feeling good. Slept well. Drank less than normal. 
+
+Barbell Squat - 3x12 - 1st set: 60kg @ 7.5/10 - 2nd set: 60kg @ 7.5/10 - 3rd set: 65kg @ 8/10
+Standing Calf Raises - 3x15 - Bodyweight - 1st set: 6/10 - 2nd set: 8/10 - 3rd set: 8/10
+Leg Extension - 3x12 - 29.6kg - 1st set: 8/10 (legs shaking) - 2nd set: 8/10 - 3rd set: 9/10
+Prone Leg Curl - 3x12 - 29.3kg - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8.5/10
+45° Back Extension - 3x12 - Skipped exercise (time)
+
+Started uncontrollably yawning after calf raises. A tiny bit lightheaded when upside down on prone leg curl.
+
+Gym
+17/01/26 - Gym Group Stevenage - 3.15pm
+Started new PPL cycle today. Had high calorie lunch around 12.00pm (Nando’s). 1000 calories ~ 71g protein and 96g carbs. Only 2 beers last night. 1200ml water before working out.
+
+PUSH (Chest, Shoulders, Triceps)
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Dumbbell Chest Press - 3x12 - 18kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8/10
+Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 8/10 - 2nd set: 8/10 (left arm shaking) - 3rd set: 8/10 (left arm shaking)
+Incline Dumbbell Fly - 3x12 - 8kg e/h - 1st set: 7/10 - 2nd set: 7/10 - 3rd set: 7/10
+Lateral Raises - 3x12 - 5kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
+Tricep Cable Pushdown - 3x12 - 12.5kg - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9.5/10
+
+Gym - 19/1/26 - Gym Group Bolton - 9.45am
+Feeling good. Weetabix for breakfast. Gym was absolutely crazy with attachments, weights etc not available.
+
+DAY B - PULL (Back, Biceps, Rear Delt)
+Tempo: 1-1-3 on all. Rest: 90s b/w sets.
+Lat Pulldown - 3x12 - 34.3kg 1st set then 36.6kg after (all that was available) - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8/10
+Seated Cable Row - 3x12 - 27.3kg (gym was chaos, had to use a different attachment with wider grip) - 1st set: 8/10 - 2nd set: 8/10 - 3rd set: 8.5/10
+Cable Face Pulls - 3x12 - 7.9kg 1st set then 10.2kg (first time doing exercise)- 1st set: 5/10 - 2nd set: 5/10 - 3rd set: (raised clamp higher) 6/10
+Standing Hammer Curls - 3x12 - 10kg e/h - 1st set: 8/10 - 2nd set: 8.5/10 (left arm breakdown) - 3rd set: 10/10 (left arm failed at 10th rep)
+Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and dropped reps) - 1st set: 9/10 - 2nd set: 9/10 (left arm weak) - 3rd set: 9/10 (left arm)`;
+
         const workoutPresets = {
             "A": {
                 name: "DAY A - PUSH",
@@ -428,7 +747,63 @@
             document.getElementById('userAvatar').textContent = currentUser === 'Rammy' ? '🐏' : (currentUser === 'Lammy' ? '🐑' : '👤');
             document.getElementById('loginModal').classList.add('hidden');
             await loadUserStats();
+            await loadMasterExercises(); // Load exercises on login
             loadFromLocalStorage();
+        }
+        
+        // --- MASTER EXERCISE LIST LOGIC ---
+        async function loadMasterExercises() {
+            if(!currentUser) return;
+            masterExerciseList.clear();
+            
+            // 1. Add defaults from presets
+            Object.values(workoutPresets).forEach(p => p.exercises.forEach(e => masterExerciseList.add(e.name)));
+            
+            // 2. Fetch from DB if available
+            if(dbClient) {
+                try {
+                    const { data, error } = await dbClient.from('exercises').select('name').order('name');
+                    if(data) {
+                        data.forEach(e => masterExerciseList.add(e.name));
+                    } else {
+                        // Fallback: Fetch unique exercise names from workouts history if 'exercises' table doesn't exist yet
+                        const { data: historyData } = await dbClient.from('workouts').select('exercises').eq('username', currentUser);
+                         if(historyData) {
+                             historyData.forEach(w => {
+                                 if(w.exercises) w.exercises.forEach(ex => masterExerciseList.add(ex.name));
+                             });
+                         }
+                    }
+                } catch(e) { console.error("Error loading exercises", e); }
+            }
+            
+            updateExerciseDatalist();
+        }
+        
+        async function addToMasterExerciseList(exerciseName) {
+            if(!exerciseName || masterExerciseList.has(exerciseName)) return; // Prevents updating
+            
+            masterExerciseList.add(exerciseName);
+            updateExerciseDatalist();
+            
+            if(dbClient) {
+                // Try to insert into 'exercises' table. If it doesn't exist, this fails silently.
+                try {
+                    await dbClient.from('exercises').upsert({ name: exerciseName }, { onConflict: 'name' });
+                } catch(e) { 
+                    console.log("Could not save to exercises table (might not exist yet)."); 
+                }
+            }
+        }
+        
+        function updateExerciseDatalist() {
+            const dl = document.getElementById('exerciseList');
+            dl.innerHTML = '';
+            Array.from(masterExerciseList).sort().forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                dl.appendChild(opt);
+            });
         }
 
         window.logout = function() {
@@ -674,6 +1049,175 @@
             modal.classList.add('opacity-0', 'pointer-events-none');
             document.body.classList.remove('modal-active');
         }
+        
+        // --- IMPORT LOGIC ---
+        window.openImportModal = function() {
+            document.getElementById('importModal').classList.remove('hidden');
+            const txt = document.getElementById('importText');
+            // Only fill if empty to avoid overwriting user edits
+            if(!txt.value) txt.value = LEGACY_LOG_DATA;
+        }
+
+        window.processImport = async function() {
+            const text = document.getElementById('importText').value;
+            if(!text) return;
+            
+            const btn = document.querySelector('#importModal button');
+            const origText = btn.textContent;
+            btn.textContent = "PARSING...";
+            btn.disabled = true;
+
+            const workouts = parseLegacyLogs(text);
+            
+            if(workouts.length === 0) {
+                alert("Could not find any workouts. Check format.");
+                btn.textContent = origText;
+                btn.disabled = false;
+                return;
+            }
+            
+            if(!confirm(`Found ${workouts.length} workouts to import for ${currentUser}. Proceed?`)) {
+                btn.textContent = origText;
+                btn.disabled = false;
+                return;
+            }
+
+            if(dbClient) {
+                // Bulk insert
+                const { error } = await dbClient.from('workouts').insert(workouts);
+                if(error) {
+                    console.error(error);
+                    alert("Import failed: " + error.message);
+                } else {
+                    alert("Successfully imported grazing history!");
+                    document.getElementById('importModal').classList.add('hidden');
+                    loadHistory();
+                    await loadMasterExercises(); // Refresh exercise list
+                }
+            } else {
+                alert("Database disconnected.");
+            }
+            
+            btn.textContent = origText;
+            btn.disabled = false;
+        }
+        
+        function parseLegacyLogs(text) {
+            const sessions = [];
+            // Normalize newlines
+            const lines = text.split('\n');
+            let currentSession = null;
+            let currentExercises = [];
+            let sessionNotes = "";
+
+            // Heuristic regexes
+            const dateRegex = /(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/;
+            
+            // Helper to close session
+            const closeSession = () => {
+                if(currentSession && currentExercises.length > 0) {
+                    sessions.push({
+                        username: currentUser,
+                        workout_name: "Imported Workout",
+                        date: currentSession.date,
+                        time: currentSession.time || "12:00",
+                        gym_name: currentSession.gym || "Gym",
+                        notes: sessionNotes.trim(),
+                        exercises: currentExercises
+                    });
+                }
+            };
+
+            for(let line of lines) {
+                line = line.trim();
+                if(!line) continue;
+                
+                // Detect Date Line
+                const dateMatch = line.match(dateRegex);
+                const isGymLine = line.toLowerCase().includes('gym');
+                
+                if (dateMatch && (line.length < 50)) { // Valid date line, usually short
+                    closeSession(); // Close previous
+                    
+                    let dateStr = dateMatch[1];
+                    // Year inference
+                    const parts = dateStr.split('/');
+                    let day = parseInt(parts[0]);
+                    let month = parseInt(parts[1]);
+                    let year = parts[2] ? (parts[2].length === 2 ? '20'+parts[2] : parts[2]) : (month >= 10 ? '2025' : '2026');
+                    
+                    // Pad date
+                    const fmtDate = `${year}-${month.toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
+
+                    currentSession = {
+                        date: fmtDate,
+                        gym: line.toLowerCase().replace(dateStr,'').replace('gym','').replace('-','').trim() || "Gym",
+                        time: line.includes('pm') || line.includes('am') ? line.match(/(\d{1,2}(?:\.\d{2})?(?:am|pm))/i)?.[0]?.replace('.',':') : "12:00"
+                    };
+                    currentExercises = [];
+                    sessionNotes = "";
+                    continue;
+                }
+
+                if(!currentSession) continue; // Skip header noise
+
+                // Detect Exercise Line: "Name - 3x12 - 20kg"
+                // Must have numbers and dashes usually
+                if (line.includes('-') && /\d/.test(line)) {
+                    // Naive parsing
+                    const parts = line.split('-').map(s => s.trim());
+                    const name = parts[0];
+                    
+                    // Try to find sets/reps
+                    let sets = 3, reps = 12, weight = 0;
+                    let metaFound = false;
+                    
+                    // Look for NxN pattern in any part
+                    for(let part of parts) {
+                        const setRepMatch = part.match(/(\d+)\s*[xX]\s*(\d+)/);
+                        if(setRepMatch) {
+                            sets = parseInt(setRepMatch[1]);
+                            reps = parseInt(setRepMatch[2]);
+                            metaFound = true;
+                        }
+                        const weightMatch = part.match(/(\d+(?:\.\d+)?)\s*kg/i);
+                        if(weightMatch) {
+                            weight = parseFloat(weightMatch[1]);
+                        }
+                    }
+                    
+                    // If we found basic structure, add it
+                    if(name.length > 2 && metaFound) {
+                        const exerciseObj = {
+                            name: name,
+                            sets: []
+                        };
+                        
+                        // Populate sets (use detected weight for all, or put raw line in notes)
+                        for(let i=0; i<sets; i++) {
+                            exerciseObj.sets.push({
+                                weight: weight,
+                                reps: reps,
+                                rpe: 7, // default
+                                notes: i === 0 ? line : "" // Put raw line in 1st set note for reference
+                            });
+                        }
+                        currentExercises.push(exerciseObj);
+                        
+                        // Add to master list instantly for local cache
+                        masterExerciseList.add(name);
+                    } else {
+                        // Probably a note line or complex exercise line
+                        sessionNotes += line + "\n";
+                    }
+                } else {
+                    // Just text, append to notes
+                    sessionNotes += line + "\n";
+                }
+            }
+            closeSession(); // Close last
+            return sessions;
+        }
 
         window.finishWorkout = async function() {
             const btn = document.getElementById('finishBtn');
@@ -695,7 +1239,11 @@
             }
 
             let setCounter = 0;
-            workoutData.exercises.forEach(ex => setCounter += ex.sets.length);
+            workoutData.exercises.forEach(ex => {
+                setCounter += ex.sets.length;
+                addToMasterExerciseList(ex.name); // SAVE NEW EXERCISE NAME
+            });
+            
             const xpGained = setCounter * 10;
             userStats.xp += xpGained;
             const today = new Date().toISOString().split('T')[0];
@@ -783,17 +1331,92 @@
                     });
                 }
                 item.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="font-black text-white text-lg">${workout.workout_name}</h3>
-                        <div class="text-right">
-                             <div class="text-xs font-bold text-ram-primary">${workout.date}</div>
-                             <div class="text-[10px] text-ram-muted">${workout.gym_name || 'Gym'}</div>
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-black text-white text-lg mt-1">${workout.workout_name}</h3>
+                        <div class="flex items-start gap-3">
+                            <div class="text-right">
+                                 <div class="text-xs font-bold text-ram-primary">${workout.date}</div>
+                                 <div class="text-[10px] text-ram-muted">${workout.gym_name || 'Gym'}</div>
+                            </div>
+                            <button onclick="deleteWorkout('${workout.id}')" class="text-ram-border hover:text-red-500 transition pt-1" title="Delete Workout"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
                     <div class="pl-2 border-l-2 border-ram-border">${stats}</div>
                 `;
                 list.appendChild(item);
             });
+        }
+        
+        window.deleteWorkout = async function(id) {
+            if(!confirm("Are you sure you want to delete this workout? This cannot be undone.")) return;
+            
+            if(dbClient) {
+                const { error } = await dbClient.from('workouts').delete().eq('id', id);
+                if(error) {
+                    alert("Error deleting workout: " + error.message);
+                } else {
+                    loadHistory();
+                }
+            }
+        }
+        
+        window.downloadCSV = async function() {
+            if(!dbClient) { alert("Database not connected."); return; }
+            
+            const btn = document.querySelector('button[onclick="downloadCSV()"]');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner animate-spin"></i> Preparing...`;
+            
+            try {
+                const { data, error } = await dbClient.from('workouts')
+                    .select('*')
+                    .eq('username', currentUser)
+                    .order('date', { ascending: false });
+                    
+                if(!data || data.length === 0) { alert("No data to export."); btn.innerHTML = originalHTML; return; }
+                
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "Date,Time,Workout Name,Gym,Exercise Name,Set Number,Weight (KG),Reps,RPE,Notes\n";
+                
+                data.forEach(w => {
+                    if(w.exercises) {
+                        w.exercises.forEach(ex => {
+                            ex.sets.forEach((s, i) => {
+                                // Handle commas in text fields
+                                const cleanNotes = (s.notes || '').replace(/,/g, ';').replace(/\n/g, ' ');
+                                const cleanExName = (ex.name || '').replace(/,/g, ' ');
+                                
+                                const row = [
+                                    w.date,
+                                    w.time,
+                                    w.workout_name,
+                                    w.gym_name || 'Gym',
+                                    cleanExName,
+                                    i + 1,
+                                    s.weight || 0,
+                                    s.reps || 0,
+                                    s.rpe || '',
+                                    cleanNotes
+                                ].join(",");
+                                csvContent += row + "\n";
+                            });
+                        });
+                    }
+                });
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `ram_workouts_${currentUser}_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (err) {
+                console.error(err);
+                alert("Failed to generate CSV");
+            } finally {
+                btn.innerHTML = originalHTML;
+            }
         }
 
         window.switchView = function(viewName) {
