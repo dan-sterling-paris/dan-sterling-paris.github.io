@@ -1250,49 +1250,50 @@
         const FINANCIAL_DATA = {
             // PHASE 1: Edinburgh
             phase1: {
-                ttrEstimate:  28303.99,
-                receipts: 46920.60,
-                royalties: 9723.56,
+                ttrEstimate: 26143.99,
+                receipts:  37171.97,
+                royalties:  7782.48,
                 metrics: {
-                    capacity:410,
-                    performances:22,
-                    avgTicket:14.00
+                    capacity:276,
+                    performances:26,
+                    avgTicket:14.08
                 },
                 breakdown: [
                     { name: "FEES", cost:25236.18},
-                    { name: "PHYSICAL PRODUCTION", cost:29825},
+                    { name: "PHYSICAL PRODUCTION", cost:23825},
                     { name: "SALARIES", cost:27964.28},
-                    { name: "ALLOWANCES", cost:9585.84},
+                    { name: "ALLOWANCES", cost:19215.84},
                     { name: "BENEFITS", cost:7673.55},
                     { name: "CASTING & REHEARSALS", cost:7300},
                     { name: "THEATRE", cost:950},
-                    { name: "PRESS & MARKETING", cost:11560},
+                    { name: "PRESS & MARKETING", cost:10560},
                     { name: "SUNDRY", cost:800},
-                    { name: "GENERAL & ADMINISTRATIVE", cost:4500}
+                    { name: "GENERAL & ADMINISTRATIVE", cost:3500}
                 ]
             },
 
             // PHASE 2: Tour
             phase2: {
-                ttrEstimate:  25449.12,
-                carriedForward: -59893.92,
+                ttrEstimate: 24721.59,
+                carriedForward:  -71491.38,
                 metrics: {
                     capacity:600,
-                    performances:96,
-                    avgTicket:20,
-                    runningCost: 25002.68
+                    performances:120,
+                    avgTicket:17,
+                    weeks:10,
+                    runningCost: 20202.68
                 },
                 breakdown: [
                     { name: "FEES", cost:34500},
                     { name: "PHYSICAL PRODUCTION", cost:4250},
-                    { name: "SALARIES", cost:17967.4},
+                    { name: "SALARIES", cost:17252.4},
                     { name: "ALLOWANCES", cost:0},
-                    { name: "BENEFITS", cost:5174.61},
-                    { name: "CASTING & REHEARSALS", cost:7300},
+                    { name: "BENEFITS", cost:4968.69},
+                    { name: "CASTING & REHEARSALS", cost:6200},
                     { name: "THEATRE", cost:0},
-                    { name: "PRESS & MARKETING", cost:25168},
+                    { name: "PRESS & MARKETING", cost:30460},
                     { name: "SUNDRY", cost:1500},
-                    { name: "GENERAL & ADMINISTRATIVE", cost:8000}
+                    { name: "GENERAL & ADMINISTRATIVE", cost:5000}
                 ]
             },
 
@@ -1423,7 +1424,7 @@
         // 3. RECOUPMENT SCENARIO CALCULATOR
         function calculateScenario(percentage) {
             // Gross at this % capacity
-            const currentGross = COMPUTED.p2Gross * (percentage / 100) / 12;
+            const currentGross = COMPUTED.p2Gross * (percentage / 100) / FINANCIAL_DATA.phase2.metrics.weeks;
             
             // Net Box Office (deduct VAT/Commissions based on margin)
             const currentNetBox = currentGross * FINANCIAL_DATA.recoupment.netBoxOfficeMargin;
@@ -1435,11 +1436,11 @@
             const royalties = currentGross * FINANCIAL_DATA.recoupment.royaltiesPercent;
             
             //Weekly Running Costs
-            const runningCosts = 25002.68
+            const runningCosts = FINANCIAL_DATA.phase2.metrics.runningCost;
             
             const netReceipts = currentGross - theatreSplit - royalties - runningCosts;
             
-            const profit = (netReceipts * 12) - 78410.89 - 59893.82;
+			const profit = (netReceipts * FINANCIAL_DATA.phase2.metrics.weeks) - (COMPUTED.p2TotalBudget - FINANCIAL_DATA.phase2.ttrEstimate - FINANCIAL_DATA.phase2.carriedForward);
 
             return {
                 capacity: percentage,
