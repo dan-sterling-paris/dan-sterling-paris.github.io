@@ -14,6 +14,22 @@
         input[type=number] { -moz-appearance: textfield; }
         /* Touch optimization */
         .touch-manipulation { touch-action: manipulation; }
+        
+        /* Markdown Styles for AI Response */
+        .prose h1, .prose h2, .prose h3 { font-weight: 800; color: #58CC02; margin-top: 1em; margin-bottom: 0.5em; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose strong { color: #CE82FF; }
+        .prose p { margin-bottom: 0.8em; line-height: 1.5; }
+        
+        /* Shimmer effect for AI loading text */
+        .ai-thinking {
+            animation: pulse-text 2s infinite;
+        }
+        @keyframes pulse-text {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
     </style>
 
     <!-- Tailwind CSS -->
@@ -26,6 +42,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Marked for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <script>
         tailwind.config = {
@@ -74,6 +92,17 @@
         
         .modal { transition: opacity 0.25s ease; }
         body.modal-active { overflow: hidden; }
+        
+        /* Select styling override */
+        select {
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+             background-position: right 0.5rem center;
+             background-repeat: no-repeat;
+             background-size: 1.5em 1.5em;
+             padding-right: 2.5rem;
+             -webkit-print-color-adjust: exact;
+             print-color-adjust: exact;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-40">
@@ -123,6 +152,68 @@
             <p class="text-xs text-center text-ram-muted mt-4 font-bold uppercase tracking-widest">Max Weight per Session</p>
         </div>
     </div>
+
+    <!-- SUMMARY / FINISH MODAL -->
+    <div id="summaryModal" class="hidden fixed inset-0 z-[90] bg-[#131F24] flex flex-col items-center justify-center p-4">
+        <div class="bg-ram-card w-full max-w-2xl h-[90vh] rounded-3xl border-2 border-ram-border shadow-2xl flex flex-col overflow-hidden relative">
+            
+            <!-- Header -->
+            <div class="p-6 border-b-2 border-ram-border bg-[#131F24] flex justify-between items-center shrink-0">
+                <h2 class="text-2xl font-black text-ram-primary">Session Overview</h2>
+                <button onclick="closeSummary()" class="text-ram-muted hover:text-white"><i class="fas fa-times text-2xl"></i></button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Simple Stats -->
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="bg-[#131F24] p-3 rounded-xl border border-ram-border">
+                        <div class="text-xs text-ram-muted font-bold uppercase tracking-tighter">XP Gained</div>
+                        <div class="text-xl font-black text-yellow-400" id="summaryXP">0</div>
+                    </div>
+                    <div class="bg-[#131F24] p-3 rounded-xl border border-ram-border">
+                        <div class="text-xs text-ram-muted font-bold uppercase tracking-tighter">Streak</div>
+                        <div class="text-xl font-black text-orange-500" id="summaryStreak">0</div>
+                    </div>
+                    <div class="bg-[#131F24] p-3 rounded-xl border border-ram-border">
+                        <div class="text-xs text-ram-muted font-bold uppercase tracking-tighter">Exercises</div>
+                        <div class="text-xl font-black text-ram-accent" id="summaryCount">0</div>
+                    </div>
+                </div>
+
+                <!-- AI Section -->
+                <div id="aiSection" class="bg-[#131F24] rounded-2xl border-2 border-ram-border p-4 relative min-h-[150px]">
+                    <div class="flex items-center gap-2 mb-3 border-b border-ram-border/50 pb-2">
+                        <i class="fas fa-user-md text-ram-secondary text-xl"></i>
+                        <span class="font-bold text-lg text-white tracking-tight">PT Progress Audit</span>
+                    </div>
+                    <div id="aiLoading" class="hidden absolute inset-0 flex items-center justify-center bg-[#131F24]/90 z-10">
+                        <div class="text-center">
+                            <i class="fas fa-circle-notch fa-spin text-3xl text-ram-secondary mb-2"></i>
+                            <p class="text-xs font-bold text-ram-muted animate-pulse">Running historical comparison...</p>
+                        </div>
+                    </div>
+                    <div id="aiContent" class="prose prose-invert text-sm text-gray-300">
+                        <p class="text-ram-muted italic">Awaiting session results...</p>
+                    </div>
+                </div>
+
+                <!-- Text Summary -->
+                <div>
+                    <h3 class="font-bold text-white mb-2 text-sm uppercase tracking-wider opacity-60">Raw Session Log</h3>
+                    <textarea id="summaryText" class="w-full h-32 bg-[#131F24] border-2 border-ram-border rounded-xl p-3 text-xs font-mono text-gray-400 focus:border-ram-primary outline-none resize-none" readonly></textarea>
+                    <button onclick="copySummary()" class="mt-2 text-xs font-bold text-ram-accent hover:text-white"><i class="fas fa-copy mr-1"></i> Copy to Clipboard</button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="p-4 border-t-2 border-ram-border bg-[#131F24] shrink-0">
+                <button onclick="confirmFinish()" class="w-full btn-3d bg-ram-primary hover:bg-ram-primaryDark text-white font-extrabold py-4 rounded-xl border-ram-primaryDark text-lg uppercase tracking-wide">
+                    Commit to Database
+                </button>
+            </div>
+        </div>
+    </div>
     
     <!-- IMPORT MODAL -->
     <div id="importModal" class="hidden fixed inset-0 z-[80] bg-[#131F24] flex flex-col p-4">
@@ -160,7 +251,6 @@
             </div>
             <div class="flex gap-2">
                  <button onclick="switchView('history')" class="text-ram-muted hover:text-white transition p-2"><i class="fas fa-scroll text-lg"></i></button>
-                <button onclick="resetApp()" class="text-ram-muted hover:text-white transition p-2"><i class="fas fa-redo text-lg"></i></button>
             </div>
         </div>
     </div>
@@ -189,9 +279,6 @@
                     <option value="B">🪜 DAY B - PULL (Back, Biceps)</option>
                     <option value="C">🦵 DAY C - LEGS (Quads, Hams)</option>
                 </select>
-                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-ram-primary">
-                    <i class="fas fa-chevron-down text-xl"></i>
-                </div>
             </div>
         </div>
 
@@ -254,24 +341,29 @@
         </div>
     </footer>
 
-    <!-- SHARED DATALIST FOR AUTOCOMPLETE -->
-    <datalist id="exerciseList">
-        <!-- Populated via JS -->
-    </datalist>
-
     <!-- TEMPLATES -->
     <template id="exercise-template">
         <div class="exercise-card exercise-enter bg-ram-card rounded-3xl overflow-hidden shadow-lg border-2 border-ram-border mb-6">
             <div class="p-4 bg-ram-card border-b-2 border-ram-border flex justify-between items-center gap-3">
                 <div class="flex-1">
-                    <input type="text" list="exerciseList" class="exercise-name w-full bg-transparent text-xl font-black text-white outline-none placeholder-ram-muted" placeholder="Exercise Name">
+                    <select class="exercise-name w-full bg-[#202F36] text-xl font-black text-white outline-none border-b border-transparent focus:border-ram-primary appearance-none py-1 cursor-pointer" onchange="handleExerciseChange(this)">
+                         <!-- Options populated via JS -->
+                    </select>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="showProgress(this)" class="text-ram-accent hover:text-white transition p-2 rounded-full hover:bg-[#131F24]"><i class="fas fa-chart-line"></i></button>
-                    <button onclick="deleteExercise(this)" class="text-ram-border hover:text-red-400 transition p-2 rounded-full hover:bg-[#131F24]"><i class="fas fa-trash-alt"></i></button>
+                <!-- Controls: Chart, Move Up, Move Down, Delete -->
+                <div class="flex gap-1">
+                    <button onclick="showProgress(this)" class="text-ram-accent hover:text-white transition p-2 rounded-full hover:bg-[#131F24]" title="Chart"><i class="fas fa-chart-line"></i></button>
+                    <button onclick="moveExercise(this, -1)" class="text-ram-muted hover:text-white transition p-2 rounded-full hover:bg-[#131F24]" title="Move Up"><i class="fas fa-arrow-up"></i></button>
+                    <button onclick="moveExercise(this, 1)" class="text-ram-muted hover:text-white transition p-2 rounded-full hover:bg-[#131F24]" title="Move Down"><i class="fas fa-arrow-down"></i></button>
+                    <button onclick="deleteExercise(this)" class="text-ram-border hover:text-red-400 transition p-2 rounded-full hover:bg-[#131F24]" title="Delete"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
-            <!-- Column Headers removed as the set-row is now self-contained/stacked -->
+            
+            <!-- Summary of last session -->
+            <div class="last-session-summary hidden px-4 py-3 bg-[#1a262b] border-b border-ram-border text-xs text-ram-muted font-mono leading-relaxed transition-all">
+                <!-- Injected via JS -->
+            </div>
+            
             <div class="sets-container p-2 space-y-3">
                 <!-- Sets inject here -->
             </div>
@@ -331,352 +423,67 @@
 
     <script>
         // ==========================================
-        // CONFIGURATION: SUPABASE (DB)
+        // CONFIGURATION
         // ==========================================
         var SUPABASE_URL = "https://oaltkxblacpjjecpauya.supabase.co"; 
         var SUPABASE_KEY = "sb_publishable_TMGWYUqc50BRxAynmGZRoA_YJu1a02f"; 
+        // 🚨 PASTE YOUR GEMINI API KEY BELOW 🚨
+        const GEMINI_API_KEY = "AIzaSyAYCbD4Y1bDh15UYOl9cp4R-AWEK6aT27o"; 
         // ==========================================
 
         let dbClient = null;
         let currentUser = null;
+        let currentUserId = null; 
         let currentChart = null;
-        let currentUnit = 'kg'; // 'kg' or 'lbs'
+        let currentUnit = 'kg'; 
         let masterExerciseList = new Set();
         
-        // Massive Log Text for Import Convenience
         const LEGACY_LOG_DATA = `Gym
 22/10
 Lat pull down - 3x12 - 25kg
 Hamstring curls - 3x12 - 27kg (the pins prongs on -1 and 6) 
 Bent over barbell row - 3x12 - 25kg
 Standing head cavers - 3x12 - 6kg
-Barbell deadlift - 3x12 - 30kg
-
-24/10
-Leg Extension- 3x12 -25kg (Difficulty: 6/10)
-Cable Bicep Curls - 3x12 - 5.7kg (Difficulty: 7/10) Didn’t like the exercise 
-Dumbbell Shoulder Press - 3x12 - 10kg (8/10) Left arm struggled at end
-Barbell Squat - 3x12 - 20kg (8/10) (mistake it was 20kg on each side)
-Lat Raises - 3x12 - 6kg (9/10) Form dropped off
-
-26/10
-Slight headache from too much beer last night
-Dumbbell chest press - 3x12 - 12kg - 8/10
-Incline dumbbell chest press - 3x12 - 8kg - 9/10
-Cable chest fly - 3x12 - 3.4kg - 8/10 (next weight on machine is 5.7kg)
-Triceps press down cable - 3x12 - 7.9kg - 7/10 but big jump in weight on machine
-Standing hammer dumbbell curls - 2x12 @ 8kg then 1x12 @ 6kg - struggled for form particularly with left arm after about rep 9 in both 2nd and 3rd set
-
-28/10
-Early morning with not much sleep because was at the theatre last night. But feeling good. In a different gym today with different weight levels and machines.
-
-Workout in this order: 
-
-Dumbbell RDL - 3x12 - 1st set: 12kg (6/10) 2nd set: 14kg (6/10) 3rd set: 16kg (8/10) (weights in each hand) - felt slightly sore in lower back, but not in pain
-
-Kneeling single leg Hamstring curls - 3x12 - 17.5kg - Left leg 9/10 - right leg 8/10 
-
-Lat pull down - 3x12 - 1st set: 26kg (5/10) - 2nd set: 33kg (8/10) - 3rd set: 33kg (9/10)
-
-Single arm dumbbell row - 3x12 - 1st set: 12kg (Left 9/10 - Right 8/10) - 2nd set: 12kg (Left 10/10 - Right 9/10) - 3rd set: 10kg (Left 10/10 - Right 9/10)
-
-31/10
-Tired. End of a long week. Dehydrated. No shower at home because no hot water so felt congested.
-
-All 1-1-3 tempo with ~ 60 seconds rest (but not strict). Workout needed to be a bit rushed because of work and needing to shower at gym.
-
-Barbell Squat - 3x12 - 1st set: 22.5kg (previous bad notation - previously 20kg each side) 5/10 - 2nd set: 40kg 8/10 - 3rd set: 42.5kg
-Leg Extension- 3x12 - 1st set: 30kg (9/10) - 2nd set: 30kg (10/10) - 3rd set: 27.5kg (9.5/10)
-Dumbbell Shoulder Press - 3x12 - All sets: 10kg - 1st set: 8/10 2nd set: 9/10 3rd set: 10/10 on left arm 
-Lat Raises - 3x12 - 5kg - ran out of time
-
-Gym
-1/11
-Day off work. Slept well. Bit dehydrated and congested but okay.
- 
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Dumbbell chest press - 3x12 - 14kg e/h - 1st set 9/10 - 2nd set: 9/10 - 3rd set: 10/0
-Incline dumbbell chest press - 3x12 - 8kg e/h - all sets 9/10
-Dumbbell chest fly - 3x12 - 6kg e/h - 1st set: 9/10 - 2nd set: 9/10 - 3rd set
-Triceps press down cable - 3x15 - 1st set: 7.9kg (7/10) - 2nd set: 10.2kg (8/10) - 3rd set: 12.5kg (9.5/10)
-Standing hammer dumbbell curls - 7.5kg (only dumbbells available) - 1st set: 12 reps (9/10) - 2nd set: 10 reps (9/10) - 3rd set: 10 reps (9/10)
-
-Gym
-3/11
-Really tired. Too much to drink yesterday, but mainly the long drive and eating too late. Has made me feel really groggy anyway, then add 6 hours sleep after a long drive and the pub last night. Also, hot water still not working, so nose blocked and feeling gross. Shoulders sore from last time in the gym.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Dumbbell RDL - 3x12 - 16kg e/h - 1st set: 8/10 - 2nd set: 8/10 - 3rd set: 8/10
-Lat pull down - 3x12 - 1st set: 35.3kg 9/10 (it was the next weight up) - 2nd set: 35.3kg 9/10 - 3rd set: 35.3kg (thought about dropping weight, but wanted to see what I could do) 10/10 form and tempo was 7/10 on last set
-Prone leg curls (bilateral) - 3x12 - 1st set: 30.4kg 9/10 (paused to buy Powerade after 1st set) - 2nd set: 30.4kg (9.5/10) - 3rd set: 27kg 9/10
-Close grip Diverging seated row - 3x12 - 1st set: 23kg 9/10 (started at 30kg had to lower on rep 4) - 2nd set: 18kg (to focus on form) 9/10 - 3rd set: 18kg 10/10
-
-On the whole a tough session.
-
-Gym
-4/11
-Tired but much better than yesterday. Soreness in inner left thigh and left calf from workout. But feeling 7/10.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Barbell Squat - 3x12 - 45kg - 1st set: 8/10 - 2nd set: 8/10 - 3rd set: 9/10
-Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9.5/10 (felt like left arm improved)
-Leg Extension - 3x12 - 27.3kg - 1st set: 8.5/10 - 2nd set: 9/10 - 3rd set: 9/10
-Lat Raises - 3x12 - 5kg e/h - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set:  10/10 (left side definitely better)
-
-Gym
-7/11
-Hungover this morning but went to gym at 2.50pm after work. Feel okay. Not much food.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Dumbbell chest press - 14kg e/h - 1st set: 7/10 12 reps - 2nd set: 8/10 12 reps - 3rd set: 8.5/10 15 reps
-Incline dumbbell chest press - 3x12 - 8kg e/h - 1st set: 7/10 (left arm stability issues) - 2nd set: 7/10 (left arm stability) - 3rd set: 8/10 (left arm shaking)
-Dumbbell chest fly - 3x12 - 1st set: 6kg e/h 6/10 - 2nd set: 8kg e/h 8.5/10 (left side weaker) - 3rd set: 8kg e/h 9/10
-Triceps press down cable - 3x15 - 11.3kg (different machine with next weight up) - 1st set: 8.5/10 - 2nd set: 9.5/10 (had to pause on tenth rep then continue) - 3rd set: dropped to 9kg 9.75/10
-Standing hammer dumbbell curls - 3x12 - 7.5kg e/h (Goal: Beat 12, 10, 10 reps) - 1st set: 12 reps 7/10 - 2 set:  12 reps 8/10 (felt strong but burn) - 3rd set: 12 reps 10/10
-
-Gym
-8/11
-Feeling good. Lots of food and not too much to drink over the last two days. Decided not to do hamstrings because soreness not entirely gone since last workout. 
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Dumbbell RDL - 3x12 - 18kg e/h - not completed
-Lat pull down - 3x15 - 32kg (35.3kg not available so upped reps to 15 per set) - 1st set: 8/10 - 2nd set: 9/10 - 3rd set: 10/10
-Hamstring curls (bilateral) - 3x12 - 27.3kg - not completed
-Seated Cable Row - 3x12 - 1st set: 18kg 6/10 - 2nd set: 25kg 7/10 - 3rd set: 25kg 8/10 (next weight up is 32kg) 
-Standing dumbbell bicep curl (not hammer) - 1st set: 6kg e/h 12 reps 8/10 - 2nd set: 6kg e/h 12 reps 8.5/10 - 3rd set: 6kg e/h 11 reps 10/10 (left side fail at 11th rep)
-
-##LOCH TAY HOLIDAY BREAK 9/11 TO 13/11##
-
-Gym
-15/11
-9.45am. Feeling good. First workout back after holiday. In Bolton so not too much to drink and eating well.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Barbell Squat - 3x12 - 45kg plates and 11.3kg bar - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
-Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 6/10 - 2nd set: 8.5/10 (easy but burning for final few reps) - 3rd set: 9/10
-Leg Extension - 3x12 - 27.3kg - 1st set: 7/10 - 2nd set: 8.5/10 - 3rd set: 9/10
-Lat Raises - 3x12 - 5kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 10/10
-
-Body comp test: 86.7kg clothed - 26% BF 41% muscle 54% hydration 
-
-
-Gym
-18/11
-
-Not feeling too bad despite a bit of a late night. Very cold and rainy today. Did a five minute warm up on cross trainer.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-
-Dumbbell RDL - 3x12 - 20kg e/h (18kg not free) - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8/10 - as a general note, I hate how this exercise makes me feel. Feels awkward and clunky. Need to Google proper form.
-
-Lat pull down - 1st set: 32kg 15 reps 7/10- 2nd set:  (moved to new machine with better weight levels) 34.3kg 12 reps 8/20- 3rd set: 34.3kg 12 reps 9/10
-
-Prone leg curls - 3x12 - 29.3kg - 1st set: 8/10 - 2nd set: 9/10 (cramping in calves) - 3rd set: 10/10
-
-A little lightheadedness during the workout when looking down. Bought protein bar as hadn’t eaten today.
-
-Standing dumbbell bicep curl (not hammer) - 6kg - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set: 9.5/10
-
-Ears popping like I’m at altitude.
-
-Diverging Seated Row - 3x12 - 25.3kg - 1st set: 8/10 25.3kg - 2nd set: 25.3kg 10/10 (just feeling off) - 3rd set: 23kg 10/10
-
-Felt rough for second half of workout. Lightheaded and just rubbish. 
-
-Gym 20/11
-Slept well. ~9hrs. Afternoon tea (sandwiches cakes etc before workout). New gym with weird weights.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-
-Barbell chest press - 3x12 - 20kg bar + 10kg plates - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8/10
-Incline dumbbell chest press - 3x12 - 8kg e/h - 1st set: 8/10 - 2nd set: 8/10 - 3rd set: 9/10
-Dumbbell chest fly - 3x12 - 8kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8/10
-Triceps press down cable - 3x12 - 11.25kg - 1st set: 8/10 - 2nd set: 9/10 - 3rd set: 9.5/10
-Standing hammer dumbbell curls - 3x12 - 8kg e/h - 1st set: 8/10 - 2nd set: 9/10 (cramping right bicep) - 3rd set: 10/10 (right arm struggled)
-
-Gym - BasicFit Serris
-24/11/2025 - 3.20pm
-
-Hungover but looked after myself before going to gym.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-
-Barbell Squats - (60kg) 40kg plates and 20kg bar - 3x12 - 1st set: 7/10 - 2nd set: 7.5/10 - 3rd set:
-Dumbbell shoulder press - 10kg e/h - 3x12 - 1st set: 5.5/10 - 2nd set: 6.5/10 - 3rd set: 8.5/10 (strong enough but forearms burning)
-Leg Extension - 3x12 - 29.6kg - 1st set: 9/10 - 2nd set: 8/10 - 3rd set: 9/10
-Lat Raises - 3x12 - 5kg e/h - 1st set: 5/10 - 2nd set: 8/10 - 3rd set: 9/10
-
-Gym
-26/11/25 - BasicFit Serris 11.35am
-
-Feeling good, even though I had not much sleep. Had a coffee and a croissant this morning before the gym. High protein day yesterday even though I drank beer and wine.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Dumbbell RDL - 3x12 - 20kg e/h ("Shave the legs" cue) - 1st set: 7/10 - 2nd set: 7/10 - 3rd set: 8/10 (still sore in lower back on last set)
-Lat Pull Down - 3x12 - 34.3kg - 1st set: 7/10 - 2nd set: 8/10 (corrected tempo on second set) - 3rd set: 9.5/10 (started to lose tempo on last reps)
-Seated Leg Curl - 3x12 - 29.6kg (Toes up!) - 1st set: 6/10 - 2nd set: 6/10 - 3rd set: 7/10
-Cable Seated Row - 3x12 - 25kg - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8.5/10
-Bicep Curls - 3x12 - 6kg e/h - 1st set: 8/10 - 2nd set: 9/10 - 3rd set: 10/10 (had to take a break after 9 reps and struggled until the end)
-
-Gym
-28/11 - BasicFit Serris - 11.30am
-Feeling good despite thanksgiving indulgence and late night. Coffee and pain au chocolat this morning.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-
-Dumbbell Bench Press - 3x12 - 16kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
-Dumbbell Chest Fly - 3x12 - 8kg e/h 1st set: 6/10 - 2nd set: 8/10 - 3rd set: 8/10 (left arm better when breathing is disciplined)
-Incline Dumbbell Press - 3x12 - 1st set: 8kg 8/10 - 2nd set: 8kg 7/10 (felt light) - 3rd set: 10kg 8/10
-Triceps Pushdown - 3x12 - 11.3kg - 1st set: 7/10 - 2nd set: 8.5/10 (losing tempo) - 3rd set:  9/10
-Standing Hammer Curls - 3x12 - 8kg e/h - 1st set: 8/10 - 2nd set: 9/10 - 3rd set: 9.5/10
-
-Gym
-1/12/25 - BasicFit Bastille ~1.30pm
-Went out with the boys last night so had a chilled morning. Have eaten a muffin and protein bar. Have drunk 1.5l of water.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Barbell Squat - 3x12 - 60kg (Total weight) - 1st set: 7/10 - 2nd set: 7/10 - 3rd set: 8/10
-Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8/10
-Leg Extension - 3x12 - 29.6kg - 1st set: 6/10 (Strength there but legs shaking massively) - 2nd set: 8/10 (Adjusted seat position which helped but shaking still there) - 3rd set: 8/10
-Lat Raises - 3x12 - 5kg e/h - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 9/10
-
-Gym
-2/12/25
-
-Tired and groggy. Pain au chocolat, pineapple juice and two coffees before working out.
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-
-Dumbbell chest press - 3x12 - 16kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
-Incline dumbbell press - 3x12 - 10kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8/10
-Lat pull down - 3x12 - 34.3kg - 1st set: 7/10 - 2nd set: 7/10 - 3rd set: 8/10
-Hammer curls - 3x12 - 8kg e/h - 1st set: 7/10 - 2nd set: 8/10 (felt strong, but burning) - 3rd set: 9/10
-Tricep push down - 3x12 - 11.3kg - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
-
-##SOUTHPORT TRIP 3/12/25 to 10/12/25 - was ill with a fever and chest infection so didn’t workout at all##
-
-Gym
-14/12/25 - 1.45pm at Gym Group Charing Cross
-Feeling okay, but will have a runny nose and cough. Ate a PBJ sandwich at 11am.
-
-Recovery Session: Focus on form, not intensity. Stop if dizzy.
-Tempo: 1-1-3 on all. Rest: 90s+ b/w sets.
-45° Back Extension - 3x12 - Bodyweight - skipped exercise because not feeling 100%
-
-Lat Pulldown - 3x12 - 34.3kg - 1st set: 6/10 - 2nd set: 6/10 - 3rd set: 7/10
-
-Bicep Curls - 3x12 - 6kg e/h - 1st set: 6/10 - 2nd set: 6.5/10 - 3rd set: 7/10
-
-Seated Leg Extension - 3x12 - 29.5kg (Toes up) - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 7/10
-Cable Seated Row - 3x12 - 25kg - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 7.5/10
-
-Gym
-24/12/25 - Gym Group Stevenage - 10.45am
-
-Drank a lot yesterday but feeling good.
-
-Tempo: 1-1-3 on all
-Rest: 90s b/w sets
-Dumbbell Chest Press - 3x12 - 16kg - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8.5/10
-Incline Dumbbell Press - 3x12 - 12kg (no 10s available) - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set: 9/10
-Dumbbell Chest Fly - 3x12 - 8kg - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set: 9/10
-Standing Hammer Curls - 3x12 - 8kg - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8.5/10 (strength there but burning)
-Triceps Press Down (Cable) - 3x12 - 12.5kg - 1st set: 6/10 - 2nd set: 8/10 - 3rd set: 9/10
-
-Gym
-27/12 - Gym Group Stevenage - 9.20am
-
-Feel good despite overindulging over Christmas on food, alcohol etc. Had a banana about 45 minutes before working out. 
-
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 6/10 - 2nd set: 6/10 - 3rd set: 8/10
-Lat Pull Down - 3x12 - 36.9kg - 1st set: 7/10 - 2nd set: 8/10 (hands badly placed on bar) - 3rd set: 8.5/10 (couldn’t stick to tempo at the end)
-Cable Row - 3x12 - 27.3kg - 1st set: 8/10 - 2nd set: 8.5/10 - 3rd set: 9.75/10
-Lat Raises - 3x12 - 5kg e/h - 1st set: 6/10 - 2nd set: 7/10 (caught myself being mentally weak and lazy on tempo) - 3rd set: 8.5/10
-
-Gym
-3/1/26 - BasicFit Serris
-
-Two glasses of wine over two days because I’m mirroring girlfriend’s good habits. Ego day in the gym.
-
-Tempo 1-1-3 and 90s rest on all sets. Ego day in the gym.
-
-Hammer curls - 3x12 - 10kg e/h - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 9/10 (left arm form breakdown)
-Dumbbell chest pres - 3x12 - 18kg e/h - 1st set: 7/10 - 2nd set: 8.5/10 - 3rd set: 9.5/10
-Lat pull down - 3x12 - 36.6kg - 1st set: 6/10 (slight cramping on left side) - 2nd set: 8/10 - 3rd set: 9.5/10 (cramping behind left shoulder blade)
-
-Gym
-13/1/26 - Gym Group Stevenage - 3pm
-Feeling good. Slept well. Drank less than normal. 
-
-Barbell Squat - 3x12 - 1st set: 60kg @ 7.5/10 - 2nd set: 60kg @ 7.5/10 - 3rd set: 65kg @ 8/10
-Standing Calf Raises - 3x15 - Bodyweight - 1st set: 6/10 - 2nd set: 8/10 - 3rd set: 8/10
-Leg Extension - 3x12 - 29.6kg - 1st set: 8/10 (legs shaking) - 2nd set: 8/10 - 3rd set: 9/10
-Prone Leg Curl - 3x12 - 29.3kg - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8.5/10
-45° Back Extension - 3x12 - Skipped exercise (time)
-
-Started uncontrollably yawning after calf raises. A tiny bit lightheaded when upside down on prone leg curl.
-
-Gym
-17/01/26 - Gym Group Stevenage - 3.15pm
-Started new PPL cycle today. Had high calorie lunch around 12.00pm (Nando’s). 1000 calories ~ 71g protein and 96g carbs. Only 2 beers last night. 1200ml water before working out.
-
-PUSH (Chest, Shoulders, Triceps)
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Dumbbell Chest Press - 3x12 - 18kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 8/10
-Dumbbell Shoulder Press - 3x12 - 10kg e/h - 1st set: 8/10 - 2nd set: 8/10 (left arm shaking) - 3rd set: 8/10 (left arm shaking)
-Incline Dumbbell Fly - 3x12 - 8kg e/h - 1st set: 7/10 - 2nd set: 7/10 - 3rd set: 7/10
-Lateral Raises - 3x12 - 5kg e/h - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9/10
-Tricep Cable Pushdown - 3x12 - 12.5kg - 1st set: 7/10 - 2nd set: 8/10 - 3rd set: 9.5/10
-
-Gym - 19/1/26 - Gym Group Bolton - 9.45am
-Feeling good. Weetabix for breakfast. Gym was absolutely crazy with attachments, weights etc not available.
-
-DAY B - PULL (Back, Biceps, Rear Delt)
-Tempo: 1-1-3 on all. Rest: 90s b/w sets.
-Lat Pulldown - 3x12 - 34.3kg 1st set then 36.6kg after (all that was available) - 1st set: 6/10 - 2nd set: 7/10 - 3rd set: 8/10
-Seated Cable Row - 3x12 - 27.3kg (gym was chaos, had to use a different attachment with wider grip) - 1st set: 8/10 - 2nd set: 8/10 - 3rd set: 8.5/10
-Cable Face Pulls - 3x12 - 7.9kg 1st set then 10.2kg (first time doing exercise)- 1st set: 5/10 - 2nd set: 5/10 - 3rd set: (raised clamp higher) 6/10
-Standing Hammer Curls - 3x12 - 10kg e/h - 1st set: 8/10 - 2nd set: 8.5/10 (left arm breakdown) - 3rd set: 10/10 (left arm failed at 10th rep)
-Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and dropped reps) - 1st set: 9/10 - 2nd set: 9/10 (left arm weak) - 3rd set: 9/10 (left arm)`;
+Barbell deadlift - 3x12 - 30kg`;
 
         const workoutPresets = {
             "A": {
                 name: "DAY A - PUSH",
                 notes: "Tempo: 1-1-3. Rest: 90s. (Chest, Shoulders, Triceps)",
                 exercises: [
-                    { name: "Dumbbell Chest Press", sets: 3, reps: 12, weight: 18 },
-                    { name: "Dumbbell Shoulder Press", sets: 3, reps: 12, weight: 10 },
-                    { name: "Incline Dumbbell Fly", sets: 3, reps: 12, weight: 8 },
-                    { name: "Lateral Raises", sets: 3, reps: 12, weight: 5 },
-                    { name: "Tricep Cable Pushdown", sets: 3, reps: 12, weight: 12.5 }
+                    { name: "Dumbbell Chest Press", sets: 3, reps: 12, weight: "" },
+                    { name: "Dumbbell Shoulder Press", sets: 3, reps: 12, weight: "" },
+                    { name: "Incline Dumbbell Fly", sets: 3, reps: 12, weight: "" },
+                    { name: "Lateral Raises", sets: 3, reps: 12, weight: "" },
+                    { name: "Tricep Cable Pushdown", sets: 3, reps: 12, weight: "" }
                 ]
             },
             "B": {
                 name: "DAY B - PULL",
                 notes: "Tempo: 1-1-3. Rest: 90s. (Back, Biceps, Rear Delt)",
                 exercises: [
-                    { name: "Lat Pulldown", sets: 3, reps: 12, weight: 36.6 },
-                    { name: "Seated Cable Row", sets: 3, reps: 12, weight: 27.3 },
-                    { name: "Cable Face Pulls", sets: 3, reps: 15, weight: 0 },
-                    { name: "Standing Hammer Curls", sets: 3, reps: 12, weight: 10 },
-                    { name: "Seated Dumbbell Bicep Curls", sets: 3, reps: 12, weight: 6 }
+                    { name: "Lat Pulldown", sets: 3, reps: 12, weight: "" },
+                    { name: "Seated Cable Row", sets: 3, reps: 12, weight: "" },
+                    { name: "Cable Face Pulls", sets: 3, reps: 15, weight: "" },
+                    { name: "Standing Hammer Curls", sets: 3, reps: 12, weight: "" },
+                    { name: "Seated Dumbbell Bicep Curls", sets: 3, reps: 12, weight: "" }
                 ]
             },
             "C": {
                 name: "DAY C - LEGS",
                 notes: "Tempo: 1-1-3. Rest: 90s. (Quads, Hamstrings)",
                 exercises: [
-                    { name: "Barbell Squat", sets: 3, reps: 12, weight: 60 },
-                    { name: "Leg Extension", sets: 3, reps: 12, weight: 29.5 },
-                    { name: "Seated Leg Curl", sets: 3, reps: 12, weight: 29.6 },
-                    { name: "45° Back Extension", sets: 3, reps: 12, weight: 0 },
-                    { name: "Standing Calf Raises", sets: 3, reps: 15, weight: 0 }
+                    { name: "Barbell Squat", sets: 3, reps: 12, weight: "" },
+                    { name: "Leg Extension", sets: 3, reps: 12, weight: "" },
+                    { name: "Seated Leg Curl", sets: 3, reps: 12, weight: "" },
+                    { name: "45° Back Extension", sets: 3, reps: 12, weight: "" },
+                    { name: "Standing Calf Raises", sets: 3, reps: 15, weight: "" }
                 ]
             }
         };
 
         let userStats = { xp: 0, level: 1, streak: 0, lastWorkoutDate: null, defaultGym: "" };
+        let pendingWorkoutData = null; 
 
         // --- Init ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -689,6 +496,7 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
             }
 
             setDateTime();
+            loadMasterExercises();
 
             const storedUser = localStorage.getItem('ram_currentUser');
             if (storedUser) {
@@ -697,17 +505,14 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
                 document.getElementById('loginModal').classList.remove('hidden');
             }
             
-            // Auto-save typing
             document.getElementById('view-tracker').addEventListener('input', debounce(saveToLocalStorage, 500));
         });
 
         // --- Unit Logic ---
         window.setUnit = function(unit) {
             if(currentUnit === unit) return;
-            const oldUnit = currentUnit;
             currentUnit = unit;
             
-            // Visual Toggle
             if(unit === 'kg') {
                 document.getElementById('btn-kg').className = "px-3 py-1 rounded text-xs font-bold transition bg-ram-primary text-white";
                 document.getElementById('btn-lbs').className = "px-3 py-1 rounded text-xs font-bold transition text-ram-muted hover:text-white";
@@ -716,25 +521,20 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
                 document.getElementById('btn-kg').className = "px-3 py-1 rounded text-xs font-bold transition text-ram-muted hover:text-white";
             }
 
-            // Update Labels
             document.querySelectorAll('.unit-label').forEach(el => el.textContent = `(${unit.toUpperCase()})`);
 
-            // Convert Values in Inputs
             const weightInputs = document.querySelectorAll('.set-weight');
             weightInputs.forEach(input => {
                 const val = parseFloat(input.value);
                 if(!isNaN(val)) {
                     if(unit === 'lbs') {
-                        // KG -> LBS
                         input.value = (val * 2.20462).toFixed(1).replace('.0','');
                     } else {
-                        // LBS -> KG
                         input.value = (val / 2.20462).toFixed(2).replace('.00','');
                     }
                 }
             });
-            
-            saveToLocalStorage(); // Save state with new unit preference
+            saveToLocalStorage();
         }
 
         // --- Standard Logic ---
@@ -746,68 +546,166 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
             document.getElementById('userDisplay').textContent = currentUser;
             document.getElementById('userAvatar').textContent = currentUser === 'Rammy' ? '🐏' : (currentUser === 'Lammy' ? '🐑' : '👤');
             document.getElementById('loginModal').classList.add('hidden');
+            
             await loadUserStats();
-            await loadMasterExercises(); // Load exercises on login
+            await loadMasterExercises(); 
             loadFromLocalStorage();
         }
         
-        // --- MASTER EXERCISE LIST LOGIC ---
         async function loadMasterExercises() {
-            if(!currentUser) return;
-            masterExerciseList.clear();
-            
-            // 1. Add defaults from presets
             Object.values(workoutPresets).forEach(p => p.exercises.forEach(e => masterExerciseList.add(e.name)));
             
-            // 2. Fetch from DB if available
             if(dbClient) {
                 try {
                     const { data, error } = await dbClient.from('exercises').select('name').order('name');
                     if(data) {
                         data.forEach(e => masterExerciseList.add(e.name));
-                    } else {
-                        // Fallback: Fetch unique exercise names from workouts history if 'exercises' table doesn't exist yet
-                        const { data: historyData } = await dbClient.from('workouts').select('exercises').eq('username', currentUser);
-                         if(historyData) {
-                             historyData.forEach(w => {
-                                 if(w.exercises) w.exercises.forEach(ex => masterExerciseList.add(ex.name));
-                             });
-                         }
                     }
                 } catch(e) { console.error("Error loading exercises", e); }
             }
-            
-            updateExerciseDatalist();
+            refreshAllDropdowns();
         }
         
-        async function addToMasterExerciseList(exerciseName) {
-            if(!exerciseName || masterExerciseList.has(exerciseName)) return; // Prevents updating
+        function generateExerciseOptions(selectedName = "") {
+            let html = `<option value="__NEW__" class="font-bold text-ram-accent bg-ram-card">+ Add New Exercise...</option>`;
+            html += `<option disabled>----------------</option>`;
+            const sorted = Array.from(masterExerciseList).sort();
+            if(selectedName && !masterExerciseList.has(selectedName)) {
+                html += `<option value="${selectedName}" selected>${selectedName}</option>`;
+            } else if (!selectedName) {
+                html += `<option value="" selected disabled>Select Exercise</option>`;
+            }
+            sorted.forEach(name => {
+                const isSelected = name === selectedName ? 'selected' : '';
+                html += `<option value="${name}" ${isSelected}>${name}</option>`;
+            });
+            return html;
+        }
+        
+        function refreshAllDropdowns() {
+            const selects = document.querySelectorAll('select.exercise-name');
+            selects.forEach(sel => {
+                const currentVal = sel.value;
+                sel.innerHTML = generateExerciseOptions(currentVal);
+                sel.value = currentVal; 
+            });
+        }
+        
+        // --- GEMINI SUMMARY FOR SINGLE EXERCISE (PEER-STYLE) ---
+        async function fetchGeminiExerciseSummary(exerciseName, dateStr, logs) {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY.includes("YOUR_API_KEY")) return null;
+
+            const setsData = logs.map((l, i) => `Set ${i+1}: ${l.weight}${currentUnit} x ${l.reps} (RPE: ${l.rpe || '?'})`).join(', ');
             
-            masterExerciseList.add(exerciseName);
-            updateExerciseDatalist();
+            const prompt = `
+                Context: You are a peer-level gym partner. Keep it analytical but human. Avoid wanky enthusiasm.
+                Task: In one factual sentence, summarize how I did on ${exerciseName} on ${dateStr}.
+                Data: ${setsData}.
+                Example: "You finished with ${logs[logs.length-1].weight}${currentUnit} for ${logs[logs.length-1].reps} at RPE ${logs[logs.length-1].rpe}, which looked like a solid effort for 3 sets."
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function hydrateExerciseCard(card, exerciseName) {
+            if(!dbClient || !currentUserId || !exerciseName) return;
             
-            if(dbClient) {
-                // Try to insert into 'exercises' table. If it doesn't exist, this fails silently.
-                try {
-                    await dbClient.from('exercises').upsert({ name: exerciseName }, { onConflict: 'name' });
-                } catch(e) { 
-                    console.log("Could not save to exercises table (might not exist yet)."); 
+            const summaryDiv = card.querySelector('.last-session-summary');
+            summaryDiv.classList.remove('hidden');
+            summaryDiv.innerHTML = '<span class="ai-thinking text-[10px] opacity-50 uppercase tracking-widest">🐏 Syncing history...</span>';
+            
+            try {
+                const { data: exData } = await dbClient.from('exercises').select('id').eq('name', exerciseName).single();
+                
+                if(exData) {
+                    const { data: recentLog } = await dbClient.from('workout_logs')
+                        .select('workout_id, workouts!inner(date, user_id)')
+                        .eq('exercise_id', exData.id)
+                        .eq('workouts.user_id', currentUserId)
+                        .order('date', { foreignTable: 'workouts', ascending: false })
+                        .order('id', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+
+                    if(recentLog) {
+                        const { data: historyLogs } = await dbClient.from('workout_logs')
+                            .select('*')
+                            .eq('workout_id', recentLog.workout_id)
+                            .eq('exercise_id', exData.id)
+                            .order('set_index', { ascending: true });
+
+                        if(historyLogs && historyLogs.length > 0) {
+                            const dateStr = new Date(recentLog.workouts.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                            
+                            // RAW DATA FALLBACK
+                            let rawSummary = `<span class="text-ram-muted font-bold">${dateStr}:</span> `;
+                            rawSummary += historyLogs.map(l => `${l.weight}${currentUnit}x${l.reps}`).join(', ');
+                            summaryDiv.innerHTML = rawSummary;
+
+                            // AI UPGRADE
+                            fetchGeminiExerciseSummary(exerciseName, dateStr, historyLogs).then(aiText => {
+                                if(aiText) {
+                                    summaryDiv.innerHTML = `<span class="text-ram-primary/60 font-bold"><i class="fas fa-history mr-1"></i></span> <span class="text-gray-400">${aiText}</span>`;
+                                }
+                            });
+
+                            const rows = card.querySelectorAll('.set-row');
+                            rows.forEach((row, idx) => {
+                                if(historyLogs[idx]) {
+                                    const rowW = row.querySelector('.set-weight');
+                                    const rowR = row.querySelector('.set-reps');
+                                    if(rowW.value === "" || rowW.value === "0") {
+                                        let lastW = historyLogs[idx].weight;
+                                        if(currentUnit === 'lbs' && lastW) lastW = (lastW * 2.20462).toFixed(1).replace('.0','');
+                                        rowW.value = lastW;
+                                        rowW.classList.add('bg-ram-primary', 'bg-opacity-20');
+                                        setTimeout(() => rowW.classList.remove('bg-ram-primary', 'bg-opacity-20'), 1000);
+                                    }
+                                    if(rowR.value === "" || rowR.value === "0") {
+                                        rowR.value = historyLogs[idx].reps;
+                                    }
+                                }
+                            });
+                        }
+                    } else {
+                        summaryDiv.innerHTML = "New territory. No previous logs found.";
+                    }
                 }
+            } catch(e) {
+                summaryDiv.innerHTML = "History link broken.";
             }
         }
         
-        function updateExerciseDatalist() {
-            const dl = document.getElementById('exerciseList');
-            dl.innerHTML = '';
-            Array.from(masterExerciseList).sort().forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                dl.appendChild(opt);
-            });
+        window.handleExerciseChange = async function(selectElem) {
+            const val = selectElem.value;
+            if (val === "__NEW__") {
+                const newName = prompt("New exercise name:");
+                if (newName && newName.trim()) {
+                    const cleanName = newName.trim();
+                    masterExerciseList.add(cleanName);
+                    if (dbClient) await dbClient.from('exercises').upsert({ name: cleanName }, { onConflict: 'name' });
+                    refreshAllDropdowns();
+                    selectElem.value = cleanName;
+                } else selectElem.selectedIndex = 2; 
+            } else {
+                const card = selectElem.closest('.exercise-card');
+                hydrateExerciseCard(card, val);
+            }
+            saveToLocalStorage();
         }
 
         window.logout = function() {
-            if(confirm("Sign out?")) {
+            if(confirm("Logout?")) {
                 localStorage.removeItem('ram_currentUser');
                 location.reload();
             }
@@ -815,8 +713,13 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
 
         async function loadUserStats() {
             if(dbClient) {
-                const { data, error } = await dbClient.from('user_stats').select('*').eq('username', currentUser).single();
+                let { data, error } = await dbClient.from('users').select('*').eq('username', currentUser).single();
+                if (!data && !error) {
+                     const res = await dbClient.from('users').insert({ username: currentUser }).select().single();
+                     if (res.data) data = res.data;
+                }
                 if(data) {
+                    currentUserId = data.id; 
                     userStats = { xp: data.xp || 0, level: data.level || 1, streak: data.streak || 0, lastWorkoutDate: data.last_workout_date, defaultGym: data.default_gym };
                 }
             } else {
@@ -835,8 +738,14 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
 
         async function saveUserStats() {
             updateUIStats();
-            if(dbClient) {
-                await dbClient.from('user_stats').upsert({ username: currentUser, xp: userStats.xp, level: userStats.level, streak: userStats.streak, last_workout_date: userStats.lastWorkoutDate, default_gym: document.getElementById('gymName').value });
+            if(dbClient && currentUserId) {
+                await dbClient.from('users').update({ 
+                    xp: userStats.xp, 
+                    level: userStats.level, 
+                    streak: userStats.streak, 
+                    last_workout_date: userStats.lastWorkoutDate, 
+                    default_gym: document.getElementById('gymName').value 
+                }).eq('id', currentUserId);
             }
             localStorage.setItem(`ram_stats_${currentUser}`, JSON.stringify(userStats));
         }
@@ -872,43 +781,18 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
                 const card = createExerciseCard(ex.name);
                 container.appendChild(card);
                 const setsContainer = card.querySelector('.sets-container');
-                const setRows = [];
                 for(let i=0; i<ex.sets; i++) {
-                    let w = ex.weight;
-                    if(currentUnit === 'lbs' && w) w = (w * 2.20462).toFixed(1);
-                    const setRow = createSetRow(i+1, w, ex.reps);
-                    setsContainer.appendChild(setRow);
-                    setRows.push(setRow);
+                    setsContainer.appendChild(createSetRow(i+1, ex.weight, ex.reps));
                 }
-                exerciseInputs.push({ name: ex.name, rows: setRows });
+                exerciseInputs.push({ name: ex.name, card: card });
             });
 
             saveToLocalStorage();
 
-            if(dbClient) {
-                try {
-                    const { data, error } = await dbClient.from('workouts').select('*').eq('workout_name', presetData.name).eq('username', currentUser).order('date', { ascending: false }).limit(1);
-                    if(data && data.length > 0) {
-                        const lastWorkout = data[0];
-                        exerciseInputs.forEach(exItem => {
-                            const historyEx = lastWorkout.exercises.find(h => h.name === exItem.name);
-                            if(historyEx) {
-                                exItem.rows.forEach((row, idx) => {
-                                    if(historyEx.sets[idx]) {
-                                        const wInput = row.querySelector('.set-weight');
-                                        const rInput = row.querySelector('.set-reps');
-                                        let histW = historyEx.sets[idx].weight;
-                                        if(currentUnit === 'lbs' && histW) histW = (histW * 2.20462).toFixed(1).replace('.0','');
-                                        wInput.value = histW;
-                                        rInput.value = historyEx.sets[idx].reps;
-                                        wInput.classList.add('bg-ram-primary', 'bg-opacity-20');
-                                        setTimeout(() => wInput.classList.remove('bg-ram-primary', 'bg-opacity-20'), 1000);
-                                    }
-                                });
-                            }
-                        });
-                    }
-                } catch(err) { console.error(err); }
+            if(dbClient && currentUserId) {
+                for (const exItem of exerciseInputs) {
+                    hydrateExerciseCard(exItem.card, exItem.name);
+                }
             }
         }
 
@@ -916,7 +800,9 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
             const tmpl = document.getElementById('exercise-template');
             const clone = tmpl.content.cloneNode(true);
             const card = clone.querySelector('.exercise-card');
-            card.querySelector('.exercise-name').value = name;
+            const select = card.querySelector('.exercise-name');
+            select.innerHTML = generateExerciseOptions(name);
+            select.value = name; 
             card.querySelectorAll('.unit-label').forEach(el => el.textContent = `(${currentUnit.toUpperCase()})`);
             return card;
         }
@@ -935,11 +821,23 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
             const container = document.getElementById('exercisesContainer');
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('actionFooter').classList.remove('hidden');
-            const card = createExerciseCard();
+            const card = createExerciseCard(); 
             container.appendChild(card);
             card.querySelector('.sets-container').appendChild(createSetRow(1));
+            card.querySelector('.exercise-name').focus();
             saveToLocalStorage();
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        window.moveExercise = function(btn, direction) {
+            const card = btn.closest('.exercise-card');
+            const container = document.getElementById('exercisesContainer');
+            if (direction === -1 && card.previousElementSibling && card.previousElementSibling.id !== 'emptyState') {
+                container.insertBefore(card, card.previousElementSibling);
+            } else if (direction === 1 && card.nextElementSibling) {
+                container.insertBefore(card.nextElementSibling, card);
+            }
+            saveToLocalStorage();
         }
 
         window.addSet = function(btn) {
@@ -973,7 +871,6 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
 
         window.updateRpeDisplay = function(rangeInput) {
             const val = parseFloat(rangeInput.value);
-            // In new template, display is inside the same parent div, strictly finding .rpe-value
             const rpeVal = rangeInput.parentElement.querySelector('.rpe-value');
             if(rpeVal) {
                 rpeVal.textContent = val;
@@ -984,7 +881,7 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
         }
 
         window.resetApp = function() {
-            if(confirm("Reset workout form?")) {
+            if(confirm("Clear current form?")) {
                 localStorage.removeItem(`ram_draft_${currentUser}`);
                 location.reload();
             }
@@ -995,31 +892,23 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
             const card = btn.closest('.exercise-card');
             const exerciseName = card.querySelector('.exercise-name').value;
             if(!exerciseName) return;
-            document.getElementById('chartTitle').textContent = `${exerciseName} (${currentUser})`;
-            
-            if(!dbClient) { alert("Please connect Database for charts."); return; }
-
-            const { data, error } = await dbClient.from('workouts')
-                .select('date, exercises')
-                .eq('username', currentUser)
-                .order('date', { ascending: true });
-
-            if(!data || data.length === 0) { alert("No history found for this exercise."); return; }
-
-            const labels = [], dataPoints = [];
-            data.forEach(workout => {
-                const exData = workout.exercises.find(e => e.name === exerciseName);
-                if(exData && exData.sets) {
-                    let maxWeight = 0;
-                    exData.sets.forEach(s => { const w = parseFloat(s.weight); if(w > maxWeight) maxWeight = w; });
-                    if(maxWeight > 0) { labels.push(workout.date); dataPoints.push(maxWeight); }
+            document.getElementById('chartTitle').textContent = `${exerciseName} - ${currentUser}`;
+            if(!dbClient || !currentUserId) return;
+            const { data: exData } = await dbClient.from('exercises').select('id').eq('name', exerciseName).single();
+            if(!exData) return;
+            const { data } = await dbClient.from('workout_logs').select('weight, workouts(date, user_id)').eq('exercise_id', exData.id).order('id', { ascending: true });
+            if(!data || data.length === 0) return;
+            const labels = []; const dataPoints = []; const dayMax = {};
+            data.forEach(log => {
+                if(log.workouts.user_id === currentUserId) {
+                    const d = log.workouts.date.split('T')[0];
+                    const w = parseFloat(log.weight);
+                    if(!dayMax[d] || w > dayMax[d]) dayMax[d] = w;
                 }
             });
-
+            Object.keys(dayMax).sort().forEach(date => { labels.push(date); dataPoints.push(dayMax[date]); });
             renderChart(labels, dataPoints);
-            const modal = document.getElementById('chartModal');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            document.body.classList.add('modal-active');
+            document.getElementById('chartModal').classList.remove('opacity-0', 'pointer-events-none');
         }
 
         function renderChart(labels, dataPoints) {
@@ -1030,457 +919,348 @@ Seated Dumbbell Bicep Curls - 3x8 - 8kg e/h (no 6kg avb so upped weight and drop
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Max Weight (kg)',
-                        data: dataPoints,
-                        borderColor: '#58CC02', backgroundColor: 'rgba(88, 204, 2, 0.1)', borderWidth: 3,
-                        pointBackgroundColor: '#FFFFFF', pointBorderColor: '#58CC02', pointRadius: 5, fill: true, tension: 0.1
+                        label: 'Max Lift', data: dataPoints,
+                        borderColor: '#58CC02', backgroundColor: 'rgba(88, 204, 2, 0.1)', borderWidth: 3, pointRadius: 4, fill: true, tension: 0.1
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: false, grid: { color: '#37464F' }, ticks: { color: '#9CA3AF' } }, x: { grid: { display: false }, ticks: { color: '#9CA3AF' } } },
+                    scales: { y: { grid: { color: '#37464F' } }, x: { grid: { display: false } } },
                     plugins: { legend: { display: false } }
                 }
             });
         }
 
         window.closeChart = function() {
-            const modal = document.getElementById('chartModal');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            document.body.classList.remove('modal-active');
+            document.getElementById('chartModal').classList.add('opacity-0', 'pointer-events-none');
         }
         
-        // --- IMPORT LOGIC ---
+        // --- SUMMARY & SAVE ---
+        window.finishWorkout = async function() {
+            const workoutData = getWorkoutDataFromDOM();
+            let summary = `🐏 SESSION SUMMARY (${currentUser})\n`;
+            summary += `📅 ${workoutData.date} | ${workoutData.name}\n`;
+            summary += `-------------------------\n`;
+            let setCounter = 0;
+            workoutData.exercises.forEach(ex => {
+                summary += `🔹 ${ex.name}\n`;
+                ex.sets.forEach((set, idx) => {
+                    setCounter++;
+                    if(set.weight || set.reps) summary += `   ${idx+1}: ${set.weight}${currentUnit} x ${set.reps} (RPE ${set.rpe})\n`;
+                });
+            });
+            
+            const xpGained = setCounter * 10;
+            document.getElementById('summaryXP').textContent = `+${xpGained}`;
+            document.getElementById('summaryStreak').textContent = userStats.streak + 1; 
+            document.getElementById('summaryCount').textContent = workoutData.exercises.length;
+            document.getElementById('summaryText').value = summary;
+            document.getElementById('aiContent').innerHTML = '<p class="text-ram-muted italic">Running performance audit...</p>';
+            
+            pendingWorkoutData = workoutData; 
+            pendingWorkoutData.xpGained = xpGained;
+            pendingWorkoutData.summary = summary; 
+            
+            document.getElementById('summaryModal').classList.remove('hidden');
+            callGeminiTrainer(workoutData);
+        }
+        
+        window.closeSummary = function() {
+            document.getElementById('summaryModal').classList.add('hidden');
+        }
+        
+        window.copySummary = function() {
+            const txt = document.getElementById('summaryText');
+            txt.select(); document.execCommand('copy');
+            alert("Log copied!");
+        }
+        
+        // --- GEMINI PROGRESS AUDIT (ANALYTICAL PERSONA) ---
+        async function callGeminiTrainer(currentWorkout) {
+            if(!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_API_KEY_HERE") {
+                document.getElementById('aiContent').innerHTML = `<p class="text-yellow-500">API Key missing. Progression audit disabled.</p>`;
+                return;
+            }
+            
+            document.getElementById('aiLoading').classList.remove('hidden');
+            
+            try {
+                let historyContext = "No history context found.";
+                let startContext = "Unknown start date.";
+                
+                if(dbClient && currentUserId) {
+                    // Fetch last 10 workouts for detailed trend analysis
+                    const { data: recentHist } = await dbClient.from('workouts')
+                        .select('date, name, notes')
+                        .eq('user_id', currentUserId)
+                        .order('date', { ascending: false })
+                        .limit(10);
+                        
+                    // Fetch oldest workout for "since the start" contrast
+                    const { data: firstHist } = await dbClient.from('workouts')
+                        .select('date, name, notes')
+                        .eq('user_id', currentUserId)
+                        .order('date', { ascending: true })
+                        .limit(1);
+
+                    if(recentHist) historyContext = JSON.stringify(recentHist);
+                    if(firstHist && firstHist.length > 0) startContext = JSON.stringify(firstHist[0]);
+                }
+                
+                const prompt = `
+                    System Role: Expert Personal Trainer. Persona: Analytical, human, peer-like, objective. No wanky marketing speak.
+                    Goal: Provide a useful audit of the current workout vs historical progression.
+                    
+                    USER: ${currentUser}
+                    CURRENT SESSION: ${JSON.stringify(currentWorkout.exercises)}
+                    RECENT HISTORY (Last 10): ${historyContext}
+                    STARTING CONTEXT: ${startContext}
+                    
+                    ANALYSIS REQUIREMENTS:
+                    1. **Volume & Intensity:** Objective summary of today's workload.
+                    2. **Progress vs History:** Identify specific instances of Progressive Overload (weight increases, rep bumps) from today vs the last few sessions.
+                    3. **Long-term Trend:** Compare today's lifts against the starting context. Quantify the progress (e.g., "You're moving 20% more weight on compound lifts than when you started").
+                    4. **Observation:** One professional, anatomical observation or form warning based on notes/rpe.
+                    
+                    Constraint: Max 180 words. Markdown format.
+                `;
+                
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                
+                const data = await response.json();
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Audit failed to generate.";
+                pendingWorkoutData.aiResponse = aiText;
+                document.getElementById('aiContent').innerHTML = marked.parse(aiText);
+            } catch(e) {
+                document.getElementById('aiContent').innerHTML = `<p class="text-red-500">Analysis offline: ${e.message}</p>`;
+            } finally {
+                document.getElementById('aiLoading').classList.add('hidden');
+            }
+        }
+
+        window.confirmFinish = async function() {
+            const btn = document.querySelector('#summaryModal button[onclick="confirmFinish()"]');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> FINALIZING...';
+            btn.disabled = true;
+            
+            const workoutData = pendingWorkoutData;
+            if(workoutData.aiResponse) {
+                workoutData.notes = (workoutData.notes || "") + "\n\n[RAM_AUDIT]: " + workoutData.aiResponse;
+            }
+            
+            // Standardize to KG for storage
+            if(currentUnit === 'lbs') {
+                workoutData.exercises.forEach(ex => {
+                    ex.sets.forEach(set => {
+                        if(set.weight) set.weight = (parseFloat(set.weight) / 2.20462).toFixed(2).replace('.00','');
+                    });
+                });
+            }
+
+            userStats.xp += workoutData.xpGained;
+            const today = new Date().toISOString().split('T')[0];
+            if(userStats.lastWorkoutDate !== today) { userStats.streak += 1; userStats.lastWorkoutDate = today; }
+            await saveUserStats();
+
+            if(dbClient && currentUserId) {
+                try {
+                    const { data: wData, error: wError } = await dbClient.from('workouts').insert({
+                        user_id: currentUserId,
+                        name: workoutData.name,
+                        date: workoutData.date ? new Date(workoutData.date).toISOString() : new Date().toISOString(),
+                        duration: workoutData.time,
+                        gym_name: workoutData.gym,
+                        notes: workoutData.notes
+                    }).select().single();
+
+                    if(wError) throw wError;
+                    const workoutId = wData.id;
+
+                    for (let i = 0; i < workoutData.exercises.length; i++) {
+                        const ex = workoutData.exercises[i];
+                        let exId = null;
+                        const { data: existingEx } = await dbClient.from('exercises').select('id').eq('name', ex.name).single();
+                        if (existingEx) exId = existingEx.id;
+                        else {
+                            const { data: newEx } = await dbClient.from('exercises').insert({ name: ex.name }).select().single();
+                            if(newEx) exId = newEx.id;
+                        }
+                        if(exId) {
+                            const logsToInsert = ex.sets.map((set, idx) => ({
+                                workout_id: workoutId, exercise_id: exId, set_index: idx + 1, exercise_order: i + 1, 
+                                reps: set.reps || 0, weight: set.weight || 0, rpe: set.rpe, notes: set.notes
+                            }));
+                            await dbClient.from('workout_logs').insert(logsToInsert);
+                        }
+                    }
+                } catch(err) { console.error(err); }
+            }
+            localStorage.removeItem(`ram_draft_${currentUser}`);
+            location.reload();
+        }
+
+        window.loadHistory = async function() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = `<div class="py-10 opacity-50 uppercase tracking-widest text-xs">🐏 Loading Grazing Logs...</div>`;
+            if(!dbClient || !currentUserId) return;
+
+            const { data: workouts } = await dbClient.from('workouts').select('*').eq('user_id', currentUserId).order('date', { ascending: false }).limit(10);
+            if(!workouts || workouts.length === 0) { list.innerHTML = `<div class="py-10 opacity-30 italic">Pastures are empty.</div>`; return; }
+            
+            const workoutsWithLogs = await Promise.all(workouts.map(async (w) => {
+                const { data: logs } = await dbClient.from('workout_logs').select('*, exercises(name)').eq('workout_id', w.id).order('exercise_order', { ascending: true }).order('set_index', { ascending: true });
+                return { ...w, logs };
+            }));
+
+            list.innerHTML = '';
+            workoutsWithLogs.forEach(workout => {
+                const item = document.createElement('div');
+                item.className = 'bg-[#131F24] p-4 rounded-2xl border-2 border-ram-border text-left';
+                let stats = "";
+                if(workout.logs) {
+                    const grouped = workout.logs.reduce((acc, log) => {
+                        const exName = log.exercises?.name || 'Unknown';
+                        const key = `${log.exercise_order}_${exName}`;
+                        if(!acc[key]) acc[key] = { name: exName, sets: [] };
+                        acc[key].sets.push(log);
+                        return acc; group
+                    }, {});
+                    Object.values(grouped).forEach(exGroup => {
+                        let rows = "";
+                        exGroup.sets.forEach((s, i) => {
+                             if(s.weight || s.reps) rows += `<tr class="border-b border-ram-border/50 text-xs"><td class="py-1 text-ram-muted font-bold">${s.set_index}</td><td class="py-1 text-white font-bold">${s.weight}</td><td class="py-1 text-white">${s.reps}</td><td class="py-1 text-ram-accent">${s.rpe || '-'}</td><td class="py-1 text-ram-muted italic truncate max-w-[80px]">${s.notes || ''}</td></tr>`;
+                        });
+                        stats += `<div class="mt-4 mb-2"><div class="font-bold text-ram-primary text-sm border-b border-ram-border pb-1 mb-2">${exGroup.name}</div><table class="w-full text-center"><thead><tr class="text-[10px] text-ram-muted uppercase tracking-wider"><th class="pb-1 font-bold">Set</th><th class="pb-1 font-bold">Kg</th><th class="pb-1 font-bold">Reps</th><th class="pb-1 font-bold">RPE</th><th class="pb-1 font-bold">Note</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+                    });
+                }
+                item.innerHTML = `<div class="flex justify-between items-start mb-2"><h3 class="font-black text-white text-lg mt-1">${workout.name || 'Session'}</h3><div class="flex items-start gap-3"><div class="text-right"><div class="text-xs font-bold text-ram-primary">${new Date(workout.date).toLocaleDateString()}</div><div class="text-[10px] text-ram-muted uppercase tracking-tighter">${workout.gym_name || 'Gym'}</div></div><button onclick="deleteWorkout('${workout.id}')" class="text-ram-border hover:text-red-500 pt-1"><i class="fas fa-trash-alt"></i></button></div></div><div class="pl-2 border-l-2 border-ram-border">${stats}</div>`;
+                list.appendChild(item);
+            });
+        }
+        
+        window.deleteWorkout = async function(id) {
+            if(!confirm("Erase this session?")) return;
+            if(dbClient) {
+                const { error } = await dbClient.from('workouts').delete().eq('id', id);
+                if(!error) loadHistory();
+            }
+        }
+        
         window.openImportModal = function() {
             document.getElementById('importModal').classList.remove('hidden');
             const txt = document.getElementById('importText');
-            // Only fill if empty to avoid overwriting user edits
             if(!txt.value) txt.value = LEGACY_LOG_DATA;
         }
 
         window.processImport = async function() {
             const text = document.getElementById('importText').value;
             if(!text) return;
-            
             const btn = document.querySelector('#importModal button');
-            const origText = btn.textContent;
-            btn.textContent = "PARSING...";
-            btn.disabled = true;
-
+            btn.textContent = "UPLOADING..."; btn.disabled = true;
             const workouts = parseLegacyLogs(text);
-            
-            if(workouts.length === 0) {
-                alert("Could not find any workouts. Check format.");
-                btn.textContent = origText;
-                btn.disabled = false;
-                return;
-            }
-            
-            if(!confirm(`Found ${workouts.length} workouts to import for ${currentUser}. Proceed?`)) {
-                btn.textContent = origText;
-                btn.disabled = false;
-                return;
-            }
-
-            if(dbClient) {
-                // Bulk insert
-                const { error } = await dbClient.from('workouts').insert(workouts);
-                if(error) {
-                    console.error(error);
-                    alert("Import failed: " + error.message);
-                } else {
-                    alert("Successfully imported grazing history!");
-                    document.getElementById('importModal').classList.add('hidden');
-                    loadHistory();
-                    await loadMasterExercises(); // Refresh exercise list
+            if(dbClient && currentUserId) {
+                for(const w of workouts) {
+                    try {
+                        const { data: wRes } = await dbClient.from('workouts').insert({ user_id: currentUserId, name: w.workout_name, date: new Date(w.date).toISOString(), duration: w.time, gym_name: w.gym_name, notes: w.notes }).select().single();
+                        for (let i = 0; i < w.exercises.length; i++) {
+                            const ex = w.exercises[i];
+                            let exId = null;
+                            const { data: existing } = await dbClient.from('exercises').select('id').eq('name', ex.name).single();
+                            if(existing) exId = existing.id;
+                            else { const { data: nEx } = await dbClient.from('exercises').insert({ name: ex.name }).select().single(); if(nEx) exId = nEx.id; }
+                            if(exId) {
+                                const logs = ex.sets.map((s, idx) => ({ workout_id: wRes.id, exercise_id: exId, set_index: idx + 1, exercise_order: i + 1, reps: s.reps, weight: s.weight, rpe: s.rpe, notes: s.notes }));
+                                await dbClient.from('workout_logs').insert(logs);
+                            }
+                        }
+                    } catch(e) {}
                 }
-            } else {
-                alert("Database disconnected.");
+                alert("Imported."); document.getElementById('importModal').classList.add('hidden'); loadHistory();
             }
-            
-            btn.textContent = origText;
-            btn.disabled = false;
+            btn.textContent = "PROCESS & IMPORT"; btn.disabled = false;
         }
         
         function parseLegacyLogs(text) {
-            const sessions = [];
-            // Normalize newlines
-            const lines = text.split('\n');
-            let currentSession = null;
-            let currentExercises = [];
-            let sessionNotes = "";
-
-            // Heuristic regexes
+            const sessions = []; const lines = text.split('\n'); let currentSession = null; let currentExercises = []; let sessionNotes = "";
             const dateRegex = /(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/;
-            
-            // Helper to close session
-            const closeSession = () => {
-                if(currentSession && currentExercises.length > 0) {
-                    sessions.push({
-                        username: currentUser,
-                        workout_name: "Imported Workout",
-                        date: currentSession.date,
-                        time: currentSession.time || "12:00",
-                        gym_name: currentSession.gym || "Gym",
-                        notes: sessionNotes.trim(),
-                        exercises: currentExercises
-                    });
-                }
-            };
-
+            const closeSession = () => { if(currentSession && currentExercises.length > 0) sessions.push({ workout_name: "Legacy Log", date: currentSession.date, time: currentSession.time || "12:00", gym_name: currentSession.gym || "Gym", notes: sessionNotes.trim(), exercises: currentExercises }); };
             for(let line of lines) {
-                line = line.trim();
-                if(!line) continue;
-                
-                // Detect Date Line
+                line = line.trim(); if(!line) continue;
                 const dateMatch = line.match(dateRegex);
-                const isGymLine = line.toLowerCase().includes('gym');
-                
-                if (dateMatch && (line.length < 50)) { // Valid date line, usually short
-                    closeSession(); // Close previous
-                    
-                    let dateStr = dateMatch[1];
-                    // Year inference
-                    const parts = dateStr.split('/');
-                    let day = parseInt(parts[0]);
-                    let month = parseInt(parts[1]);
-                    let year = parts[2] ? (parts[2].length === 2 ? '20'+parts[2] : parts[2]) : (month >= 10 ? '2025' : '2026');
-                    
-                    // Pad date
-                    const fmtDate = `${year}-${month.toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
-
-                    currentSession = {
-                        date: fmtDate,
-                        gym: line.toLowerCase().replace(dateStr,'').replace('gym','').replace('-','').trim() || "Gym",
-                        time: line.includes('pm') || line.includes('am') ? line.match(/(\d{1,2}(?:\.\d{2})?(?:am|pm))/i)?.[0]?.replace('.',':') : "12:00"
-                    };
-                    currentExercises = [];
-                    sessionNotes = "";
-                    continue;
+                if (dateMatch && line.length < 50) {
+                    closeSession(); let dateStr = dateMatch[1]; const parts = dateStr.split('/'); let day = parseInt(parts[0]); let month = parseInt(parts[1]); let year = parts[2] ? (parts[2].length === 2 ? '20'+parts[2] : parts[2]) : (month >= 10 ? '2025' : '2026');
+                    currentSession = { date: `${year}-${month.toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`, gym: line.toLowerCase().replace(dateStr,'').replace('gym','').replace('-','').trim() || "Gym", time: "12:00" };
+                    currentExercises = []; sessionNotes = ""; continue;
                 }
-
-                if(!currentSession) continue; // Skip header noise
-
-                // Detect Exercise Line: "Name - 3x12 - 20kg"
-                // Must have numbers and dashes usually
+                if(!currentSession) continue;
                 if (line.includes('-') && /\d/.test(line)) {
-                    // Naive parsing
-                    const parts = line.split('-').map(s => s.trim());
-                    const name = parts[0];
-                    
-                    // Try to find sets/reps
-                    let sets = 3, reps = 12, weight = 0;
-                    let metaFound = false;
-                    
-                    // Look for NxN pattern in any part
+                    const parts = line.split('-').map(s => s.trim()); const name = parts[0]; let sets = 3, reps = 12, weight = 0; let metaFound = false;
                     for(let part of parts) {
                         const setRepMatch = part.match(/(\d+)\s*[xX]\s*(\d+)/);
-                        if(setRepMatch) {
-                            sets = parseInt(setRepMatch[1]);
-                            reps = parseInt(setRepMatch[2]);
-                            metaFound = true;
-                        }
-                        const weightMatch = part.match(/(\d+(?:\.\d+)?)\s*kg/i);
-                        if(weightMatch) {
-                            weight = parseFloat(weightMatch[1]);
-                        }
+                        if(setRepMatch) { sets = parseInt(setRepMatch[1]); reps = parseInt(setRepMatch[2]); metaFound = true; }
+                        const weightMatch = part.match(/(\d+(?:\.\d+)?)\s*kg/i); if(weightMatch) weight = parseFloat(weightMatch[1]);
                     }
-                    
-                    // If we found basic structure, add it
                     if(name.length > 2 && metaFound) {
-                        const exerciseObj = {
-                            name: name,
-                            sets: []
-                        };
-                        
-                        // Populate sets (use detected weight for all, or put raw line in notes)
-                        for(let i=0; i<sets; i++) {
-                            exerciseObj.sets.push({
-                                weight: weight,
-                                reps: reps,
-                                rpe: 7, // default
-                                notes: i === 0 ? line : "" // Put raw line in 1st set note for reference
-                            });
-                        }
-                        currentExercises.push(exerciseObj);
-                        
-                        // Add to master list instantly for local cache
-                        masterExerciseList.add(name);
-                    } else {
-                        // Probably a note line or complex exercise line
-                        sessionNotes += line + "\n";
-                    }
-                } else {
-                    // Just text, append to notes
-                    sessionNotes += line + "\n";
-                }
+                        const exObj = { name: name, sets: [] };
+                        for(let i=0; i<sets; i++) exObj.sets.push({ weight: weight, reps: reps, rpe: 7, notes: i === 0 ? line : "" });
+                        currentExercises.push(exObj); masterExerciseList.add(name);
+                    } else sessionNotes += line + "\n";
+                } else sessionNotes += line + "\n";
             }
-            closeSession(); // Close last
-            return sessions;
+            closeSession(); return sessions;
         }
 
-        window.finishWorkout = async function() {
-            const btn = document.getElementById('finishBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div> Saving...`;
-            btn.disabled = true;
-
-            const workoutData = getWorkoutDataFromDOM();
-            
-            // CONVERT TO KG FOR STORAGE IF NEEDED
-            if(currentUnit === 'lbs') {
-                workoutData.exercises.forEach(ex => {
-                    ex.sets.forEach(set => {
-                        if(set.weight) {
-                            set.weight = (parseFloat(set.weight) / 2.20462).toFixed(2).replace('.00','');
-                        }
-                    });
-                });
-            }
-
-            let setCounter = 0;
-            workoutData.exercises.forEach(ex => {
-                setCounter += ex.sets.length;
-                addToMasterExerciseList(ex.name); // SAVE NEW EXERCISE NAME
-            });
-            
-            const xpGained = setCounter * 10;
-            userStats.xp += xpGained;
-            const today = new Date().toISOString().split('T')[0];
-            if(userStats.lastWorkoutDate !== today) { userStats.streak += 1; userStats.lastWorkoutDate = today; }
-            await saveUserStats();
-
-            if(dbClient) {
-                try {
-                    await dbClient.from('workouts').insert({ username: currentUser, workout_name: workoutData.name, date: workoutData.date, time: workoutData.time, gym_name: workoutData.gym, notes: workoutData.notes, exercises: workoutData.exercises });
-                } catch(err) { console.error("DB Error", err); }
-            }
-
-            let summary = `🐏 Battering Ram (${currentUser})\n`;
-            summary += `📅 ${workoutData.date} @ ${workoutData.time}\n`;
-            summary += `🏆 +${xpGained} XP (Total: ${userStats.xp})\n`;
-            if(workoutData.notes) summary += `📝 ${workoutData.notes}\n`;
-            summary += `-------------------------\n`;
-            workoutData.exercises.forEach(ex => {
-                summary += `🔹 ${ex.name}\n`;
-                ex.sets.forEach((set, idx) => {
-                    if(set.weight || set.reps) summary += `   Set ${idx+1}: ${set.weight}kg x ${set.reps} (RPE ${set.rpe})\n`;
-                });
-            });
-
-            navigator.clipboard.writeText(summary);
-            btn.classList.remove('bg-ram-primary', 'border-ram-primaryDark');
-            btn.classList.add('bg-ram-secondary', 'border-purple-800');
-            btn.innerHTML = `<span>+${xpGained} XP! Saved!</span> 🎉`;
-            setTimeout(() => {
-                btn.classList.add('bg-ram-primary', 'border-ram-primaryDark');
-                btn.classList.remove('bg-ram-secondary', 'border-purple-800');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                localStorage.removeItem(`ram_draft_${currentUser}`);
-            }, 3000);
-        }
-
-        window.loadHistory = async function() {
-            const list = document.getElementById('historyList');
-            list.innerHTML = `<div class="text-center py-4 text-ram-muted">Herding sheep...</div>`;
-            if(!dbClient) { list.innerHTML = `<div class="text-center py-4 text-ram-muted">DB not connected.</div>`; return; }
-
-            const { data, error } = await dbClient.from('workouts').select('*').eq('username', currentUser).order('date', { ascending: false }).limit(10);
-            if(!data || data.length === 0) { list.innerHTML = `<div class="text-center text-ram-muted">No grazing history.</div>`; return; }
-
-            list.innerHTML = '';
-            data.forEach(workout => {
-                const item = document.createElement('div');
-                item.className = 'bg-[#131F24] p-4 rounded-2xl border-2 border-ram-border text-left';
-                let stats = "";
-                if(workout.exercises) {
-                    workout.exercises.forEach(ex => {
-                        let rows = "";
-                        ex.sets.forEach((s, i) => {
-                             if(s.weight || s.reps) {
-                                 // Table row for set
-                                 rows += `
-                                 <tr class="border-b border-ram-border/50 text-xs">
-                                     <td class="py-1 text-ram-muted font-bold">${i+1}</td>
-                                     <td class="py-1 text-white font-bold">${s.weight}</td>
-                                     <td class="py-1 text-white">${s.reps}</td>
-                                     <td class="py-1 text-ram-accent">${s.rpe || '-'}</td>
-                                     <td class="py-1 text-ram-muted italic truncate max-w-[80px]">${s.notes || ''}</td>
-                                 </tr>`;
-                             }
-                        });
-                        stats += `
-                        <div class="mt-4 mb-2">
-                            <div class="font-bold text-ram-primary text-sm border-b border-ram-border pb-1 mb-2">${ex.name}</div>
-                            <table class="w-full text-center">
-                                <thead>
-                                    <tr class="text-[10px] text-ram-muted uppercase tracking-wider">
-                                        <th class="pb-1 font-bold">Set</th>
-                                        <th class="pb-1 font-bold">Kg</th>
-                                        <th class="pb-1 font-bold">Reps</th>
-                                        <th class="pb-1 font-bold">RPE</th>
-                                        <th class="pb-1 font-bold">Note</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rows}
-                                </tbody>
-                            </table>
-                        </div>`;
-                    });
-                }
-                item.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-black text-white text-lg mt-1">${workout.workout_name}</h3>
-                        <div class="flex items-start gap-3">
-                            <div class="text-right">
-                                 <div class="text-xs font-bold text-ram-primary">${workout.date}</div>
-                                 <div class="text-[10px] text-ram-muted">${workout.gym_name || 'Gym'}</div>
-                            </div>
-                            <button onclick="deleteWorkout('${workout.id}')" class="text-ram-border hover:text-red-500 transition pt-1" title="Delete Workout"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </div>
-                    <div class="pl-2 border-l-2 border-ram-border">${stats}</div>
-                `;
-                list.appendChild(item);
-            });
-        }
-        
-        window.deleteWorkout = async function(id) {
-            if(!confirm("Are you sure you want to delete this workout? This cannot be undone.")) return;
-            
-            if(dbClient) {
-                const { error } = await dbClient.from('workouts').delete().eq('id', id);
-                if(error) {
-                    alert("Error deleting workout: " + error.message);
-                } else {
-                    loadHistory();
-                }
-            }
-        }
-        
         window.downloadCSV = async function() {
-            if(!dbClient) { alert("Database not connected."); return; }
-            
-            const btn = document.querySelector('button[onclick="downloadCSV()"]');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-spinner animate-spin"></i> Preparing...`;
-            
-            try {
-                const { data, error } = await dbClient.from('workouts')
-                    .select('*')
-                    .eq('username', currentUser)
-                    .order('date', { ascending: false });
-                    
-                if(!data || data.length === 0) { alert("No data to export."); btn.innerHTML = originalHTML; return; }
-                
-                let csvContent = "data:text/csv;charset=utf-8,";
-                csvContent += "Date,Time,Workout Name,Gym,Exercise Name,Set Number,Weight (KG),Reps,RPE,Notes\n";
-                
-                data.forEach(w => {
-                    if(w.exercises) {
-                        w.exercises.forEach(ex => {
-                            ex.sets.forEach((s, i) => {
-                                // Handle commas in text fields
-                                const cleanNotes = (s.notes || '').replace(/,/g, ';').replace(/\n/g, ' ');
-                                const cleanExName = (ex.name || '').replace(/,/g, ' ');
-                                
-                                const row = [
-                                    w.date,
-                                    w.time,
-                                    w.workout_name,
-                                    w.gym_name || 'Gym',
-                                    cleanExName,
-                                    i + 1,
-                                    s.weight || 0,
-                                    s.reps || 0,
-                                    s.rpe || '',
-                                    cleanNotes
-                                ].join(",");
-                                csvContent += row + "\n";
-                            });
-                        });
-                    }
+            if(!dbClient || !currentUserId) return;
+            const { data: workouts } = await dbClient.from('workouts').select('*').eq('user_id', currentUserId).order('date', { ascending: false });
+            let csv = "data:text/csv;charset=utf-8,Date,Workout,Gym,Exercise,Set,Weight,Reps,RPE,Notes\n";
+            for (const w of workouts) {
+                const { data: logs } = await dbClient.from('workout_logs').select('*, exercises(name)').eq('workout_id', w.id).order('exercise_order').order('set_index');
+                if(logs) logs.forEach(log => {
+                    const notes = (log.notes || '').replace(/,/g, ';').replace(/\n/g, ' ');
+                    csv += [w.date.split('T')[0], w.name, w.gym_name || 'Gym', log.exercises?.name || '?', log.set_index, log.weight, log.reps, log.rpe || '', notes].join(",") + "\n";
                 });
-                
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", `ram_workouts_${currentUser}_${new Date().toISOString().split('T')[0]}.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (err) {
-                console.error(err);
-                alert("Failed to generate CSV");
-            } finally {
-                btn.innerHTML = originalHTML;
             }
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `ram_logs_${currentUser}.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         window.switchView = function(viewName) {
             document.getElementById('view-tracker').classList.add('hidden');
             document.getElementById('view-history').classList.add('hidden');
             document.getElementById(`view-${viewName}`).classList.remove('hidden');
-            const footer = document.getElementById('actionFooter');
-            if(viewName === 'history') { footer.classList.add('hidden'); loadHistory(); }
-            else if (document.getElementById('exercisesContainer').children.length > 1) { footer.classList.remove('hidden'); }
+            if(viewName === 'history') { document.getElementById('actionFooter').classList.add('hidden'); loadHistory(); }
+            else if (document.getElementById('exercisesContainer').children.length > 0) { document.getElementById('actionFooter').classList.remove('hidden'); }
         }
 
         function setDateTime() {
             const now = new Date();
-            const dEl = document.getElementById('workoutDate');
-            const tEl = document.getElementById('workoutTime');
-            if(dEl && !dEl.value) dEl.value = now.toISOString().split('T')[0];
-            if(tEl && !tEl.value) tEl.value = now.toTimeString().substring(0, 5);
+            document.getElementById('workoutDate').value = now.toISOString().split('T')[0];
+            document.getElementById('workoutTime').value = now.toTimeString().substring(0, 5);
         }
 
         function getWorkoutDataFromDOM() {
              return {
-                name: document.getElementById('workoutName').value,
-                date: document.getElementById('workoutDate').value,
-                time: document.getElementById('workoutTime').value,
-                gym: document.getElementById('gymName').value,
+                name: document.getElementById('workoutName').value, date: document.getElementById('workoutDate').value,
+                time: document.getElementById('workoutTime').value, gym: document.getElementById('gymName').value,
                 notes: document.getElementById('generalNotes').value,
-                preset: document.getElementById('presetSelect').value,
                 exercises: Array.from(document.querySelectorAll('.exercise-card')).map(card => ({
                     name: card.querySelector('.exercise-name').value,
                     sets: Array.from(card.querySelectorAll('.set-row')).map(row => ({
-                        weight: row.querySelector('.set-weight').value,
-                        reps: row.querySelector('.set-reps').value,
-                        rpe: row.querySelector('.set-rpe').value,
-                        notes: row.querySelector('.set-notes').value
+                        weight: row.querySelector('.set-weight').value, reps: row.querySelector('.set-reps').value,
+                        rpe: row.querySelector('.set-rpe').value, notes: row.querySelector('.set-notes').value
                     }))
                 }))
             };
         }
 
-        function saveToLocalStorage() {
-            if(!currentUser) return;
-            // Store raw DOM values (in whatever unit they are currently in) PLUS the unit preference
-            const data = getWorkoutDataFromDOM();
-            data.currentUnit = currentUnit; 
-            localStorage.setItem(`ram_draft_${currentUser}`, JSON.stringify(data));
-        }
-
-        function loadFromLocalStorage() {
-            if(!currentUser) return;
-            const saved = localStorage.getItem(`ram_draft_${currentUser}`);
-            // Logic to restore full draft could go here.
-            // For now we rely on the preset logic, but the auto-save protects against crashes
-            // If the user reloads, they might lose specific set inputs unless we implement full hydrate here.
-            // Given the complexity of the "Sweaty Hands" requirement, I've prioritized the stepper/save mechanics.
-            // Full rehydration would require re-building the DOM from the saved JSON.
-        }
-
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
+        function saveToLocalStorage() { if(currentUser) localStorage.setItem(`ram_draft_${currentUser}`, JSON.stringify(getWorkoutDataFromDOM())); }
+        function loadFromLocalStorage() {}
+        function debounce(f, w) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => f.apply(this, a), w); }; }
     </script>
 </body>
 </html>
