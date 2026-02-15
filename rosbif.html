@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dan Blumenau | Le Rosbif Foodie</title>
+    
+    <!-- Fonts: Playfair Display (Elegance) & Lato (Modernity) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rosbif-dark': '#0f172a',
+                        'rosbif-charcoal': '#1e293b',
+                        'rosbif-gold': '#d4af37',
+                        'rosbif-cream': '#f8f5f2',
+                        'rosbif-wine': '#722F37',
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Lato"', 'sans-serif'],
+                    },
+                    letterSpacing: {
+                        widest: '.25em',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Animate On Scroll Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        /* Custom Scrollbar for Webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4af37; 
+        }
+
+        .hero-gradient {
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.3), rgba(15, 23, 42, 1));
+        }
+        
+        .gold-border-bottom {
+            position: relative;
+        }
+        .gold-border-bottom::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 2px;
+            background-color: #d4af37;
+        }
+    </style>
+</head>
+<body class="bg-rosbif-dark text-rosbif-cream font-sans antialiased overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 transition-all duration-300 bg-opacity-90 bg-rosbif-dark backdrop-blur-sm border-b border-gray-800" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex-shrink-0">
+                    <a href="#" class="font-serif text-2xl tracking-widest text-rosbif-gold font-bold uppercase">DB</a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#about" class="hover:text-rosbif-gold px-3 py-2 text-sm font-light tracking-widest uppercase transition-colors">L'Homme</a>
+                        <a href="#career" class="hover:text-rosbif-gold px-3 py-2 text-sm font-light tracking-widest uppercase transition-colors">Le Parcours</a>
+                        <a href="#showreel" class="hover:text-rosbif-gold px-3 py-2 text-sm font-light tracking-widest uppercase transition-colors">Le Format</a>
+                        <a href="#contact" class="border border-rosbif-gold text-rosbif-gold hover:bg-rosbif-gold hover:text-rosbif-dark px-4 py-2 text-sm font-light tracking-widest uppercase transition-all duration-300">Contact Pro</a>
+                    </div>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" class="text-gray-400 hover:text-white focus:outline-none" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                        <span class="sr-only">Ouvrir menu</span>
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div class="hidden md:hidden bg-rosbif-dark border-b border-gray-800" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 text-center">
+                <a href="#about" class="text-gray-300 hover:text-rosbif-gold block px-3 py-2 text-base font-medium">L'Homme</a>
+                <a href="#career" class="text-gray-300 hover:text-rosbif-gold block px-3 py-2 text-base font-medium">Le Parcours</a>
+                <a href="#showreel" class="text-gray-300 hover:text-rosbif-gold block px-3 py-2 text-base font-medium">Le Format</a>
+                <a href="#contact" class="text-rosbif-gold block px-3 py-2 text-base font-medium">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="relative h-screen flex items-center justify-center overflow-hidden">
+        <!-- Background Video/Image Placeholder -->
+        <div class="absolute inset-0 w-full h-full z-0">
+            <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=2574&auto=format&fit=crop" alt="Vineyard Texture" class="w-full h-full object-cover opacity-40">
+            <div class="hero-gradient absolute inset-0"></div>
+        </div>
+
+        <div class="relative z-10 text-center px-4" data-aos="fade-up" data-aos-duration="1500">
+            <p class="text-rosbif-gold tracking-[0.3em] uppercase text-xs md:text-sm mb-4 font-bold">Producteur. Casteur. Bon Vivant.</p>
+            <h1 class="font-serif text-5xl md:text-7xl lg:text-8xl font-bold mb-6 text-rosbif-cream leading-tight">
+                Dan Blumenau
+            </h1>
+            <p class="font-serif italic text-2xl md:text-3xl text-gray-400 mb-10">
+                "Le Rosbif Foodie"
+            </p>
+            <div class="flex justify-center gap-6">
+                <a href="#showreel" class="group relative inline-flex items-center justify-center px-8 py-3 overflow-hidden font-serif font-medium tracking-tighter text-white bg-rosbif-wine rounded-none transition duration-300 ease-out hover:bg-red-900">
+                    <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-white rounded-full group-hover:w-56 group-hover:h-56 opacity-10"></span>
+                    <span class="relative flex items-center gap-3">
+                        <i class="fa-solid fa-play text-xs"></i> Voir le Pilote
+                    </span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-rosbif-gold opacity-70">
+            <i class="fa-solid fa-chevron-down text-2xl"></i>
+        </div>
+    </div>
+
+    <!-- The Persona / About Section -->
+    <section id="about" class="py-24 bg-rosbif-dark relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <!-- Text Content -->
+                <div data-aos="fade-right" data-aos-duration="1000">
+                    <div class="mb-6">
+                        <span class="text-rosbif-gold uppercase tracking-widest text-xs font-bold">Le Profil</span>
+                        <h2 class="font-serif text-4xl md:text-5xl mt-2 mb-6 text-white leading-tight">
+                            L'Expertise Produit, <br><span class="italic text-gray-500">L'Âme d'Artiste</span>
+                        </h2>
+                        <div class="w-20 h-1 bg-rosbif-gold mb-8"></div>
+                    </div>
+                    
+                    <p class="text-lg text-gray-300 mb-6 font-light leading-relaxed">
+                        Dan Blumenau n'est pas seulement un passionné de gastronomie. Avec plus de <strong>20 ans d'expérience</strong> dans l'industrie du divertissement (Disney, West End), il maîtrise aussi bien la production que la performance.
+                    </p>
+                    <p class="text-lg text-gray-300 mb-8 font-light leading-relaxed">
+                        Parfaitement bilingue après 11 années passées au cœur de la machine <strong>Disneyland Paris</strong>, il incarne le "Rosbif" idéal : techniquement irréprochable, culturellement intégré, mais gardant ce flegme et cet humour britannique qui désarment et séduisent. 
+                    </p>
+                    
+                    <div class="grid grid-cols-2 gap-8 mt-10 border-t border-gray-800 pt-8">
+                        <div>
+                            <h4 class="font-serif text-2xl text-white">L'Insider</h4>
+                            <p class="text-sm text-gray-400 mt-2">Un professionnel de la production qui comprend les contraintes d'un tournage.</p>
+                        </div>
+                        <div>
+                            <h4 class="font-serif text-2xl text-white">Le Talent</h4>
+                            <p class="text-sm text-gray-400 mt-2">Une voix familière (doublage) et une présence scénique rodée.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Composition -->
+                <div class="relative" data-aos="fade-left" data-aos-duration="1000">
+                    <div class="absolute -top-4 -left-4 w-full h-full border border-rosbif-gold opacity-30"></div>
+                    <!-- Placeholder for Dan Portrait -->
+                    <div class="relative h-[600px] w-full bg-gray-800 overflow-hidden group">
+                        <img src="images/Dan.jpg?q=80&w=1000&auto=format&fit=crop" alt="Dan Blumenau Portrait" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0">
+                        <div class="absolute bottom-0 left-0 bg-rosbif-dark bg-opacity-90 px-6 py-4">
+                            <p class="font-serif italic text-rosbif-gold">Dan Blumenau</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Career Milestones (New Section) -->
+    <section id="career" class="py-16 bg-rosbif-charcoal border-y border-gray-800">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-gray-700">
+                <div class="p-4" data-aos="fade-up" data-aos-delay="0">
+                    <i class="fa-solid fa-castle text-rosbif-gold text-3xl mb-4"></i>
+                    <h3 class="font-serif text-xl text-white mb-2">Disneyland Paris</h3>
+                    <p class="text-sm text-gray-400 font-light">11 Ans | Finance & Opérations<br>Hôtellerie & Spectacle</p>
+                </div>
+                <div class="p-4" data-aos="fade-up" data-aos-delay="100">
+                    <i class="fa-solid fa-masks-theater text-rosbif-gold text-3xl mb-4"></i>
+                    <h3 class="font-serif text-xl text-white mb-2">West End</h3>
+                    <p class="text-sm text-gray-400 font-light">Mamma Mia! The Party<br>Priscilla The Party</p>
+                </div>
+                <div class="p-4" data-aos="fade-up" data-aos-delay="200">
+                    <i class="fa-solid fa-microphone-lines text-rosbif-gold text-3xl mb-4"></i>
+                    <h3 class="font-serif text-xl text-white mb-2">Voix Off</h3>
+                    <p class="text-sm text-gray-400 font-light">Doublage Animation<br>(Ce "petit alien bleu"...)</p>
+                </div>
+                <div class="p-4" data-aos="fade-up" data-aos-delay="300">
+                    <i class="fa-solid fa-building text-rosbif-gold text-3xl mb-4"></i>
+                    <h3 class="font-serif text-xl text-white mb-2">Sterling Paris</h3>
+                    <p class="text-sm text-gray-400 font-light">Fondateur<br>Consultant & Producteur</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Showreel / Pilot Section -->
+    <section id="showreel" class="py-24 bg-rosbif-dark relative overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-rosbif-gold rounded-full opacity-5 blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-rosbif-wine rounded-full opacity-10 blur-3xl"></div>
+
+        <div class="max-w-5xl mx-auto px-4 relative z-10 text-center">
+            <div class="mb-12" data-aos="fade-up">
+                <span class="text-rosbif-gold uppercase tracking-widest text-xs font-bold">La Bande-Annonce</span>
+                <h2 class="font-serif text-4xl md:text-5xl mt-2 text-white">Le Format</h2>
+                <p class="text-gray-400 mt-4 font-light max-w-2xl mx-auto">
+                    Fusionner la convivialité des <em>Hairy Bikers</em> avec l'esthétique cinématographique d'<em>Échappées Belles</em>.
+                </p>
+            </div>
+
+            <!-- Video Container -->
+            <div class="relative w-full aspect-video bg-black shadow-2xl border border-gray-700 group cursor-pointer" data-aos="zoom-in" data-aos-duration="1000">
+                <!-- Cover Image for Video -->
+                <img src="https://images.unsplash.com/photo-1516054575922-f0b8eeadec1a?q=80&w=2000&auto=format&fit=crop" alt="Video Cover" class="w-full h-full object-cover opacity-60 transition-opacity duration-300 group-hover:opacity-40">
+                
+                <!-- Play Button Overlay -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-20 h-20 bg-rosbif-gold rounded-full flex items-center justify-center pl-1 transition-transform duration-300 group-hover:scale-110 shadow-lg text-rosbif-dark">
+                        <i class="fa-solid fa-play text-2xl"></i>
+                    </div>
+                </div>
+                
+                <div class="absolute bottom-8 left-8 text-left">
+                    <h3 class="text-white font-serif text-2xl">Pilote Saison 1 : La Drôme Provençale</h3>
+                    <p class="text-gray-300 text-sm">Durée : 02:35 | Étalonnage 4K</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Format / Pillars Section -->
+    <section id="format" class="py-24 bg-rosbif-charcoal">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <span class="text-rosbif-gold uppercase tracking-widest text-xs font-bold">Stratégie Éditoriale</span>
+                <h2 class="font-serif text-4xl text-white mt-2">Les Piliers du Contenu</h2>
+                <div class="gold-border-bottom mt-6"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <!-- Pillar 1 -->
+                <div class="group" data-aos="fade-up" data-aos-delay="0">
+                    <div class="h-64 overflow-hidden mb-6 relative">
+                        <div class="absolute inset-0 bg-rosbif-dark opacity-0 group-hover:opacity-20 transition-opacity z-10"></div>
+                        <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?q=80&w=800&auto=format&fit=crop" alt="Terroir" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    </div>
+                    <h3 class="font-serif text-2xl text-white mb-3 flex items-center gap-3">
+                        <i class="fa-solid fa-seedling text-rosbif-gold text-lg"></i> Terroir
+                    </h3>
+                    <p class="text-gray-400 font-light leading-relaxed">
+                        Un respect profond pour le produit. Nous sommes dans la boue à récolter les carottes, pas seulement en studio. L'authenticité est notre devise.
+                    </p>
+                </div>
+
+                <!-- Pillar 2 -->
+                <div class="group" data-aos="fade-up" data-aos-delay="100">
+                    <div class="h-64 overflow-hidden mb-6 relative">
+                        <div class="absolute inset-0 bg-rosbif-dark opacity-0 group-hover:opacity-20 transition-opacity z-10"></div>
+                        <img src="https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=800&auto=format&fit=crop" alt="Rencontre" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    </div>
+                    <h3 class="font-serif text-2xl text-white mb-3 flex items-center gap-3">
+                        <i class="fa-solid fa-handshake text-rosbif-gold text-lg"></i> Rencontre
+                    </h3>
+                    <p class="text-gray-400 font-light leading-relaxed">
+                        Le cœur de l'émission. L'interaction avec le producteur. Écoute, empathie, et ce pont unique entre l'invité britannique et l'artisan français.
+                    </p>
+                </div>
+
+                <!-- Pillar 3 -->
+                <div class="group" data-aos="fade-up" data-aos-delay="200">
+                    <div class="h-64 overflow-hidden mb-6 relative">
+                        <div class="absolute inset-0 bg-rosbif-dark opacity-0 group-hover:opacity-20 transition-opacity z-10"></div>
+                        <img src="https://images.unsplash.com/photo-1543007630-9710e4a00a20?q=80&w=800&auto=format&fit=crop" alt="Humour" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    </div>
+                    <h3 class="font-serif text-2xl text-white mb-3 flex items-center gap-3">
+                        <i class="fa-solid fa-masks-theater text-rosbif-gold text-lg"></i> Humour
+                    </h3>
+                    <p class="text-gray-400 font-light leading-relaxed">
+                        L'esprit "British". Pince-sans-rire, autodérision. Transformer le cliché du "Rosbif" en un badge de curiosité affectueuse.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visual Aesthetic / Gallery Grid -->
+    <section class="py-12 bg-rosbif-dark">
+        <div class="max-w-7xl mx-auto px-4">
+             <div class="grid grid-cols-2 md:grid-cols-4 gap-2 h-96 md:h-[500px]">
+                 <!-- Changed from Vintage Car to Landscape/Travel -->
+                 <div class="col-span-1 h-full overflow-hidden relative group">
+                     <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 filter brightness-75 group-hover:brightness-100" alt="Scenic Journey">
+                     <div class="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span class="font-serif italic text-sm">L'Échappée</span>
+                     </div>
+                 </div>
+                 <div class="col-span-1 md:col-span-2 h-full overflow-hidden relative group">
+                     <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=1200&auto=format&fit=crop" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-75 group-hover:brightness-100" alt="Fine Dining">
+                     <div class="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span class="font-serif italic text-sm">La Table</span>
+                     </div>
+                 </div>
+                 <div class="col-span-2 md:col-span-1 h-full overflow-hidden relative group">
+                     <img src="https://images.unsplash.com/photo-1599525419958-86d42e616238?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 filter brightness-75 group-hover:brightness-100" alt="Market Day">
+                     <div class="absolute bottom-4 left-4 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span class="font-serif italic text-sm">Le Marché</span>
+                     </div>
+                 </div>
+             </div>
+        </div>
+    </section>
+
+    <!-- Footer / Contact -->
+    <footer id="contact" class="bg-rosbif-charcoal border-t border-gray-800 pt-24 pb-12">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            
+            <i class="fa-solid fa-envelope-open-text text-4xl text-rosbif-gold mb-6"></i>
+            
+            <h2 class="font-serif text-3xl md:text-4xl text-white mb-6">Produire Le Concept</h2>
+            <p class="text-gray-400 font-light mb-12 max-w-xl mx-auto">
+                Discussions exploratoires en cours avec des partenaires de production pour la saison 2026/2027.
+            </p>
+
+            <div class="flex flex-col md:flex-row justify-center gap-8 mb-16">
+                <a href="mailto:dan@rosbiffoodie.com" class="bg-rosbif-gold text-rosbif-dark px-8 py-4 font-serif font-bold uppercase tracking-wider hover:bg-white transition-colors duration-300">
+                    Demander le Dossier
+                </a>
+                <a href="mailto:dan@sterlingparis.com" class="border border-gray-600 text-gray-300 px-8 py-4 font-serif uppercase tracking-wider hover:border-rosbif-gold hover:text-rosbif-gold transition-colors duration-300">
+                    Contact Sterling Paris
+                </a>
+            </div>
+
+            <!-- Social Proof Links -->
+            <div class="flex justify-center gap-8 text-2xl text-gray-500 mb-12">
+                <a href="#" class="hover:text-rosbif-gold transition-colors"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#" class="hover:text-rosbif-gold transition-colors"><i class="fa-brands fa-linkedin"></i></a>
+            </div>
+
+            <div class="border-t border-gray-800 pt-8">
+                <p class="font-serif italic text-gray-600 text-sm">
+                    &copy; 2026 Dan Blumenau & Sterling Paris Limited. <br>
+                    "Le Rosbif Foodie" est un format déposé.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Init AOS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            once: true,
+            offset: 100,
+            duration: 800,
+            easing: 'ease-out-cubic',
+        });
+
+        // Sticky Nav Logic
+        window.addEventListener('scroll', function() {
+            var nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('shadow-lg');
+                nav.classList.remove('py-4');
+            } else {
+                nav.classList.remove('shadow-lg');
+                nav.classList.add('py-4');
+            }
+        });
+    </script>
+</body>
+</html>
