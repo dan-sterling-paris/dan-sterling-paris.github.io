@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lamb Hub 🐑</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Nunito', 'sans-serif'] },
+                    colors: {
+                        ram: { bg: '#131F24', card: '#202F36', primary: '#58CC02', secondary: '#CE82FF', accent: '#1CB0F6', border: '#37464F' },
+                        duo: { green: '#58cc02', blue: '#1cb0f6', yellow: '#ffc800', red: '#ff4b4b' }
+                    },
+                    aspectRatio: {
+                        'square': '1 / 1',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            background-color: #131F24; 
+            color: white; 
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
+        }
+        .btn-3d-square { 
+            transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            border-bottom-width: 6px; 
+            aspect-ratio: 1 / 1;
+        }
+        .btn-3d-square:active { 
+            border-bottom-width: 0px; 
+            transform: translateY(6px); 
+        }
+        .glass-footer {
+            background: rgba(32, 47, 54, 0.8);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .app-icon-shadow {
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-gradient-to-b from-[#131F24] to-[#0a1012] selection:bg-ram-primary/30">
+
+    <!-- Top Status Bar Area Area -->
+    <div class="h-12 w-full"></div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col items-center px-6 pb-32">
+        
+        <!-- Hero Header -->
+        <header class="text-center mt-8 mb-12">
+            <div class="text-8xl mb-4 animate-float inline-block">🐑</div>
+            <h1 class="text-5xl font-black text-white tracking-tighter">Lamb Hub</h1>
+            <p class="text-ram-primary font-extrabold text-lg tracking-wide uppercase mt-1 opacity-90">Daily Pasture</p>
+        </header>
+
+        <!-- App Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-4xl">
+            
+            <!-- App 1: Battering Ram -->
+            <a href="Tracker.html" class="group">
+                <div class="btn-3d-square bg-ram-card border-b-[#162126] rounded-[2rem] p-4 flex flex-col items-center justify-center text-center border-2 border-ram-border/50 hover:border-ram-primary/50 transition-colors">
+                    <div class="text-5xl mb-3 app-icon-shadow group-hover:scale-110 transition-transform duration-300">🐏</div>
+                    <h2 class="text-lg font-black text-ram-primary leading-tight">Training</h2>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Lifts & XP</p>
+                </div>
+            </a>
+
+            <!-- App 2: Calorie Tracker -->
+            <a href="calories.html" class="group">
+                <div class="btn-3d-square bg-ram-card border-b-[#162126] rounded-[2rem] p-4 flex flex-col items-center justify-center text-center border-2 border-ram-border/50 hover:border-duo-blue/50 transition-colors">
+                    <div class="text-5xl mb-3 app-icon-shadow group-hover:scale-110 transition-transform duration-300">🥗</div>
+                    <h2 class="text-lg font-black text-duo-blue leading-tight">Grazing</h2>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Calories</p>
+                </div>
+            </a>
+
+            <!-- App 3: Habits -->
+            <a href="habits.html" class="group">
+                <div class="btn-3d-square bg-ram-card border-b-[#162126] rounded-[2rem] p-4 flex flex-col items-center justify-center text-center border-2 border-ram-border/50 hover:border-duo-yellow/50 transition-colors">
+                    <div class="text-5xl mb-3 app-icon-shadow group-hover:scale-110 transition-transform duration-300">🧶</div>
+                    <h2 class="text-lg font-black text-duo-yellow leading-tight">Challenges</h2>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Consistency</p>
+                </div>
+            </a>
+
+            <!-- Placeholder -->
+            <div class="btn-3d-square bg-ram-card/30 border-b-[#10181c] rounded-[2rem] p-4 flex flex-col items-center justify-center text-center border-2 border-dashed border-ram-border/30 opacity-60">
+                <div class="text-3xl mb-2 opacity-50 grayscale">🏔️</div>
+                <h2 class="text-sm font-black text-gray-500 uppercase tracking-tighter">Coming Soon</h2>
+            </div>
+
+        </div>
+
+        <!-- Motivation Banner -->
+        <div class="mt-10 w-full max-w-4xl bg-ram-primary/10 border-2 border-ram-primary/20 rounded-3xl p-5 flex items-center gap-4">
+            <div class="text-3xl">💡</div>
+            <div>
+                <p class="text-xs font-black text-ram-primary uppercase tracking-widest">Tip of the Day</p>
+                <p class="text-sm font-bold text-gray-300">Success is the sum of small efforts, repeated day in and day out.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Stats -->
+    <footer class="fixed bottom-0 w-full glass-footer pb-8 pt-4 px-8 z-50">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex flex-col items-center gap-1">
+                <div class="text-2xl font-black text-white">1,240</div>
+                <div class="text-[9px] font-black text-ram-primary uppercase tracking-tighter">Weekly Wool</div>
+            </div>
+            
+            <div class="h-12 w-px bg-white/10"></div>
+            
+            <div class="flex flex-col items-center gap-1">
+                <div class="text-2xl font-black text-orange-500">🔥 12</div>
+                <div class="text-[9px] font-black text-orange-400 uppercase tracking-tighter">Day Streak</div>
+            </div>
+            
+            <div class="h-12 w-px bg-white/10"></div>
+
+            <div class="flex flex-col items-center gap-1">
+                <div class="text-2xl font-black text-ram-secondary">VIII</div>
+                <div class="text-[9px] font-black text-ram-secondary uppercase tracking-tighter">Pasture Rank</div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
