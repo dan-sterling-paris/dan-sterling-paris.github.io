@@ -65,13 +65,19 @@
         <h1 class="text-3xl font-bold text-gray-800 mb-2">CV Tinder</h1>
         <p class="text-gray-500 mb-8">Categorise candidates quickly and efficiently.</p>
         
-        <button onclick="showView('swipe')" class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold py-4 px-6 rounded-xl mb-4 hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2">
-            <i class="fa-solid fa-layer-group"></i> Start Categorising
-        </button>
-        
-        <button onclick="showView('history')" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left text-pink-500"></i> View History
-        </button>
+        <div class="w-full flex flex-col gap-3">
+            <button onclick="showView('swipe')" class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold py-4 px-6 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-layer-group"></i> Start Categorising
+            </button>
+            
+            <button onclick="showView('history')" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-pink-500"></i> View History
+            </button>
+            
+            <button id="csv-btn" onclick="openExportModal()" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2">
+                <i class="fa-solid fa-file-csv text-green-500"></i> Export to CSV
+            </button>
+        </div>
     </div>
 
     <!-- MAIN SWIPE VIEW -->
@@ -110,15 +116,14 @@
                 </div>
             </div>
 
-            <!-- The Swipable Card (Now Edge-to-Edge) -->
+            <!-- The Swipable Card -->
             <div id="tinder-card" class="absolute inset-0 bg-white flex flex-col card-transition z-10">
                 
-                <!-- Card Header (Shows Name and Role) -->
+                <!-- Card Header -->
                 <div class="bg-white border-b border-gray-200 px-4 py-2 shrink-0 flex flex-col items-center text-center relative z-20">
                     <h2 id="card-name" class="text-lg font-bold text-gray-800 leading-tight">Loading Name...</h2>
                     <span id="card-role" class="text-sm font-medium text-gray-500 mt-0.5">Loading Role...</span>
                     
-                    <!-- Open external link small button -->
                     <a id="open-external-btn" href="#" target="_blank" class="absolute right-3 top-2 text-gray-400 hover:text-gray-600 p-2">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </a>
@@ -130,7 +135,6 @@
                         <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
                         <span class="text-sm text-gray-500 font-medium tracking-wide">Loading CV...</span>
                     </div>
-                    <!-- touch-action: pan-y added to strictly lock scrolling to vertical only -->
                     <iframe id="website-frame" class="absolute inset-0 w-full h-full border-0 z-10 bg-white" style="touch-action: pan-y; overflow-x: hidden;"></iframe>
                 </div>
 
@@ -169,7 +173,7 @@
         <div class="p-4 shrink-0 bg-white shadow-sm z-0 space-y-3">
             <div class="relative">
                 <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="history-search" placeholder="Search by name..." 
+                <input type="text" id="history-search" placeholder="Search name or role..." 
                        class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all" 
                        oninput="filterHistory()">
             </div>
@@ -199,6 +203,51 @@
         </div>
     </div>
 
+    <!-- Export Modal -->
+    <div id="export-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-csv text-green-500"></i> Export Settings
+            </h2>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">File Name</label>
+                <div class="relative">
+                    <input type="text" id="export-filename" class="w-full pl-3 pr-12 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">.csv</span>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Filter Records</label>
+                <select id="export-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
+                    <option value="all">All Records</option>
+                    <option value="pending">Pending</option>
+                    <option value="yes">Yes</option>
+                    <option value="maybe">Maybe</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Sort By</label>
+                <select id="export-sort" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
+                    <option value="updated_desc">Recently Updated</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="role_asc">Role (A-Z)</option>
+                    <option value="decision">Decision Status</option>
+                </select>
+            </div>
+
+            <div class="flex gap-3 mt-4 pt-4 border-t border-gray-100">
+                <button onclick="closeExportModal()" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-bold transition-colors">Cancel</button>
+                <button id="execute-export-btn" onclick="executeCSVExport()" class="flex-1 py-2.5 px-4 bg-green-500 text-white rounded-xl hover:bg-green-600 font-bold flex items-center justify-center gap-2 transition-colors shadow-sm">
+                    <i class="fa-solid fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Error Toast -->
     <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-300 -translate-y-24 z-50 flex items-center gap-3">
         <i class="fa-solid fa-circle-info text-pink-400"></i>
@@ -212,8 +261,8 @@
             key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbHRreGJsYWNwamplY3BhdXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTc2ODQsImV4cCI6MjA4NDQ3MzY4NH0.zDfKgAKfWjXMQsOP5ZpD_nl6yhZS1O4H794HqSRDLVo',     
             table: 'links',                    
             urlCol: 'url',                     
-            nameCol: 'name',         // New Column for CV Name
-            roleCol: 'role',         // New Column for CV Role
+            nameCol: 'name',         
+            roleCol: 'role',         
             decisionCol: 'decision'            
         };
 
@@ -229,7 +278,6 @@
         // Initialize App
         function init() {
             setupSupabase(appConfig.url, appConfig.key);
-            // Default view is 'home', so no loading needed yet
         }
 
         function setupSupabase(url, key) {
@@ -239,6 +287,48 @@
                 showToast("Failed to initialize Supabase. Check credentials.");
             }
         }
+
+        // --- DATA FETCHING UTILS ---
+        
+        // Fetches ALL records bypassing the 1000 row Supabase limit using pagination.
+        async function fetchAllRecords() {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select('*')
+                    .range(from, from + step - 1);
+                
+                if (error) {
+                    console.error("Fetch error:", error);
+                    throw error;
+                }
+
+                if (data && data.length > 0) {
+                    allData = allData.concat(data);
+                    from += step;
+                    if (data.length < step) {
+                        fetchMore = false;
+                    }
+                } else {
+                    fetchMore = false;
+                }
+            }
+
+            // Sort locally: most recently updated first
+            allData.sort((a, b) => {
+                const dateA = new Date(a.updated_at || 0);
+                const dateB = new Date(b.updated_at || 0);
+                return dateB - dateA;
+            });
+
+            return allData;
+        }
+
 
         // --- NAVIGATION LOGIC ---
         function showView(viewName) {
@@ -303,7 +393,6 @@
                     iframeLoading.style.display = 'none';
                 };
                 
-                // Set URL. We DO NOT use sandboxing so cookies from the domain persist.
                 iframe.src = currentLink[appConfig.urlCol];
 
                 // Failsafe UI unlocker
@@ -327,7 +416,7 @@
 
             const tinderCard = document.getElementById('tinder-card');
 
-            // 1. Animate card away
+            // Animate card away
             tinderCard.classList.remove('card-transition'); 
             void tinderCard.offsetWidth; // Reflow
             tinderCard.classList.add('card-transition');
@@ -340,10 +429,10 @@
             else if (decision === 'no') tinderCard.classList.add('swipe-left');
             else if (decision === 'maybe') tinderCard.classList.add('swipe-up');
 
-            // 2. Save decision AND timestamp asynchronously
+            // Save decision asynchronously
             const updateData = {};
             updateData[appConfig.decisionCol] = decision;
-            updateData['updated_at'] = new Date().toISOString(); // To enable "last categorised" sorting
+            updateData['updated_at'] = new Date().toISOString(); 
 
             supabaseClient
                 .from(appConfig.table)
@@ -353,7 +442,7 @@
                     if (error) console.error("Error saving decision:", error);
                 });
 
-            // 3. Reset UI & Load Next
+            // Reset UI & Load Next
             setTimeout(() => {
                 tinderCard.classList.add('hidden');
                 tinderCard.classList.remove('swipe-left', 'swipe-right', 'swipe-up');
@@ -361,13 +450,110 @@
                 document.getElementById('stamp-nope').classList.remove('show-stamp');
                 document.getElementById('stamp-like').classList.remove('show-stamp');
                 document.getElementById('stamp-maybe').classList.remove('show-stamp');
-
-                // Deliberately NOT clearing iframe.src here!
-                // Keeping the domain context alive helps browser persist session cookies.
                 
                 loadNextLink();
             }, 400); 
         }
+
+        // --- CSV EXPORT LOGIC ---
+        function openExportModal() {
+            const dateStr = new Date().toISOString().split('T')[0];
+            document.getElementById('export-filename').value = `LinkTinder_Export_${dateStr}`;
+            document.getElementById('export-modal').classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+        }
+
+        async function executeCSVExport() {
+            if (!supabaseClient) {
+                showToast("Database not initialized");
+                return;
+            }
+            
+            const btn = document.getElementById('execute-export-btn');
+            const originalContent = btn.innerHTML;
+            
+            // Show loading state
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Exporting...';
+            btn.disabled = true;
+
+            try {
+                // Fetch ALL rows with pagination bypass
+                let data = await fetchAllRecords();
+                
+                // Get user preferences
+                let filename = document.getElementById('export-filename').value.trim() || 'LinkTinder_Export';
+                if (!filename.toLowerCase().endsWith('.csv')) filename += '.csv';
+                
+                const filterVal = document.getElementById('export-filter').value;
+                const sortVal = document.getElementById('export-sort').value;
+
+                // Apply Filter
+                if (filterVal !== 'all') {
+                    data = data.filter(item => {
+                        if (filterVal === 'pending') return !item[appConfig.decisionCol];
+                        return item[appConfig.decisionCol] === filterVal;
+                    });
+                }
+
+                // Apply Sort
+                data.sort((a, b) => {
+                    if (sortVal === 'updated_desc') {
+                        return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+                    } else if (sortVal === 'name_asc') {
+                        return (a[appConfig.nameCol] || '').localeCompare(b[appConfig.nameCol] || '');
+                    } else if (sortVal === 'role_asc') {
+                        return (a[appConfig.roleCol] || '').localeCompare(b[appConfig.roleCol] || '');
+                    } else if (sortVal === 'decision') {
+                        return (a[appConfig.decisionCol] || 'pending').localeCompare(b[appConfig.decisionCol] || 'pending');
+                    }
+                    return 0;
+                });
+
+                if (data.length === 0) {
+                    showToast("No records match the selected filter.");
+                    return;
+                }
+                
+                // Build CSV
+                let csvContent = "\uFEFFName,Role,Link,Decision\n";
+                
+                data.forEach(row => {
+                    const name = `"${(row[appConfig.nameCol] || '').replace(/"/g, '""')}"`;
+                    const role = `"${(row[appConfig.roleCol] || '').replace(/"/g, '""')}"`;
+                    const link = `"${(row[appConfig.urlCol] || '').replace(/"/g, '""')}"`;
+                    const decision = `"${(row[appConfig.decisionCol] || 'Pending').replace(/"/g, '""')}"`;
+                    
+                    csvContent += `${name},${role},${link},${decision}\n`;
+                });
+                
+                // Trigger download
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast("CSV Downloaded Successfully");
+                closeExportModal();
+
+            } catch (error) {
+                console.error("Export Error:", error);
+                showToast("Failed to generate CSV export");
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
 
         // --- HISTORY LOGIC ---
         async function loadHistory() {
@@ -378,16 +564,8 @@
             document.getElementById('history-empty').classList.add('hidden');
 
             try {
-                // Fetch all rows (including uncategorised), order by recent updates
-                const { data, error } = await supabaseClient
-                    .from(appConfig.table)
-                    .select('*')
-                    .order('updated_at', { ascending: false, nullsFirst: false })
-                    .limit(1000); // Set a generous limit for searching
-
-                if (error) throw error;
-                
-                historyData = data || [];
+                // Use our new pagination fetcher so it finds EVERYTHING
+                historyData = await fetchAllRecords();
                 filterHistory();
                 
             } catch (error) {
@@ -419,14 +597,16 @@
             
             const filtered = historyData.filter(item => {
                 const nameStr = (item[appConfig.nameCol] || '').toLowerCase();
-                const matchesName = nameStr.includes(query);
+                const roleStr = (item[appConfig.roleCol] || '').toLowerCase(); // Added searching by Role
+                
+                const matchesSearch = nameStr.includes(query) || roleStr.includes(query);
                 
                 let matchesFilter = false;
                 if (currentFilter === 'all') matchesFilter = true;
                 else if (currentFilter === 'pending') matchesFilter = !item[appConfig.decisionCol];
                 else matchesFilter = (item[appConfig.decisionCol] === currentFilter);
 
-                return matchesName && matchesFilter;
+                return matchesSearch && matchesFilter;
             });
 
             if (filtered.length === 0) {
@@ -443,7 +623,7 @@
             const div = document.createElement('div');
             
             // Color code the card border
-            let borderClass = 'border-l-4 border-l-gray-300'; // Default for Pending
+            let borderClass = 'border-l-4 border-l-gray-300'; 
             if (item.decision === 'yes') borderClass = 'border-l-4 border-l-green-500';
             else if (item.decision === 'no') borderClass = 'border-l-4 border-l-red-500';
             else if (item.decision === 'maybe') borderClass = 'border-l-4 border-l-blue-500';
@@ -461,7 +641,7 @@
             const selectDiv = document.createElement('div');
             const select = document.createElement('select');
             
-            let selectColorClass = 'bg-gray-100 border-gray-300 text-gray-600 font-medium'; // Default for Pending
+            let selectColorClass = 'bg-gray-100 border-gray-300 text-gray-600 font-medium'; 
             if (item.decision === 'yes') selectColorClass = 'bg-green-50 border-green-200 text-green-700 font-bold';
             else if (item.decision === 'no') selectColorClass = 'bg-red-50 border-red-200 text-red-700 font-bold';
             else if (item.decision === 'maybe') selectColorClass = 'bg-blue-50 border-blue-200 text-blue-700 font-bold';
@@ -495,9 +675,6 @@
         async function updateHistoryDecision(id, newDecision, cardElement) {
             const updateData = {};
             updateData[appConfig.decisionCol] = newDecision;
-            
-            // Optionally, update the timestamp when modifying history:
-            // updateData['updated_at'] = new Date().toISOString(); 
 
             const { error } = await supabaseClient
                 .from(appConfig.table)
@@ -506,14 +683,12 @@
 
             if (error) {
                 showToast("Failed to update decision.");
-                loadHistory(); // Revert UI
+                loadHistory(); 
             } else {
-                // Update local state and trigger re-render
                 const item = historyData.find(i => i.id === id);
                 if (item) item.decision = newDecision;
                 showToast("Decision updated successfully");
                 
-                // Re-filter so the item visually updates its icon / moves if a filter is active
                 filterHistory();
             }
         }
