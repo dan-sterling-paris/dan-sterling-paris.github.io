@@ -98,8 +98,8 @@
                 <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
                     <i class="fa-solid fa-check-double text-4xl text-gray-400"></i>
                 </div>
-                <h2 id="empty-state-title" class="text-xl font-bold text-gray-800">You're all caught up!</h2>
-                <p id="empty-state-desc" class="text-gray-500 mt-2">No more links found in the database pending a decision.</p>
+                <h2 class="text-xl font-bold text-gray-800">You're all caught up!</h2>
+                <p class="text-gray-500 mt-2">No more links found in the database pending a decision.</p>
                 <div class="flex gap-3 mt-6">
                     <button onclick="showView('home')" class="text-gray-600 font-semibold py-2 px-4 border border-gray-300 bg-white rounded-lg hover:bg-gray-50">
                         Home
@@ -125,15 +125,13 @@
                 </div>
 
                 <!-- Iframe Container -->
-                <div class="flex-1 relative bg-white w-full h-full overflow-hidden">
+                <div class="flex-1 relative bg-white w-full h-full">
                     <div id="iframe-loading" class="absolute inset-0 flex items-center justify-center flex-col gap-3 z-0 bg-gray-50">
                         <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
                         <span class="text-sm text-gray-500 font-medium tracking-wide">Loading CV...</span>
                     </div>
-                    <!-- Wrapper to force vertical scrolling and clip horizontal scrolling on iOS -->
-                    <div class="absolute inset-0 w-full h-full overflow-y-auto overflow-x-hidden z-10" style="-webkit-overflow-scrolling: touch;">
-                        <iframe id="website-frame" class="w-full h-full border-0 bg-white min-w-full min-h-full"></iframe>
-                    </div>
+                    <!-- touch-action: pan-y added to strictly lock scrolling to vertical only -->
+                    <iframe id="website-frame" class="absolute inset-0 w-full h-full border-0 z-10 bg-white" style="touch-action: pan-y; overflow-x: hidden;"></iframe>
                 </div>
 
                 <!-- Stamps -->
@@ -224,10 +222,6 @@
         let currentLink = null;
         let isProcessing = false;
         
-        // Offline & Buffer State
-        let offlineQueue = JSON.parse(localStorage.getItem('spinderOfflineQueue') || '[]');
-        let linkBuffer = [];
-        
         // History State
         let historyData = [];
         let currentFilter = 'all';
@@ -235,20 +229,7 @@
         // Initialize App
         function init() {
             setupSupabase(appConfig.url, appConfig.key);
-            syncQueue(); // Try to sync anything from previous offline sessions
-            
-            // Network Event Listeners
-            window.addEventListener('online', () => {
-                showToast("Connection restored! Syncing actions...");
-                syncQueue();
-                if (document.getElementById('swipe-view').classList.contains('hidden') === false && !currentLink) {
-                    loadNextLink(); // Automatically reload if stuck on offline empty state
-                }
-            });
-            
-            window.addEventListener('offline', () => {
-                showToast("You are offline. Actions will be saved locally.");
-            });
+            // Default view is 'home', so no loading needed yet
         }
 
         function setupSupabase(url, key) {
@@ -274,34 +255,6 @@
             }
         }
 
-        // --- BACKGROUND SYNC LOGIC ---
-        async function syncQueue() {
-            if (!navigator.onLine || offlineQueue.length === 0 || !supabaseClient) return;
-
-            let syncedCount = 0;
-            const queueCopy = [...offlineQueue];
-
-            for (const item of queueCopy) {
-                const { error } = await supabaseClient
-                    .from(appConfig.table)
-                    .update({ decision: item.decision, updated_at: item.updated_at })
-                    .eq('id', item.id);
-
-                if (!error) {
-                    // Success! Remove from actual queue
-                    offlineQueue = offlineQueue.filter(q => q.id !== item.id);
-                    localStorage.setItem('spinderOfflineQueue', JSON.stringify(offlineQueue));
-                    syncedCount++;
-                } else {
-                    console.error("Sync failed for", item.id, error);
-                }
-            }
-            
-            if (syncedCount > 0) {
-                showToast(`Synced ${syncedCount} offline decisions!`);
-            }
-        }
-
         // --- SWIPE / CATEGORISATION LOGIC ---
         async function loadNextLink() {
             if (!supabaseClient) return;
@@ -319,40 +272,22 @@
             iframeLoading.style.display = 'flex';
 
             try {
-                // Buffer Refill Logic
-                if (linkBuffer.length === 0) {
-                    if (!navigator.onLine) {
-                        showEmptyState("You are offline", "Please reconnect to fetch more CVs.");
-                        isProcessing = false;
-                        return;
-                    }
+                // Fetch a batch of undecided links
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select('*')
+                    .is(appConfig.decisionCol, null)
+                    .limit(50);
 
-                    const { data, error } = await supabaseClient
-                        .from(appConfig.table)
-                        .select('*')
-                        .is(appConfig.decisionCol, null)
-                        .limit(50);
+                if (error) throw error;
 
-                    if (error) throw error;
-
-                    if (data && data.length > 0) {
-                        // Filter out items already waiting in offline queue
-                        const queueIds = new Set(offlineQueue.map(q => q.id));
-                        linkBuffer = data.filter(item => !queueIds.has(item.id));
-                        
-                        // Shuffle to pick randoms
-                        linkBuffer.sort(() => Math.random() - 0.5);
-                    }
-                }
-
-                if (linkBuffer.length === 0) {
+                if (!data || data.length === 0) {
                     showEmptyState();
-                    isProcessing = false;
                     return;
                 }
 
-                // Pop from buffer
-                currentLink = linkBuffer.pop();
+                // Pick random un-reviewed CV
+                currentLink = data[Math.floor(Math.random() * data.length)];
                 
                 // Update UI Labels
                 nameEl.textContent = currentLink[appConfig.nameCol] || "Unknown Candidate";
@@ -405,18 +340,18 @@
             else if (decision === 'no') tinderCard.classList.add('swipe-left');
             else if (decision === 'maybe') tinderCard.classList.add('swipe-up');
 
-            // 2. Queue decision locally
-            const updateData = {
-                id: currentLink.id,
-                decision: decision,
-                updated_at: new Date().toISOString()
-            };
-            
-            offlineQueue.push(updateData);
-            localStorage.setItem('spinderOfflineQueue', JSON.stringify(offlineQueue));
+            // 2. Save decision AND timestamp asynchronously
+            const updateData = {};
+            updateData[appConfig.decisionCol] = decision;
+            updateData['updated_at'] = new Date().toISOString(); // To enable "last categorised" sorting
 
-            // Fire and forget background sync
-            syncQueue();
+            supabaseClient
+                .from(appConfig.table)
+                .update(updateData)
+                .eq('id', currentLink.id)
+                .then(({ error }) => {
+                    if (error) console.error("Error saving decision:", error);
+                });
 
             // 3. Reset UI & Load Next
             setTimeout(() => {
@@ -437,15 +372,6 @@
         // --- HISTORY LOGIC ---
         async function loadHistory() {
             if (!supabaseClient) return;
-            
-            if (!navigator.onLine) {
-                showToast("You are offline. Showing cached history.");
-                // Proceeds with whatever historyData is currently in memory
-                if (historyData.length > 0) {
-                    filterHistory();
-                    return;
-                }
-            }
 
             document.getElementById('history-loading').classList.remove('hidden');
             document.getElementById('history-list').innerHTML = '';
@@ -593,11 +519,9 @@
         }
 
         // --- UTILS ---
-        function showEmptyState(title = "You're all caught up!", desc = "No more links found in the database pending a decision.") {
+        function showEmptyState() {
             document.getElementById('tinder-card').classList.add('hidden');
             document.getElementById('empty-state').classList.remove('hidden');
-            document.getElementById('empty-state-title').textContent = title;
-            document.getElementById('empty-state-desc').textContent = desc;
             currentLink = null;
         }
 
