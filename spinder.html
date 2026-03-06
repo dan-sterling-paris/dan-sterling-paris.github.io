@@ -66,6 +66,18 @@
         <p class="text-gray-500 mb-8">Categorise candidates quickly and efficiently.</p>
         
         <div class="w-full flex flex-col gap-3">
+            
+            <!-- Role Selection Filter -->
+            <div class="relative w-full text-left mb-1">
+                <label class="block text-sm font-semibold text-gray-500 mb-1 px-1">Filter by Role</label>
+                <div class="relative">
+                    <select id="role-select" class="w-full bg-white text-gray-700 font-bold py-4 px-4 pr-10 rounded-xl border border-gray-200 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-pink-500 cursor-pointer transition-all">
+                        <option value="all">Loading roles...</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+            </div>
+
             <button onclick="showView('swipe')" class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold py-4 px-6 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2">
                 <i class="fa-solid fa-layer-group"></i> Start Categorising
             </button>
@@ -105,7 +117,7 @@
                     <i class="fa-solid fa-check-double text-4xl text-gray-400"></i>
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">You're all caught up!</h2>
-                <p class="text-gray-500 mt-2">No more links found in the database pending a decision.</p>
+                <p class="text-gray-500 mt-2">No more links found in the database pending a decision for the selected role.</p>
                 <div class="flex gap-3 mt-6">
                     <button onclick="showView('home')" class="text-gray-600 font-semibold py-2 px-4 border border-gray-300 bg-white rounded-lg hover:bg-gray-50">
                         Home
@@ -278,6 +290,9 @@
         // Initialize App
         function init() {
             setupSupabase(appConfig.url, appConfig.key);
+            if (supabaseClient) {
+                loadRolesForFilter();
+            }
         }
 
         function setupSupabase(url, key) {
@@ -290,6 +305,58 @@
 
         // --- DATA FETCHING UTILS ---
         
+        // Lightweight function to fetch only unique roles to populate the dropdown
+        async function fetchAllRoles() {
+            let allRoles = new Set();
+            let from = 0;
+            const step = 1000;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select(appConfig.roleCol)
+                    .range(from, from + step - 1);
+                
+                if (error) {
+                    console.error("Fetch roles error:", error);
+                    throw error;
+                }
+
+                if (data && data.length > 0) {
+                    data.forEach(item => {
+                        const r = item[appConfig.roleCol];
+                        if (r && r.trim() !== '') allRoles.add(r.trim());
+                    });
+                    from += step;
+                    if (data.length < step) {
+                        fetchMore = false;
+                    }
+                } else {
+                    fetchMore = false;
+                }
+            }
+            return Array.from(allRoles).sort();
+        }
+
+        async function loadRolesForFilter() {
+            const select = document.getElementById('role-select');
+            try {
+                const roles = await fetchAllRoles();
+                
+                select.innerHTML = '<option value="all">All Roles</option>';
+                roles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role;
+                    option.textContent = role;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Failed to load roles:", error);
+                select.innerHTML = '<option value="all">Failed to load roles</option>';
+            }
+        }
+
         // Fetches ALL records bypassing the 1000 row Supabase limit using pagination.
         async function fetchAllRecords() {
             let allData = [];
@@ -362,12 +429,20 @@
             iframeLoading.style.display = 'flex';
 
             try {
-                // Fetch a batch of undecided links
-                const { data, error } = await supabaseClient
+                // Initialize query for undecided links
+                let query = supabaseClient
                     .from(appConfig.table)
                     .select('*')
-                    .is(appConfig.decisionCol, null)
-                    .limit(50);
+                    .is(appConfig.decisionCol, null);
+
+                // Add role filter if a specific role is selected
+                const selectedRole = document.getElementById('role-select').value;
+                if (selectedRole !== 'all') {
+                    query = query.eq(appConfig.roleCol, selectedRole);
+                }
+
+                // Fetch batch
+                const { data, error } = await query.limit(50);
 
                 if (error) throw error;
 
