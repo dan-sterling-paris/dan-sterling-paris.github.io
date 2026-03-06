@@ -57,7 +57,7 @@
         .show-stamp { opacity: 1 !important; }
     </style>
 </head>
-<body class="bg-gray-100 h-screen w-screen text-gray-800 font-sans">
+<body class="bg-gray-100 h-[100dvh] w-screen text-gray-800 font-sans overflow-hidden">
 
     <!-- HOME VIEW -->
     <div id="home-view" class="h-full w-full flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
@@ -142,7 +142,7 @@
         </div>
 
         <!-- Controls -->
-        <div class="h-24 w-full bg-white border-t border-gray-200 flex justify-center items-center shrink-0 z-20">
+        <div class="w-full bg-white border-t border-gray-200 flex justify-center items-center shrink-0 z-20 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <div class="flex justify-center items-center gap-4 w-full max-w-md px-6">
                 <button onclick="makeDecision('no')" class="action-btn flex-1 h-14 rounded-xl bg-red-500 shadow-md flex items-center justify-center text-white font-black tracking-wide text-lg hover:bg-red-600 focus:outline-none transition-colors">
                     NO
