@@ -95,16 +95,34 @@
     <!-- MAIN SWIPE VIEW -->
     <div id="swipe-view" class="hidden h-full w-full flex flex-col relative bg-gray-100">
         
-        <!-- Header -->
-        <div class="w-full h-14 flex items-center justify-center shrink-0 bg-white border-b border-gray-200 shadow-sm z-20">
-            <div class="w-full max-w-5xl flex items-center justify-between px-4">
-                <button onclick="showView('home')" class="text-gray-400 hover:text-gray-600 p-2 -ml-2 rounded-full">
-                    <i class="fa-solid fa-house"></i>
-                </button>
-                <div class="flex items-center gap-2 text-pink-500 font-bold text-xl">
-                    <i class="fa-solid fa-fire"></i> LinkTinder
+        <!-- Header area wrapper for fixed positioning -->
+        <div class="w-full flex flex-col shrink-0 z-20">
+            <!-- Main Header bar -->
+            <div class="w-full h-14 flex items-center justify-center bg-white border-b border-gray-200 shadow-sm relative">
+                <div class="w-full max-w-5xl flex items-center justify-between px-4 relative">
+                    
+                    <!-- Back Button -->
+                    <button onclick="showView('home')" class="text-gray-400 hover:text-gray-600 p-2 -ml-2 rounded-full z-10">
+                        <i class="fa-solid fa-house"></i>
+                    </button>
+                    
+                    <!-- Centered Logo -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="flex items-center gap-2 text-pink-500 font-bold text-xl">
+                            <i class="fa-solid fa-fire"></i> LinkTinder
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Pill -->
+                    <div id="progress-indicator" class="text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-full border border-gray-200 z-10 shadow-inner whitespace-nowrap min-w-[70px] text-center">
+                        <i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>
+                    </div>
                 </div>
-                <div class="w-8"></div> <!-- Spacer -->
+            </div>
+            
+            <!-- Sleek Progress Bar Track -->
+            <div class="w-full h-1 bg-gray-200">
+                <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-pink-500 to-orange-400 transition-all duration-300 rounded-r-full" style="width: 0%"></div>
             </div>
         </div>
 
@@ -112,24 +130,24 @@
         <div class="flex-1 w-full relative flex items-center justify-center min-h-0 overflow-hidden">
             
             <!-- Empty State -->
-            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 hidden">
-                <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-                    <i class="fa-solid fa-check-double text-4xl text-gray-400"></i>
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 hidden z-10 bg-gray-100">
+                <div class="w-24 h-24 bg-white shadow-sm border border-gray-200 rounded-full flex items-center justify-center mb-4 text-green-500">
+                    <i class="fa-solid fa-check-double text-4xl"></i>
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">You're all caught up!</h2>
                 <p class="text-gray-500 mt-2">No more links found in the database pending a decision for the selected role.</p>
                 <div class="flex gap-3 mt-6">
-                    <button onclick="showView('home')" class="text-gray-600 font-semibold py-2 px-4 border border-gray-300 bg-white rounded-lg hover:bg-gray-50">
-                        Home
+                    <button onclick="showView('home')" class="text-gray-600 font-semibold py-2 px-6 border border-gray-300 bg-white shadow-sm rounded-xl hover:bg-gray-50 transition-colors">
+                        Go Home
                     </button>
-                    <button onclick="loadNextLink()" class="text-pink-500 font-semibold py-2 px-4 border border-pink-500 rounded-lg hover:bg-pink-50">
+                    <button onclick="initProgressIndicator(); loadNextLink();" class="text-white bg-pink-500 font-semibold py-2 px-6 shadow-sm rounded-xl hover:bg-pink-600 transition-colors">
                         Refresh
                     </button>
                 </div>
             </div>
 
             <!-- The Swipable Card -->
-            <div id="tinder-card" class="absolute inset-0 bg-white flex flex-col card-transition z-10">
+            <div id="tinder-card" class="absolute inset-0 bg-white flex flex-col card-transition z-20">
                 
                 <!-- Card Header -->
                 <div class="bg-white border-b border-gray-200 px-4 py-2 shrink-0 flex flex-col items-center text-center relative z-20">
@@ -158,7 +176,7 @@
         </div>
 
         <!-- Controls -->
-        <div class="w-full bg-white border-t border-gray-200 flex justify-center items-center shrink-0 z-20 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div class="w-full bg-white border-t border-gray-200 flex justify-center items-center shrink-0 z-30 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <div class="flex justify-center items-center gap-4 w-full max-w-md px-6">
                 <button onclick="makeDecision('no')" class="action-btn flex-1 h-14 rounded-xl bg-red-500 shadow-md flex items-center justify-center text-white font-black tracking-wide text-lg hover:bg-red-600 focus:outline-none transition-colors">
                     NO
@@ -283,6 +301,10 @@
         let currentLink = null;
         let isProcessing = false;
         
+        // Progress State
+        let currentTotalCount = 0;
+        let currentCategorisedCount = 0;
+        
         // History State
         let historyData = [];
         let currentFilter = 'all';
@@ -302,6 +324,68 @@
                 showToast("Failed to initialize Supabase. Check credentials.");
             }
         }
+
+        // --- PROGRESS TRACKING LOGIC ---
+        
+        async function initProgressIndicator() {
+            if (!supabaseClient) return;
+            
+            const selectedRole = document.getElementById('role-select').value;
+            const progressEl = document.getElementById('progress-indicator');
+            
+            // Show loading state temporarily
+            progressEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
+
+            try {
+                // 1. Get total records count matching role filter
+                let totalQuery = supabaseClient
+                    .from(appConfig.table)
+                    .select('*', { count: 'exact', head: true });
+                
+                if (selectedRole !== 'all') {
+                    totalQuery = totalQuery.eq(appConfig.roleCol, selectedRole);
+                }
+                const { count: totalCount, error: totalError } = await totalQuery;
+                if (totalError) throw totalError;
+
+                // 2. Get pending records count matching role filter
+                let pendingQuery = supabaseClient
+                    .from(appConfig.table)
+                    .select('*', { count: 'exact', head: true })
+                    .is(appConfig.decisionCol, null);
+                    
+                if (selectedRole !== 'all') {
+                    pendingQuery = pendingQuery.eq(appConfig.roleCol, selectedRole);
+                }
+                const { count: pendingCount, error: pendingError } = await pendingQuery;
+                if (pendingError) throw pendingError;
+
+                // Store locally for immediate UI updates without refetching DB on every swipe
+                currentTotalCount = totalCount || 0;
+                currentCategorisedCount = currentTotalCount - (pendingCount || 0);
+
+                renderProgress();
+
+            } catch (error) {
+                console.error("Error fetching progress counts:", error);
+                progressEl.textContent = "- / -";
+            }
+        }
+
+        function renderProgress() {
+            const progressEl = document.getElementById('progress-indicator');
+            const progressBar = document.getElementById('progress-bar-fill');
+            
+            const percentage = currentTotalCount === 0 ? 0 : Math.round((currentCategorisedCount / currentTotalCount) * 100);
+            
+            if (progressEl) {
+                progressEl.textContent = `${currentCategorisedCount} / ${currentTotalCount} (${percentage}%)`;
+            }
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+            }
+        }
+
 
         // --- DATA FETCHING UTILS ---
         
@@ -405,8 +489,11 @@
             
             document.getElementById(`${viewName}-view`).classList.remove('hidden');
             
-            if (viewName === 'swipe' && !currentLink) {
-                loadNextLink();
+            if (viewName === 'swipe') {
+                initProgressIndicator(); // Kick off DB progress counts fetch
+                if (!currentLink) {
+                    loadNextLink();
+                }
             } else if (viewName === 'history') {
                 loadHistory();
             }
@@ -489,6 +576,12 @@
             if (isProcessing || !currentLink) return;
             isProcessing = true;
 
+            // Instantly update the progress UI
+            if (currentCategorisedCount < currentTotalCount) {
+                currentCategorisedCount++;
+                renderProgress();
+            }
+
             const tinderCard = document.getElementById('tinder-card');
 
             // Animate card away
@@ -514,7 +607,12 @@
                 .update(updateData)
                 .eq('id', currentLink.id)
                 .then(({ error }) => {
-                    if (error) console.error("Error saving decision:", error);
+                    if (error) {
+                        console.error("Error saving decision:", error);
+                        // Revert progress visually if the API call actually fails
+                        currentCategorisedCount--;
+                        renderProgress();
+                    }
                 });
 
             // Reset UI & Load Next
