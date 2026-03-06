@@ -198,7 +198,7 @@
         </div>
     </div>
 
-    <!-- ALL SUBMISSIONS VIEW (Formerly History) -->
+    <!-- ALL SUBMISSIONS VIEW -->
     <div id="submissions-view" class="hidden h-full w-full flex flex-col mx-auto max-w-md bg-gray-50 relative">
         <div class="bg-white shadow-sm p-4 flex items-center gap-4 shrink-0 z-10 border-b border-gray-200">
             <button onclick="showView('home')" class="text-gray-500 hover:text-gray-800 p-2 -ml-2 rounded-full">
@@ -358,21 +358,41 @@
         // --- DATA FETCHING & GROUPING ---
         
         // Groups flat DB rows into distinct People based on URL (or ID fallback)
+        // Also tracks the latest update timestamp across all of their applications to maintain strict sorting.
         function groupApplicationsByPerson(rawData) {
             const map = new Map();
             rawData.forEach(item => {
                 const key = item[appConfig.urlCol] || item.id;
+                const itemUpdatedTime = new Date(item.updated_at || 0).getTime();
+
                 if (!map.has(key)) {
                     map.set(key, { 
                         name: item[appConfig.nameCol], 
                         url: item[appConfig.urlCol], 
                         idFallback: item.id,
-                        applications: [] 
+                        applications: [],
+                        latestUpdate: itemUpdatedTime
                     });
+                } else {
+                    const existing = map.get(key);
+                    if (itemUpdatedTime > existing.latestUpdate) {
+                        existing.latestUpdate = itemUpdatedTime;
+                    }
                 }
                 map.get(key).applications.push(item);
             });
-            return Array.from(map.values());
+
+            const grouped = Array.from(map.values());
+            
+            // Explicitly sort the grouped array by the latest activity descending
+            grouped.sort((a, b) => b.latestUpdate - a.latestUpdate);
+            
+            // Optionally, sort applications within the person descending as well
+            grouped.forEach(person => {
+                person.applications.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+            });
+
+            return grouped;
         }
 
         async function fetchAllRecords() {
@@ -853,11 +873,18 @@
 
             if (error) {
                 showToast("Failed to update decision.");
-                loadSubmissions(); // reload to reset state
+                // We reload completely on error to reset UI to true DB state
+                loadSubmissions(); 
             } else {
                 app[appConfig.decisionCol] = newDecision;
                 showToast("Decision updated");
-                // Don't auto-refresh the UI here, let them stay where they are
+                
+                // To maintain strict sorting order instantly, we update the timestamp in memory
+                app.updated_at = updateData.updated_at;
+                
+                // We do NOT fully reload the UI here to prevent the list from jumping around 
+                // while the user is actively clicking dropdowns. 
+                // The order will be perfected the next time they enter this view.
             }
         }
 
