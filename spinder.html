@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LinkTinder</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* Swipe Animations */
+        .card-transition {
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+        }
+        
+        .swipe-left { transform: translateX(-150%) rotate(-15deg) !important; opacity: 0; }
+        .swipe-right { transform: translateX(150%) rotate(15deg) !important; opacity: 0; }
+        .swipe-up { transform: translateY(-150%) !important; opacity: 0; }
+
+        /* Action Buttons Hover & Active States */
+        .action-btn { transition: transform 0.1s, background-color 0.2s; }
+        .action-btn:active { transform: scale(0.9); }
+
+        /* Hide scrollbar for the main view but allow it in iframe/history */
+        body {
+            overflow: hidden;
+            overscroll-behavior-y: contain;
+        }
+
+        /* Stamp overlay for animations */
+        .stamp {
+            position: absolute;
+            top: 40px;
+            padding: 0.5rem 1rem;
+            border: 4px solid;
+            border-radius: 10px;
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 50;
+            pointer-events: none;
+        }
+        
+        .stamp-nope { right: 40px; color: #ef4444; border-color: #ef4444; transform: rotate(15deg); }
+        .stamp-like { left: 40px; color: #22c55e; border-color: #22c55e; transform: rotate(-15deg); }
+        .stamp-maybe { left: 50%; top: 50%; transform: translate(-50%, -50%); color: #3b82f6; border-color: #3b82f6; }
+
+        .show-stamp { opacity: 1 !important; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen w-screen text-gray-800 font-sans">
+
+    <!-- HOME VIEW -->
+    <div id="home-view" class="h-full w-full flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+        <i class="fa-solid fa-fire text-pink-500 text-6xl mb-6 shadow-sm rounded-full bg-white p-4"></i>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">CV Tinder</h1>
+        <p class="text-gray-500 mb-8">Categorise candidates quickly and efficiently.</p>
+        
+        <button onclick="showView('swipe')" class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold py-4 px-6 rounded-xl mb-4 hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2">
+            <i class="fa-solid fa-layer-group"></i> Start Categorising
+        </button>
+        
+        <button onclick="showView('history')" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-pink-500"></i> View History
+        </button>
+    </div>
+
+    <!-- MAIN SWIPE VIEW -->
+    <div id="swipe-view" class="hidden h-full w-full flex flex-col relative bg-gray-100">
+        
+        <!-- Header -->
+        <div class="w-full h-14 flex items-center justify-center shrink-0 bg-white border-b border-gray-200 shadow-sm z-20">
+            <div class="w-full max-w-5xl flex items-center justify-between px-4">
+                <button onclick="showView('home')" class="text-gray-400 hover:text-gray-600 p-2 -ml-2 rounded-full">
+                    <i class="fa-solid fa-house"></i>
+                </button>
+                <div class="flex items-center gap-2 text-pink-500 font-bold text-xl">
+                    <i class="fa-solid fa-fire"></i> LinkTinder
+                </div>
+                <div class="w-8"></div> <!-- Spacer -->
+            </div>
+        </div>
+
+        <!-- Card Container -->
+        <div class="flex-1 w-full relative flex items-center justify-center min-h-0 overflow-hidden">
+            
+            <!-- Empty State -->
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 hidden">
+                <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-check-double text-4xl text-gray-400"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">You're all caught up!</h2>
+                <p class="text-gray-500 mt-2">No more links found in the database pending a decision.</p>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="showView('home')" class="text-gray-600 font-semibold py-2 px-4 border border-gray-300 bg-white rounded-lg hover:bg-gray-50">
+                        Home
+                    </button>
+                    <button onclick="loadNextLink()" class="text-pink-500 font-semibold py-2 px-4 border border-pink-500 rounded-lg hover:bg-pink-50">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- The Swipable Card (Now Edge-to-Edge) -->
+            <div id="tinder-card" class="absolute inset-0 bg-white flex flex-col card-transition z-10">
+                
+                <!-- Card Header (Shows Name and Role) -->
+                <div class="bg-white border-b border-gray-200 px-4 py-2 shrink-0 flex flex-col items-center text-center relative z-20">
+                    <h2 id="card-name" class="text-lg font-bold text-gray-800 leading-tight">Loading Name...</h2>
+                    <span id="card-role" class="text-sm font-medium text-gray-500 mt-0.5">Loading Role...</span>
+                    
+                    <!-- Open external link small button -->
+                    <a id="open-external-btn" href="#" target="_blank" class="absolute right-3 top-2 text-gray-400 hover:text-gray-600 p-2">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                </div>
+
+                <!-- Iframe Container -->
+                <div class="flex-1 relative bg-white w-full h-full">
+                    <div id="iframe-loading" class="absolute inset-0 flex items-center justify-center flex-col gap-3 z-0 bg-gray-50">
+                        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
+                        <span class="text-sm text-gray-500 font-medium tracking-wide">Loading CV...</span>
+                    </div>
+                    <!-- Note: Cookies allowed via lack of sandbox, but browser 3rd-party cookie blocking may still apply -->
+                    <iframe id="website-frame" class="absolute inset-0 w-full h-full border-0 z-10 bg-white"></iframe>
+                </div>
+
+                <!-- Stamps -->
+                <div id="stamp-nope" class="stamp stamp-nope">NOPE</div>
+                <div id="stamp-like" class="stamp stamp-like">YES</div>
+                <div id="stamp-maybe" class="stamp stamp-maybe">MAYBE</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="h-24 w-full bg-white border-t border-gray-200 flex justify-center items-center shrink-0 z-20">
+            <div class="flex justify-center items-center gap-4 w-full max-w-md px-6">
+                <button onclick="makeDecision('no')" class="action-btn flex-1 h-14 rounded-xl bg-red-500 shadow-md flex items-center justify-center text-white font-black tracking-wide text-lg hover:bg-red-600 focus:outline-none transition-colors">
+                    NO
+                </button>
+                <button onclick="makeDecision('maybe')" class="action-btn flex-1 h-14 rounded-xl bg-blue-500 shadow-md flex items-center justify-center text-white font-black tracking-wide text-lg hover:bg-blue-600 focus:outline-none transition-colors">
+                    MAYBE
+                </button>
+                <button onclick="makeDecision('yes')" class="action-btn flex-1 h-14 rounded-xl bg-green-500 shadow-md flex items-center justify-center text-white font-black tracking-wide text-lg hover:bg-green-600 focus:outline-none transition-colors">
+                    YES
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HISTORY VIEW -->
+    <div id="history-view" class="hidden h-full w-full flex flex-col mx-auto max-w-md bg-gray-50 relative">
+        <div class="bg-white shadow-sm p-4 flex items-center gap-4 shrink-0 z-10 border-b border-gray-200">
+            <button onclick="showView('home')" class="text-gray-500 hover:text-gray-800 p-2 -ml-2 rounded-full">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1 class="text-xl font-bold text-gray-800 flex-1">Categorisation History</h1>
+        </div>
+        
+        <div class="p-4 shrink-0 bg-white shadow-sm z-0 space-y-3">
+            <div class="relative">
+                <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="history-search" placeholder="Search by name..." 
+                       class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all" 
+                       oninput="filterHistory()">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="setFilter('all', this)" class="filter-btn flex-1 py-1.5 text-sm rounded-md bg-pink-500 text-white font-medium transition-colors">All</button>
+                <button onclick="setFilter('yes', this)" class="filter-btn flex-1 py-1.5 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Yes</button>
+                <button onclick="setFilter('maybe', this)" class="filter-btn flex-1 py-1.5 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Maybe</button>
+                <button onclick="setFilter('no', this)" class="filter-btn flex-1 py-1.5 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">No</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 relative">
+            <div id="history-loading" class="flex justify-center py-8 hidden">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
+            </div>
+            <div id="history-list" class="space-y-3 pb-8">
+                <!-- History items injected here via JS -->
+            </div>
+            <div id="history-empty" class="text-center py-12 hidden">
+                <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-folder-open text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-gray-800 font-semibold text-lg">No records found</h3>
+                <p class="text-gray-500 text-sm mt-1">Try adjusting your filters or search query.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-300 -translate-y-24 z-50 flex items-center gap-3">
+        <i class="fa-solid fa-circle-info text-pink-400"></i>
+        <span id="toast-msg" class="text-sm font-medium">Message</span>
+    </div>
+
+    <script>
+        // --- HARDCODED SUPABASE CONFIGURATION ---
+        const appConfig = {
+            url: 'https://oaltkxblacpjjecpauya.supabase.co',          
+            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbHRreGJsYWNwamplY3BhdXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTc2ODQsImV4cCI6MjA4NDQ3MzY4NH0.zDfKgAKfWjXMQsOP5ZpD_nl6yhZS1O4H794HqSRDLVo',     
+            table: 'links',                    
+            urlCol: 'url',                     
+            nameCol: 'name',         // New Column for CV Name
+            roleCol: 'role',         // New Column for CV Role
+            decisionCol: 'decision'            
+        };
+
+        // App State
+        let supabaseClient = null;
+        let currentLink = null;
+        let isProcessing = false;
+        
+        // History State
+        let historyData = [];
+        let currentFilter = 'all';
+
+        // Initialize App
+        function init() {
+            setupSupabase(appConfig.url, appConfig.key);
+            // Default view is 'home', so no loading needed yet
+        }
+
+        function setupSupabase(url, key) {
+            try {
+                supabaseClient = supabase.createClient(url, key);
+            } catch (error) {
+                showToast("Failed to initialize Supabase. Check credentials.");
+            }
+        }
+
+        // --- NAVIGATION LOGIC ---
+        function showView(viewName) {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('swipe-view').classList.add('hidden');
+            document.getElementById('history-view').classList.add('hidden');
+            
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+            
+            if (viewName === 'swipe' && !currentLink) {
+                loadNextLink();
+            } else if (viewName === 'history') {
+                loadHistory();
+            }
+        }
+
+        // --- SWIPE / CATEGORISATION LOGIC ---
+        async function loadNextLink() {
+            if (!supabaseClient) return;
+            
+            isProcessing = true;
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('tinder-card').classList.remove('hidden');
+            
+            const iframe = document.getElementById('website-frame');
+            const iframeLoading = document.getElementById('iframe-loading');
+            const nameEl = document.getElementById('card-name');
+            const roleEl = document.getElementById('card-role');
+
+            iframe.style.opacity = '0';
+            iframeLoading.style.display = 'flex';
+
+            try {
+                // Fetch a batch of undecided links
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select('*')
+                    .is(appConfig.decisionCol, null)
+                    .limit(50);
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    showEmptyState();
+                    return;
+                }
+
+                // Pick random un-reviewed CV
+                currentLink = data[Math.floor(Math.random() * data.length)];
+                
+                // Update UI Labels
+                nameEl.textContent = currentLink[appConfig.nameCol] || "Unknown Candidate";
+                roleEl.textContent = currentLink[appConfig.roleCol] || "No role specified";
+                document.getElementById('open-external-btn').href = currentLink[appConfig.urlCol];
+                
+                // Handle Iframe loading
+                iframe.onload = () => {
+                    iframe.style.opacity = '1';
+                    iframeLoading.style.display = 'none';
+                };
+                iframe.onerror = () => {
+                    iframeLoading.style.display = 'none';
+                };
+                
+                // Set URL. We DO NOT use sandboxing so cookies from the domain persist.
+                iframe.src = currentLink[appConfig.urlCol];
+
+                // Failsafe UI unlocker
+                setTimeout(() => {
+                    iframe.style.opacity = '1';
+                    iframeLoading.style.display = 'none';
+                }, 1500);
+
+            } catch (error) {
+                console.error("Database Error:", error);
+                showToast(`Error fetching data: ${error.message}`);
+                showEmptyState();
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        async function makeDecision(decision) {
+            if (isProcessing || !currentLink) return;
+            isProcessing = true;
+
+            const tinderCard = document.getElementById('tinder-card');
+
+            // 1. Animate card away
+            tinderCard.classList.remove('card-transition'); 
+            void tinderCard.offsetWidth; // Reflow
+            tinderCard.classList.add('card-transition');
+
+            if(decision === 'no') document.getElementById('stamp-nope').classList.add('show-stamp');
+            if(decision === 'yes') document.getElementById('stamp-like').classList.add('show-stamp');
+            if(decision === 'maybe') document.getElementById('stamp-maybe').classList.add('show-stamp');
+
+            if (decision === 'yes') tinderCard.classList.add('swipe-right');
+            else if (decision === 'no') tinderCard.classList.add('swipe-left');
+            else if (decision === 'maybe') tinderCard.classList.add('swipe-up');
+
+            // 2. Save decision AND timestamp asynchronously
+            const updateData = {};
+            updateData[appConfig.decisionCol] = decision;
+            updateData['updated_at'] = new Date().toISOString(); // To enable "last categorised" sorting
+
+            supabaseClient
+                .from(appConfig.table)
+                .update(updateData)
+                .eq('id', currentLink.id)
+                .then(({ error }) => {
+                    if (error) console.error("Error saving decision:", error);
+                });
+
+            // 3. Reset UI & Load Next
+            setTimeout(() => {
+                tinderCard.classList.add('hidden');
+                tinderCard.classList.remove('swipe-left', 'swipe-right', 'swipe-up');
+                
+                document.getElementById('stamp-nope').classList.remove('show-stamp');
+                document.getElementById('stamp-like').classList.remove('show-stamp');
+                document.getElementById('stamp-maybe').classList.remove('show-stamp');
+
+                // Deliberately NOT clearing iframe.src here!
+                // Keeping the domain context alive helps browser persist session cookies.
+                
+                loadNextLink();
+            }, 400); 
+        }
+
+        // --- HISTORY LOGIC ---
+        async function loadHistory() {
+            if (!supabaseClient) return;
+
+            document.getElementById('history-loading').classList.remove('hidden');
+            document.getElementById('history-list').innerHTML = '';
+            document.getElementById('history-empty').classList.add('hidden');
+
+            try {
+                // Fetch all categorised rows, ordered mostly recent first
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select('*')
+                    .not(appConfig.decisionCol, 'is', null)
+                    .order('updated_at', { ascending: false, nullsFirst: false });
+
+                if (error) throw error;
+                
+                historyData = data || [];
+                filterHistory();
+                
+            } catch (error) {
+                showToast("Failed to fetch history");
+                console.error(error);
+            } finally {
+                document.getElementById('history-loading').classList.add('hidden');
+            }
+        }
+
+        function setFilter(filterType, btnElement) {
+            currentFilter = filterType;
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-pink-500', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            btnElement.classList.remove('bg-gray-100', 'text-gray-600');
+            btnElement.classList.add('bg-pink-500', 'text-white');
+
+            filterHistory();
+        }
+
+        function filterHistory() {
+            const query = document.getElementById('history-search').value.toLowerCase();
+            const listContainer = document.getElementById('history-list');
+            listContainer.innerHTML = '';
+            
+            const filtered = historyData.filter(item => {
+                const nameStr = (item[appConfig.nameCol] || '').toLowerCase();
+                const matchesName = nameStr.includes(query);
+                const matchesFilter = (currentFilter === 'all') || (item[appConfig.decisionCol] === currentFilter);
+                return matchesName && matchesFilter;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('history-empty').classList.remove('hidden');
+            } else {
+                document.getElementById('history-empty').classList.add('hidden');
+                filtered.forEach(item => {
+                    listContainer.appendChild(createHistoryCard(item));
+                });
+            }
+        }
+
+        function createHistoryCard(item) {
+            const div = document.createElement('div');
+            
+            // Color code the card border
+            let borderClass = 'border-gray-200';
+            if (item.decision === 'yes') borderClass = 'border-l-4 border-l-green-500';
+            else if (item.decision === 'no') borderClass = 'border-l-4 border-l-red-500';
+            else if (item.decision === 'maybe') borderClass = 'border-l-4 border-l-blue-500';
+            
+            div.className = `bg-white p-4 rounded-xl shadow-sm border ${borderClass} flex items-center gap-3 transition-all hover:shadow-md`;
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'flex-1 min-w-0 pl-1';
+            infoDiv.innerHTML = `
+                <h3 class="font-bold text-gray-800 truncate leading-tight">${item[appConfig.nameCol] || 'Unknown'}</h3>
+                <p class="text-xs text-gray-500 truncate mt-0.5">${item[appConfig.roleCol] || '-'}</p>
+            `;
+            
+            // Modify Decision Dropdown to be color coded
+            const selectDiv = document.createElement('div');
+            const select = document.createElement('select');
+            
+            let selectColorClass = 'bg-gray-50 border-gray-200 text-gray-700';
+            if (item.decision === 'yes') selectColorClass = 'bg-green-50 border-green-200 text-green-700 font-bold';
+            else if (item.decision === 'no') selectColorClass = 'bg-red-50 border-red-200 text-red-700 font-bold';
+            else if (item.decision === 'maybe') selectColorClass = 'bg-blue-50 border-blue-200 text-blue-700 font-bold';
+
+            select.className = `text-sm border rounded-lg px-2 py-1.5 outline-none cursor-pointer shadow-sm transition-colors ${selectColorClass}`;
+            
+            select.innerHTML = `
+                <option value="yes" ${item.decision === 'yes' ? 'selected' : ''}>Yes</option>
+                <option value="maybe" ${item.decision === 'maybe' ? 'selected' : ''}>Maybe</option>
+                <option value="no" ${item.decision === 'no' ? 'selected' : ''}>No</option>
+            `;
+            select.onchange = (e) => updateHistoryDecision(item.id, e.target.value, div);
+            selectDiv.appendChild(select);
+
+            div.appendChild(infoDiv);
+            div.appendChild(selectDiv);
+            
+            // Add open link button
+            const linkBtn = document.createElement('a');
+            linkBtn.href = item[appConfig.urlCol];
+            linkBtn.target = "_blank";
+            linkBtn.className = "text-gray-400 hover:text-pink-500 p-2 shrink-0";
+            linkBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i>';
+            div.appendChild(linkBtn);
+
+            return div;
+        }
+
+        async function updateHistoryDecision(id, newDecision, cardElement) {
+            const updateData = {};
+            updateData[appConfig.decisionCol] = newDecision;
+            
+            // Optionally, update the timestamp when modifying history:
+            // updateData['updated_at'] = new Date().toISOString(); 
+
+            const { error } = await supabaseClient
+                .from(appConfig.table)
+                .update(updateData)
+                .eq('id', id);
+
+            if (error) {
+                showToast("Failed to update decision.");
+                loadHistory(); // Revert UI
+            } else {
+                // Update local state and trigger re-render
+                const item = historyData.find(i => i.id === id);
+                if (item) item.decision = newDecision;
+                showToast("Decision updated successfully");
+                
+                // Re-filter so the item visually updates its icon / moves if a filter is active
+                filterHistory();
+            }
+        }
+
+        // --- UTILS ---
+        function showEmptyState() {
+            document.getElementById('tinder-card').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+            currentLink = null;
+        }
+
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            
+            toast.classList.remove('-translate-y-24');
+            toast.classList.add('translate-y-0');
+            
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0');
+                toast.classList.add('-translate-y-24');
+            }, 3000);
+        }
+
+        // Boot
+        init();
+
+    </script>
+</body>
+</html>
