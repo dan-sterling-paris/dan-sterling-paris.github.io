@@ -82,8 +82,8 @@
                 <i class="fa-solid fa-layer-group"></i> Start Categorising
             </button>
             
-            <button onclick="showView('history')" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-pink-500"></i> View History
+            <button onclick="showView('submissions')" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-folder-open text-pink-500"></i> All Submissions
             </button>
             
             <button id="csv-btn" onclick="openExportModal()" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2">
@@ -115,7 +115,7 @@
                     
                     <!-- Progress Pill -->
                     <div id="progress-indicator" class="text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-full border border-gray-200 z-10 shadow-inner whitespace-nowrap min-w-[70px] text-center">
-                        <i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>
+                        - / -
                     </div>
                 </div>
             </div>
@@ -129,25 +129,32 @@
         <!-- Card Container -->
         <div class="flex-1 w-full relative flex items-center justify-center min-h-0 overflow-hidden">
             
+            <!-- Loading State -->
+            <div id="loading-state" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 hidden z-10 bg-gray-100">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-pink-500 mb-4"></i>
+                <h2 class="text-xl font-bold text-gray-800">Preparing candidates...</h2>
+                <p class="text-gray-500 mt-2">Loading your application stack.</p>
+            </div>
+
             <!-- Empty State -->
             <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 hidden z-10 bg-gray-100">
                 <div class="w-24 h-24 bg-white shadow-sm border border-gray-200 rounded-full flex items-center justify-center mb-4 text-green-500">
                     <i class="fa-solid fa-check-double text-4xl"></i>
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">You're all caught up!</h2>
-                <p class="text-gray-500 mt-2">No more links found in the database pending a decision for the selected role.</p>
+                <p class="text-gray-500 mt-2">No more candidates found pending a decision for the selected role.</p>
                 <div class="flex gap-3 mt-6">
                     <button onclick="showView('home')" class="text-gray-600 font-semibold py-2 px-6 border border-gray-300 bg-white shadow-sm rounded-xl hover:bg-gray-50 transition-colors">
                         Go Home
                     </button>
-                    <button onclick="initProgressIndicator(); loadNextLink();" class="text-white bg-pink-500 font-semibold py-2 px-6 shadow-sm rounded-xl hover:bg-pink-600 transition-colors">
+                    <button onclick="startSwipeSession()" class="text-white bg-pink-500 font-semibold py-2 px-6 shadow-sm rounded-xl hover:bg-pink-600 transition-colors">
                         Refresh
                     </button>
                 </div>
             </div>
 
             <!-- The Swipable Card -->
-            <div id="tinder-card" class="absolute inset-0 bg-white flex flex-col card-transition z-20">
+            <div id="tinder-card" class="absolute inset-0 bg-white flex flex-col card-transition z-20 hidden">
                 
                 <!-- Card Header -->
                 <div class="bg-white border-b border-gray-200 px-4 py-2 shrink-0 flex flex-col items-center text-center relative z-20">
@@ -191,44 +198,74 @@
         </div>
     </div>
 
-    <!-- HISTORY VIEW -->
-    <div id="history-view" class="hidden h-full w-full flex flex-col mx-auto max-w-md bg-gray-50 relative">
+    <!-- ALL SUBMISSIONS VIEW (Formerly History) -->
+    <div id="submissions-view" class="hidden h-full w-full flex flex-col mx-auto max-w-md bg-gray-50 relative">
         <div class="bg-white shadow-sm p-4 flex items-center gap-4 shrink-0 z-10 border-b border-gray-200">
             <button onclick="showView('home')" class="text-gray-500 hover:text-gray-800 p-2 -ml-2 rounded-full">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
-            <h1 class="text-xl font-bold text-gray-800 flex-1">Categorisation History</h1>
+            <h1 class="text-xl font-bold text-gray-800 flex-1">All Submissions</h1>
         </div>
         
         <div class="p-4 shrink-0 bg-white shadow-sm z-0 space-y-3">
-            <div class="relative">
-                <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="history-search" placeholder="Search name or role..." 
-                       class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all" 
-                       oninput="filterHistory()">
+            
+            <!-- Filters Section -->
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" id="submissions-search" placeholder="Search name or role..." 
+                           class="w-full pl-9 pr-2 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all text-sm" 
+                           oninput="filterSubmissionsUI()">
+                </div>
+                
+                <select id="submissions-role-filter" class="w-1/2 bg-gray-100 border border-transparent rounded-lg px-2 py-2 text-sm text-gray-700 focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all cursor-pointer" onchange="filterSubmissionsUI()">
+                    <option value="all">All Roles</option>
+                    <!-- Populated via JS -->
+                </select>
             </div>
-            <div class="flex gap-2 flex-wrap">
-                <button onclick="setFilter('all', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-pink-500 text-white font-medium transition-colors">All</button>
-                <button onclick="setFilter('pending', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Pending</button>
-                <button onclick="setFilter('yes', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Yes</button>
-                <button onclick="setFilter('maybe', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Maybe</button>
-                <button onclick="setFilter('no', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">No</button>
+            
+            <!-- Decision Filters (Filters based on if the person has ANY application matching the state) -->
+            <div class="flex gap-2 flex-wrap mt-1">
+                <button onclick="setFilter('all', this)" class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-pink-500 text-white font-medium transition-colors">All</button>
+                <button onclick="setFilter('pending', this)" class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Pending</button>
+                <button onclick="setFilter('yes', this)" class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Yes</button>
+                <button onclick="setFilter('maybe', this)" class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Maybe</button>
+                <button onclick="setFilter('no', this)" class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">No</button>
             </div>
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 relative">
-            <div id="history-loading" class="flex justify-center py-8 hidden">
+            <div id="submissions-loading" class="flex justify-center py-8 hidden">
                 <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
             </div>
-            <div id="history-list" class="space-y-3 pb-8">
-                <!-- History items injected here via JS -->
+            <div id="submissions-list" class="space-y-4 pb-8">
+                <!-- Submission cards injected here via JS -->
             </div>
-            <div id="history-empty" class="text-center py-12 hidden">
+            <div id="submissions-empty" class="text-center py-12 hidden">
                 <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
                     <i class="fa-solid fa-folder-open text-2xl text-gray-400"></i>
                 </div>
                 <h3 class="text-gray-800 font-semibold text-lg">No records found</h3>
                 <p class="text-gray-500 text-sm mt-1">Try adjusting your filters or search query.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Role Pop Up Modal -->
+    <div id="multi-role-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-pink-500"></i> Additional Roles
+            </h2>
+            <p class="text-sm text-gray-600" id="multi-role-desc">This candidate applied for other roles. You can categorise them now:</p>
+            
+            <div id="multi-role-list" class="flex flex-col gap-3 max-h-[40vh] overflow-y-auto pr-1">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="flex gap-3 mt-2 pt-4 border-t border-gray-100">
+                <button onclick="skipMultiRoles()" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-bold transition-colors">Skip</button>
+                <button id="save-multi-roles-btn" onclick="saveMultiRoles()" class="flex-[2] py-2.5 px-4 bg-pink-500 text-white rounded-xl hover:bg-pink-600 font-bold transition-colors shadow-sm">Save & Next</button>
             </div>
         </div>
     </div>
@@ -256,16 +293,6 @@
                     <option value="yes">Yes</option>
                     <option value="maybe">Maybe</option>
                     <option value="no">No</option>
-                </select>
-            </div>
-            
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Sort By</label>
-                <select id="export-sort" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
-                    <option value="updated_desc">Recently Updated</option>
-                    <option value="name_asc">Name (A-Z)</option>
-                    <option value="role_asc">Role (A-Z)</option>
-                    <option value="decision">Decision Status</option>
                 </select>
             </div>
 
@@ -298,15 +325,18 @@
 
         // App State
         let supabaseClient = null;
-        let currentLink = null;
         let isProcessing = false;
         
-        // Progress State
+        // Swiping & Person State
+        let swipeQueue = []; 
+        let currentPerson = null;
+        let activeApplication = null;
+        let pendingOtherApplications = [];
         let currentTotalCount = 0;
         let currentCategorisedCount = 0;
         
-        // History State
-        let historyData = [];
+        // Submissions State
+        let allPeopleData = [];
         let currentFilter = 'all';
 
         // Initialize App
@@ -325,50 +355,162 @@
             }
         }
 
-        // --- PROGRESS TRACKING LOGIC ---
+        // --- DATA FETCHING & GROUPING ---
         
-        async function initProgressIndicator() {
+        // Groups flat DB rows into distinct People based on URL (or ID fallback)
+        function groupApplicationsByPerson(rawData) {
+            const map = new Map();
+            rawData.forEach(item => {
+                const key = item[appConfig.urlCol] || item.id;
+                if (!map.has(key)) {
+                    map.set(key, { 
+                        name: item[appConfig.nameCol], 
+                        url: item[appConfig.urlCol], 
+                        idFallback: item.id,
+                        applications: [] 
+                    });
+                }
+                map.get(key).applications.push(item);
+            });
+            return Array.from(map.values());
+        }
+
+        async function fetchAllRecords() {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select('*')
+                    .range(from, from + step - 1);
+                
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    allData = allData.concat(data);
+                    from += step;
+                    fetchMore = data.length === step;
+                } else {
+                    fetchMore = false;
+                }
+            }
+            return allData;
+        }
+
+        async function fetchAllRoles() {
+            let allRoles = new Set();
+            let from = 0;
+            const step = 1000;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select(appConfig.roleCol)
+                    .range(from, from + step - 1);
+                
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    data.forEach(item => {
+                        const r = item[appConfig.roleCol];
+                        if (r && r.trim() !== '') allRoles.add(r.trim());
+                    });
+                    from += step;
+                    fetchMore = data.length === step;
+                } else {
+                    fetchMore = false;
+                }
+            }
+            return Array.from(allRoles).sort();
+        }
+
+        async function loadRolesForFilter() {
+            const homeSelect = document.getElementById('role-select');
+            const submissionsSelect = document.getElementById('submissions-role-filter');
+            
+            try {
+                const roles = await fetchAllRoles();
+                
+                let optionsHtml = '<option value="all">All Roles</option>';
+                roles.forEach(role => {
+                    optionsHtml += `<option value="${role}">${role}</option>`;
+                });
+                
+                homeSelect.innerHTML = optionsHtml;
+                submissionsSelect.innerHTML = optionsHtml;
+            } catch (error) {
+                console.error("Failed to load roles:", error);
+            }
+        }
+
+
+        // --- NAVIGATION LOGIC ---
+        function showView(viewName) {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('swipe-view').classList.add('hidden');
+            document.getElementById('submissions-view').classList.add('hidden');
+            
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+            
+            if (viewName === 'swipe') {
+                startSwipeSession();
+            } else if (viewName === 'submissions') {
+                loadSubmissions();
+            }
+        }
+
+
+        // --- SWIPE & PROGRESS LOGIC ---
+        
+        async function startSwipeSession() {
             if (!supabaseClient) return;
-            
-            const selectedRole = document.getElementById('role-select').value;
-            const progressEl = document.getElementById('progress-indicator');
-            
-            // Show loading state temporarily
-            progressEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
+
+            document.getElementById('tinder-card').classList.add('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('progress-indicator').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
 
             try {
-                // 1. Get total records count matching role filter
-                let totalQuery = supabaseClient
-                    .from(appConfig.table)
-                    .select('*', { count: 'exact', head: true });
+                const rawData = await fetchAllRecords();
+                const uniquePeople = groupApplicationsByPerson(rawData);
                 
+                const selectedRole = document.getElementById('role-select').value;
+                
+                // Keep only people who applied for the selected role
+                let targetPeople = uniquePeople;
                 if (selectedRole !== 'all') {
-                    totalQuery = totalQuery.eq(appConfig.roleCol, selectedRole);
+                    targetPeople = uniquePeople.filter(p => p.applications.some(a => a[appConfig.roleCol] === selectedRole));
                 }
-                const { count: totalCount, error: totalError } = await totalQuery;
-                if (totalError) throw totalError;
 
-                // 2. Get pending records count matching role filter
-                let pendingQuery = supabaseClient
-                    .from(appConfig.table)
-                    .select('*', { count: 'exact', head: true })
-                    .is(appConfig.decisionCol, null);
-                    
-                if (selectedRole !== 'all') {
-                    pendingQuery = pendingQuery.eq(appConfig.roleCol, selectedRole);
+                currentTotalCount = targetPeople.length;
+                
+                // Build queue: A person is in the queue if they have a PENDING application that matches the filter
+                swipeQueue = targetPeople.filter(p => {
+                    if (selectedRole !== 'all') {
+                        return p.applications.some(a => a[appConfig.roleCol] === selectedRole && !a[appConfig.decisionCol]);
+                    }
+                    return p.applications.some(a => !a[appConfig.decisionCol]);
+                });
+                
+                // Shuffle array to randomise queue
+                for (let i = swipeQueue.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [swipeQueue[i], swipeQueue[j]] = [swipeQueue[j], swipeQueue[i]];
                 }
-                const { count: pendingCount, error: pendingError } = await pendingQuery;
-                if (pendingError) throw pendingError;
 
-                // Store locally for immediate UI updates without refetching DB on every swipe
-                currentTotalCount = totalCount || 0;
-                currentCategorisedCount = currentTotalCount - (pendingCount || 0);
-
+                currentCategorisedCount = currentTotalCount - swipeQueue.length;
                 renderProgress();
+                
+                popNextSwipeCard();
 
             } catch (error) {
-                console.error("Error fetching progress counts:", error);
-                progressEl.textContent = "- / -";
+                console.error("Session init error:", error);
+                showToast("Failed to prepare stack");
+                showEmptyState();
             }
         }
 
@@ -386,201 +528,50 @@
             }
         }
 
-
-        // --- DATA FETCHING UTILS ---
-        
-        // Lightweight function to fetch only unique roles to populate the dropdown
-        async function fetchAllRoles() {
-            let allRoles = new Set();
-            let from = 0;
-            const step = 1000;
-            let fetchMore = true;
-
-            while (fetchMore) {
-                const { data, error } = await supabaseClient
-                    .from(appConfig.table)
-                    .select(appConfig.roleCol)
-                    .range(from, from + step - 1);
-                
-                if (error) {
-                    console.error("Fetch roles error:", error);
-                    throw error;
-                }
-
-                if (data && data.length > 0) {
-                    data.forEach(item => {
-                        const r = item[appConfig.roleCol];
-                        if (r && r.trim() !== '') allRoles.add(r.trim());
-                    });
-                    from += step;
-                    if (data.length < step) {
-                        fetchMore = false;
-                    }
-                } else {
-                    fetchMore = false;
-                }
+        function popNextSwipeCard() {
+            if (swipeQueue.length === 0) {
+                showEmptyState();
+                return;
             }
-            return Array.from(allRoles).sort();
-        }
-
-        async function loadRolesForFilter() {
-            const select = document.getElementById('role-select');
-            try {
-                const roles = await fetchAllRoles();
-                
-                select.innerHTML = '<option value="all">All Roles</option>';
-                roles.forEach(role => {
-                    const option = document.createElement('option');
-                    option.value = role;
-                    option.textContent = role;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error("Failed to load roles:", error);
-                select.innerHTML = '<option value="all">Failed to load roles</option>';
-            }
-        }
-
-        // Fetches ALL records bypassing the 1000 row Supabase limit using pagination.
-        async function fetchAllRecords() {
-            let allData = [];
-            let from = 0;
-            const step = 1000;
-            let fetchMore = true;
-
-            while (fetchMore) {
-                const { data, error } = await supabaseClient
-                    .from(appConfig.table)
-                    .select('*')
-                    .range(from, from + step - 1);
-                
-                if (error) {
-                    console.error("Fetch error:", error);
-                    throw error;
-                }
-
-                if (data && data.length > 0) {
-                    allData = allData.concat(data);
-                    from += step;
-                    if (data.length < step) {
-                        fetchMore = false;
-                    }
-                } else {
-                    fetchMore = false;
-                }
-            }
-
-            // Sort locally: most recently updated first
-            allData.sort((a, b) => {
-                const dateA = new Date(a.updated_at || 0);
-                const dateB = new Date(b.updated_at || 0);
-                return dateB - dateA;
-            });
-
-            return allData;
-        }
-
-
-        // --- NAVIGATION LOGIC ---
-        function showView(viewName) {
-            document.getElementById('home-view').classList.add('hidden');
-            document.getElementById('swipe-view').classList.add('hidden');
-            document.getElementById('history-view').classList.add('hidden');
             
-            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+            currentPerson = swipeQueue.pop(); 
+            const selectedRole = document.getElementById('role-select').value;
             
-            if (viewName === 'swipe') {
-                initProgressIndicator(); // Kick off DB progress counts fetch
-                if (!currentLink) {
-                    loadNextLink();
-                }
-            } else if (viewName === 'history') {
-                loadHistory();
+            // Determine the active application to show on the card
+            if (selectedRole !== 'all') {
+                activeApplication = currentPerson.applications.find(a => a[appConfig.roleCol] === selectedRole && !a[appConfig.decisionCol]);
+            } else {
+                activeApplication = currentPerson.applications.find(a => !a[appConfig.decisionCol]);
             }
-        }
-
-        // --- SWIPE / CATEGORISATION LOGIC ---
-        async function loadNextLink() {
-            if (!supabaseClient) return;
             
-            isProcessing = true;
+            document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('tinder-card').classList.remove('hidden');
             
             const iframe = document.getElementById('website-frame');
             const iframeLoading = document.getElementById('iframe-loading');
-            const nameEl = document.getElementById('card-name');
-            const roleEl = document.getElementById('card-role');
+            
+            document.getElementById('card-name').textContent = currentPerson.name || "Unknown Candidate";
+            document.getElementById('card-role').textContent = activeApplication[appConfig.roleCol] || "No role specified"; 
+            document.getElementById('open-external-btn').href = currentPerson.url;
 
             iframe.style.opacity = '0';
             iframeLoading.style.display = 'flex';
+            
+            iframe.onload = () => { iframe.style.opacity = '1'; iframeLoading.style.display = 'none'; };
+            iframe.onerror = () => { iframeLoading.style.display = 'none'; };
+            
+            iframe.src = currentPerson.url;
 
-            try {
-                // Initialize query for undecided links
-                let query = supabaseClient
-                    .from(appConfig.table)
-                    .select('*')
-                    .is(appConfig.decisionCol, null);
-
-                // Add role filter if a specific role is selected
-                const selectedRole = document.getElementById('role-select').value;
-                if (selectedRole !== 'all') {
-                    query = query.eq(appConfig.roleCol, selectedRole);
-                }
-
-                // Fetch batch
-                const { data, error } = await query.limit(50);
-
-                if (error) throw error;
-
-                if (!data || data.length === 0) {
-                    showEmptyState();
-                    return;
-                }
-
-                // Pick random un-reviewed CV
-                currentLink = data[Math.floor(Math.random() * data.length)];
-                
-                // Update UI Labels
-                nameEl.textContent = currentLink[appConfig.nameCol] || "Unknown Candidate";
-                roleEl.textContent = currentLink[appConfig.roleCol] || "No role specified";
-                document.getElementById('open-external-btn').href = currentLink[appConfig.urlCol];
-                
-                // Handle Iframe loading
-                iframe.onload = () => {
-                    iframe.style.opacity = '1';
-                    iframeLoading.style.display = 'none';
-                };
-                iframe.onerror = () => {
-                    iframeLoading.style.display = 'none';
-                };
-                
-                iframe.src = currentLink[appConfig.urlCol];
-
-                // Failsafe UI unlocker
-                setTimeout(() => {
-                    iframe.style.opacity = '1';
-                    iframeLoading.style.display = 'none';
-                }, 1500);
-
-            } catch (error) {
-                console.error("Database Error:", error);
-                showToast(`Error fetching data: ${error.message}`);
-                showEmptyState();
-            } finally {
-                isProcessing = false;
-            }
+            setTimeout(() => {
+                iframe.style.opacity = '1';
+                iframeLoading.style.display = 'none';
+            }, 1500);
         }
 
         async function makeDecision(decision) {
-            if (isProcessing || !currentLink) return;
+            if (isProcessing || !currentPerson || !activeApplication) return;
             isProcessing = true;
-
-            // Instantly update the progress UI
-            if (currentCategorisedCount < currentTotalCount) {
-                currentCategorisedCount++;
-                renderProgress();
-            }
 
             const tinderCard = document.getElementById('tinder-card');
 
@@ -597,25 +588,15 @@
             else if (decision === 'no') tinderCard.classList.add('swipe-left');
             else if (decision === 'maybe') tinderCard.classList.add('swipe-up');
 
-            // Save decision asynchronously
-            const updateData = {};
+            // Save decision for ONLY this specific application
+            const updateData = { updated_at: new Date().toISOString() };
             updateData[appConfig.decisionCol] = decision;
-            updateData['updated_at'] = new Date().toISOString(); 
+            
+            activeApplication[appConfig.decisionCol] = decision; // update memory
 
-            supabaseClient
-                .from(appConfig.table)
-                .update(updateData)
-                .eq('id', currentLink.id)
-                .then(({ error }) => {
-                    if (error) {
-                        console.error("Error saving decision:", error);
-                        // Revert progress visually if the API call actually fails
-                        currentCategorisedCount--;
-                        renderProgress();
-                    }
-                });
+            await supabaseClient.from(appConfig.table).update(updateData).eq('id', activeApplication.id);
 
-            // Reset UI & Load Next
+            // Wait for animation, then handle next steps
             setTimeout(() => {
                 tinderCard.classList.add('hidden');
                 tinderCard.classList.remove('swipe-left', 'swipe-right', 'swipe-up');
@@ -624,9 +605,262 @@
                 document.getElementById('stamp-like').classList.remove('show-stamp');
                 document.getElementById('stamp-maybe').classList.remove('show-stamp');
                 
-                loadNextLink();
+                // Check if candidate has other applications
+                pendingOtherApplications = currentPerson.applications.filter(a => a.id !== activeApplication.id);
+                
+                if (pendingOtherApplications.length > 0) {
+                    showMultiRoleModal();
+                } else {
+                    finishPersonAndNext();
+                }
             }, 400); 
         }
+
+        function showMultiRoleModal() {
+            const listEl = document.getElementById('multi-role-list');
+            listEl.innerHTML = '';
+            
+            pendingOtherApplications.forEach(app => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100";
+                
+                const roleName = document.createElement('span');
+                roleName.className = "font-bold text-gray-700 truncate pr-2";
+                roleName.textContent = app[appConfig.roleCol] || 'No Role';
+                
+                const select = document.createElement('select');
+                select.className = "text-sm border rounded-lg px-2 py-2 outline-none cursor-pointer bg-white border-gray-300 font-medium w-28 text-center shadow-sm";
+                select.setAttribute('data-app-id', app.id);
+                
+                const currentDec = app[appConfig.decisionCol] || 'pending';
+                select.innerHTML = `
+                    <option value="pending" ${currentDec === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="yes" ${currentDec === 'yes' ? 'selected' : ''}>Yes</option>
+                    <option value="maybe" ${currentDec === 'maybe' ? 'selected' : ''}>Maybe</option>
+                    <option value="no" ${currentDec === 'no' ? 'selected' : ''}>No</option>
+                `;
+                
+                // Colorize the select based on choice
+                select.onchange = (e) => {
+                    select.classList.remove('text-green-700', 'text-red-700', 'text-blue-700', 'bg-green-50', 'bg-red-50', 'bg-blue-50');
+                    if(e.target.value === 'yes') select.classList.add('text-green-700', 'bg-green-50');
+                    if(e.target.value === 'no') select.classList.add('text-red-700', 'bg-red-50');
+                    if(e.target.value === 'maybe') select.classList.add('text-blue-700', 'bg-blue-50');
+                };
+                select.dispatchEvent(new Event('change')); // trigger initial color
+                
+                row.appendChild(roleName);
+                row.appendChild(select);
+                listEl.appendChild(row);
+            });
+            
+            document.getElementById('multi-role-modal').classList.remove('hidden');
+        }
+
+        async function saveMultiRoles() {
+            const btn = document.getElementById('save-multi-roles-btn');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const selects = document.querySelectorAll('#multi-role-list select');
+            const updates = [];
+
+            selects.forEach(select => {
+                const appId = select.getAttribute('data-app-id');
+                const val = select.value === 'pending' ? null : select.value;
+                
+                // Update memory
+                const app = pendingOtherApplications.find(a => a.id == appId);
+                if (app) app[appConfig.decisionCol] = val;
+
+                // Push to update batch
+                const updateData = { updated_at: new Date().toISOString() };
+                updateData[appConfig.decisionCol] = val;
+                
+                updates.push(supabaseClient.from(appConfig.table).update(updateData).eq('id', appId));
+            });
+
+            await Promise.all(updates);
+
+            btn.innerHTML = 'Save & Next';
+            btn.disabled = false;
+            document.getElementById('multi-role-modal').classList.add('hidden');
+            
+            finishPersonAndNext();
+        }
+
+        function skipMultiRoles() {
+            document.getElementById('multi-role-modal').classList.add('hidden');
+            finishPersonAndNext();
+        }
+
+        function finishPersonAndNext() {
+            currentCategorisedCount++;
+            renderProgress();
+            isProcessing = false;
+            popNextSwipeCard();
+        }
+
+
+        // --- ALL SUBMISSIONS LOGIC ---
+        
+        async function loadSubmissions() {
+            if (!supabaseClient) return;
+
+            document.getElementById('submissions-loading').classList.remove('hidden');
+            document.getElementById('submissions-list').innerHTML = '';
+            document.getElementById('submissions-empty').classList.add('hidden');
+
+            try {
+                const rawData = await fetchAllRecords();
+                allPeopleData = groupApplicationsByPerson(rawData); 
+                filterSubmissionsUI();
+            } catch (error) {
+                showToast("Failed to fetch submissions");
+                console.error(error);
+            } finally {
+                document.getElementById('submissions-loading').classList.add('hidden');
+            }
+        }
+
+        function setFilter(filterType, btnElement) {
+            currentFilter = filterType;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-pink-500', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            btnElement.classList.remove('bg-gray-100', 'text-gray-600');
+            btnElement.classList.add('bg-pink-500', 'text-white');
+
+            filterSubmissionsUI();
+        }
+
+        function filterSubmissionsUI() {
+            const query = document.getElementById('submissions-search').value.toLowerCase();
+            const roleFilterVal = document.getElementById('submissions-role-filter').value;
+            const listContainer = document.getElementById('submissions-list');
+            
+            listContainer.innerHTML = '';
+            
+            const filtered = allPeopleData.filter(person => {
+                const nameStr = (person.name || '').toLowerCase();
+                
+                // 1. Check if person has the requested role
+                let hasRole = true;
+                if (roleFilterVal !== 'all') {
+                    hasRole = person.applications.some(a => a[appConfig.roleCol] === roleFilterVal);
+                }
+                
+                // 2. Check if person matches decision filter (ANY of their apps match)
+                let matchesDecision = true;
+                if (currentFilter !== 'all') {
+                    if (currentFilter === 'pending') {
+                        matchesDecision = person.applications.some(a => !a[appConfig.decisionCol]);
+                    } else {
+                        matchesDecision = person.applications.some(a => a[appConfig.decisionCol] === currentFilter);
+                    }
+                }
+                
+                // 3. Text Search (Matches name or ANY of their roles)
+                const matchesSearch = nameStr.includes(query) || person.applications.some(a => (a[appConfig.roleCol] || '').toLowerCase().includes(query));
+
+                return hasRole && matchesDecision && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('submissions-empty').classList.remove('hidden');
+            } else {
+                document.getElementById('submissions-empty').classList.add('hidden');
+                filtered.forEach(person => {
+                    listContainer.appendChild(createSubmissionCard(person));
+                });
+            }
+        }
+
+        function createSubmissionCard(person) {
+            const card = document.createElement('div');
+            card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 transition-all hover:shadow-md";
+
+            // Header: Name + Link
+            const header = document.createElement('div');
+            header.className = "flex justify-between items-center border-b border-gray-100 pb-2";
+            header.innerHTML = `
+                <h3 class="font-bold text-gray-800 truncate pr-2 text-lg">${person.name || 'Unknown'}</h3>
+                <a href="${person.url}" target="_blank" class="text-gray-400 hover:text-pink-500 p-2 shrink-0 bg-gray-50 rounded-full transition-colors">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+            `;
+            card.appendChild(header);
+
+            // Roles List
+            const rolesContainer = document.createElement('div');
+            rolesContainer.className = "flex flex-col gap-2";
+
+            person.applications.forEach(app => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center bg-gray-50 p-2.5 rounded-lg border border-gray-100";
+                
+                const roleName = document.createElement('span');
+                roleName.className = "text-sm font-bold text-gray-600 truncate mr-2";
+                roleName.textContent = app[appConfig.roleCol] || 'No Role';
+                
+                const select = document.createElement('select');
+                
+                // Styling function
+                const updateSelectStyle = (val) => {
+                    let colorClass = 'bg-white border-gray-300 text-gray-600 font-medium'; 
+                    if (val === 'yes') colorClass = 'bg-green-50 border-green-200 text-green-700 font-bold';
+                    else if (val === 'no') colorClass = 'bg-red-50 border-red-200 text-red-700 font-bold';
+                    else if (val === 'maybe') colorClass = 'bg-blue-50 border-blue-200 text-blue-700 font-bold';
+                    select.className = `text-sm border rounded-lg px-2 py-1 outline-none cursor-pointer shadow-sm transition-colors w-24 text-center ${colorClass}`;
+                };
+
+                const currentDec = app[appConfig.decisionCol] || 'pending';
+                select.innerHTML = `
+                    <option value="pending" ${currentDec === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="yes" ${currentDec === 'yes' ? 'selected' : ''}>Yes</option>
+                    <option value="maybe" ${currentDec === 'maybe' ? 'selected' : ''}>Maybe</option>
+                    <option value="no" ${currentDec === 'no' ? 'selected' : ''}>No</option>
+                `;
+                
+                updateSelectStyle(currentDec);
+
+                select.onchange = (e) => {
+                    const val = e.target.value;
+                    updateSelectStyle(val);
+                    updateSubmissionDecision(app, val === 'pending' ? null : val);
+                };
+                
+                row.appendChild(roleName);
+                row.appendChild(select);
+                rolesContainer.appendChild(row);
+            });
+
+            card.appendChild(rolesContainer);
+            return card;
+        }
+
+        async function updateSubmissionDecision(app, newDecision) {
+            const updateData = { updated_at: new Date().toISOString() };
+            updateData[appConfig.decisionCol] = newDecision;
+
+            // Update specific application ID
+            const { error } = await supabaseClient
+                .from(appConfig.table)
+                .update(updateData)
+                .eq('id', app.id);
+
+            if (error) {
+                showToast("Failed to update decision.");
+                loadSubmissions(); // reload to reset state
+            } else {
+                app[appConfig.decisionCol] = newDecision;
+                showToast("Decision updated");
+                // Don't auto-refresh the UI here, let them stay where they are
+            }
+        }
+
 
         // --- CSV EXPORT LOGIC ---
         function openExportModal() {
@@ -647,21 +881,17 @@
             
             const btn = document.getElementById('execute-export-btn');
             const originalContent = btn.innerHTML;
-            
-            // Show loading state
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Exporting...';
             btn.disabled = true;
 
             try {
-                // Fetch ALL rows with pagination bypass
+                // Fetch flat records for export (1 row per application)
                 let data = await fetchAllRecords();
                 
-                // Get user preferences
                 let filename = document.getElementById('export-filename').value.trim() || 'LinkTinder_Export';
                 if (!filename.toLowerCase().endsWith('.csv')) filename += '.csv';
                 
                 const filterVal = document.getElementById('export-filter').value;
-                const sortVal = document.getElementById('export-sort').value;
 
                 // Apply Filter
                 if (filterVal !== 'all') {
@@ -670,20 +900,6 @@
                         return item[appConfig.decisionCol] === filterVal;
                     });
                 }
-
-                // Apply Sort
-                data.sort((a, b) => {
-                    if (sortVal === 'updated_desc') {
-                        return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
-                    } else if (sortVal === 'name_asc') {
-                        return (a[appConfig.nameCol] || '').localeCompare(b[appConfig.nameCol] || '');
-                    } else if (sortVal === 'role_asc') {
-                        return (a[appConfig.roleCol] || '').localeCompare(b[appConfig.roleCol] || '');
-                    } else if (sortVal === 'decision') {
-                        return (a[appConfig.decisionCol] || 'pending').localeCompare(b[appConfig.decisionCol] || 'pending');
-                    }
-                    return 0;
-                });
 
                 if (data.length === 0) {
                     showToast("No records match the selected filter.");
@@ -727,150 +943,12 @@
             }
         }
 
-
-        // --- HISTORY LOGIC ---
-        async function loadHistory() {
-            if (!supabaseClient) return;
-
-            document.getElementById('history-loading').classList.remove('hidden');
-            document.getElementById('history-list').innerHTML = '';
-            document.getElementById('history-empty').classList.add('hidden');
-
-            try {
-                // Use our new pagination fetcher so it finds EVERYTHING
-                historyData = await fetchAllRecords();
-                filterHistory();
-                
-            } catch (error) {
-                showToast("Failed to fetch history");
-                console.error(error);
-            } finally {
-                document.getElementById('history-loading').classList.add('hidden');
-            }
-        }
-
-        function setFilter(filterType, btnElement) {
-            currentFilter = filterType;
-            
-            // Update button styles
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('bg-pink-500', 'text-white');
-                btn.classList.add('bg-gray-100', 'text-gray-600');
-            });
-            btnElement.classList.remove('bg-gray-100', 'text-gray-600');
-            btnElement.classList.add('bg-pink-500', 'text-white');
-
-            filterHistory();
-        }
-
-        function filterHistory() {
-            const query = document.getElementById('history-search').value.toLowerCase();
-            const listContainer = document.getElementById('history-list');
-            listContainer.innerHTML = '';
-            
-            const filtered = historyData.filter(item => {
-                const nameStr = (item[appConfig.nameCol] || '').toLowerCase();
-                const roleStr = (item[appConfig.roleCol] || '').toLowerCase(); // Added searching by Role
-                
-                const matchesSearch = nameStr.includes(query) || roleStr.includes(query);
-                
-                let matchesFilter = false;
-                if (currentFilter === 'all') matchesFilter = true;
-                else if (currentFilter === 'pending') matchesFilter = !item[appConfig.decisionCol];
-                else matchesFilter = (item[appConfig.decisionCol] === currentFilter);
-
-                return matchesSearch && matchesFilter;
-            });
-
-            if (filtered.length === 0) {
-                document.getElementById('history-empty').classList.remove('hidden');
-            } else {
-                document.getElementById('history-empty').classList.add('hidden');
-                filtered.forEach(item => {
-                    listContainer.appendChild(createHistoryCard(item));
-                });
-            }
-        }
-
-        function createHistoryCard(item) {
-            const div = document.createElement('div');
-            
-            // Color code the card border
-            let borderClass = 'border-l-4 border-l-gray-300'; 
-            if (item.decision === 'yes') borderClass = 'border-l-4 border-l-green-500';
-            else if (item.decision === 'no') borderClass = 'border-l-4 border-l-red-500';
-            else if (item.decision === 'maybe') borderClass = 'border-l-4 border-l-blue-500';
-            
-            div.className = `bg-white p-4 rounded-xl shadow-sm border ${borderClass} flex items-center gap-3 transition-all hover:shadow-md`;
-
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'flex-1 min-w-0 pl-1';
-            infoDiv.innerHTML = `
-                <h3 class="font-bold text-gray-800 truncate leading-tight">${item[appConfig.nameCol] || 'Unknown'}</h3>
-                <p class="text-xs text-gray-500 truncate mt-0.5">${item[appConfig.roleCol] || '-'}</p>
-            `;
-            
-            // Modify Decision Dropdown to be color coded
-            const selectDiv = document.createElement('div');
-            const select = document.createElement('select');
-            
-            let selectColorClass = 'bg-gray-100 border-gray-300 text-gray-600 font-medium'; 
-            if (item.decision === 'yes') selectColorClass = 'bg-green-50 border-green-200 text-green-700 font-bold';
-            else if (item.decision === 'no') selectColorClass = 'bg-red-50 border-red-200 text-red-700 font-bold';
-            else if (item.decision === 'maybe') selectColorClass = 'bg-blue-50 border-blue-200 text-blue-700 font-bold';
-
-            select.className = `text-sm border rounded-lg px-2 py-1.5 outline-none cursor-pointer shadow-sm transition-colors ${selectColorClass}`;
-            
-            select.innerHTML = `
-                <option value="pending" ${!item.decision || item.decision === 'pending' ? 'selected' : ''}>Pending</option>
-                <option value="yes" ${item.decision === 'yes' ? 'selected' : ''}>Yes</option>
-                <option value="maybe" ${item.decision === 'maybe' ? 'selected' : ''}>Maybe</option>
-                <option value="no" ${item.decision === 'no' ? 'selected' : ''}>No</option>
-            `;
-            // Pass null back to DB if they select 'pending'
-            select.onchange = (e) => updateHistoryDecision(item.id, e.target.value === 'pending' ? null : e.target.value, div);
-            selectDiv.appendChild(select);
-
-            div.appendChild(infoDiv);
-            div.appendChild(selectDiv);
-            
-            // Add open link button
-            const linkBtn = document.createElement('a');
-            linkBtn.href = item[appConfig.urlCol];
-            linkBtn.target = "_blank";
-            linkBtn.className = "text-gray-400 hover:text-pink-500 p-2 shrink-0";
-            linkBtn.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i>';
-            div.appendChild(linkBtn);
-
-            return div;
-        }
-
-        async function updateHistoryDecision(id, newDecision, cardElement) {
-            const updateData = {};
-            updateData[appConfig.decisionCol] = newDecision;
-
-            const { error } = await supabaseClient
-                .from(appConfig.table)
-                .update(updateData)
-                .eq('id', id);
-
-            if (error) {
-                showToast("Failed to update decision.");
-                loadHistory(); 
-            } else {
-                const item = historyData.find(i => i.id === id);
-                if (item) item.decision = newDecision;
-                showToast("Decision updated successfully");
-                
-                filterHistory();
-            }
-        }
-
         // --- UTILS ---
         function showEmptyState() {
             document.getElementById('tinder-card').classList.add('hidden');
+            document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('empty-state').classList.remove('hidden');
-            currentLink = null;
+            currentPerson = null;
         }
 
         let toastTimeout;
