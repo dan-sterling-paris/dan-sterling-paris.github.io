@@ -130,8 +130,8 @@
                         <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
                         <span class="text-sm text-gray-500 font-medium tracking-wide">Loading CV...</span>
                     </div>
-                    <!-- Note: Cookies allowed via lack of sandbox, but browser 3rd-party cookie blocking may still apply -->
-                    <iframe id="website-frame" class="absolute inset-0 w-full h-full border-0 z-10 bg-white"></iframe>
+                    <!-- touch-action: pan-y added to strictly lock scrolling to vertical only -->
+                    <iframe id="website-frame" class="absolute inset-0 w-full h-full border-0 z-10 bg-white" style="touch-action: pan-y; overflow-x: hidden;"></iframe>
                 </div>
 
                 <!-- Stamps -->
@@ -173,11 +173,12 @@
                        class="w-full pl-10 pr-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all" 
                        oninput="filterHistory()">
             </div>
-            <div class="flex gap-2">
-                <button onclick="setFilter('all', this)" class="filter-btn flex-1 py-1.5 text-sm rounded-md bg-pink-500 text-white font-medium transition-colors">All</button>
-                <button onclick="setFilter('yes', this)" class="filter-btn flex-1 py-1.5 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Yes</button>
-                <button onclick="setFilter('maybe', this)" class="filter-btn flex-1 py-1.5 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Maybe</button>
-                <button onclick="setFilter('no', this)" class="filter-btn flex-1 py-1.5 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">No</button>
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="setFilter('all', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-pink-500 text-white font-medium transition-colors">All</button>
+                <button onclick="setFilter('pending', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Pending</button>
+                <button onclick="setFilter('yes', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Yes</button>
+                <button onclick="setFilter('maybe', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Maybe</button>
+                <button onclick="setFilter('no', this)" class="filter-btn flex-1 py-1.5 px-2 text-sm rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">No</button>
             </div>
         </div>
 
@@ -377,12 +378,12 @@
             document.getElementById('history-empty').classList.add('hidden');
 
             try {
-                // Fetch all categorised rows, ordered mostly recent first
+                // Fetch all rows (including uncategorised), order by recent updates
                 const { data, error } = await supabaseClient
                     .from(appConfig.table)
                     .select('*')
-                    .not(appConfig.decisionCol, 'is', null)
-                    .order('updated_at', { ascending: false, nullsFirst: false });
+                    .order('updated_at', { ascending: false, nullsFirst: false })
+                    .limit(1000); // Set a generous limit for searching
 
                 if (error) throw error;
                 
@@ -419,7 +420,12 @@
             const filtered = historyData.filter(item => {
                 const nameStr = (item[appConfig.nameCol] || '').toLowerCase();
                 const matchesName = nameStr.includes(query);
-                const matchesFilter = (currentFilter === 'all') || (item[appConfig.decisionCol] === currentFilter);
+                
+                let matchesFilter = false;
+                if (currentFilter === 'all') matchesFilter = true;
+                else if (currentFilter === 'pending') matchesFilter = !item[appConfig.decisionCol];
+                else matchesFilter = (item[appConfig.decisionCol] === currentFilter);
+
                 return matchesName && matchesFilter;
             });
 
@@ -437,7 +443,7 @@
             const div = document.createElement('div');
             
             // Color code the card border
-            let borderClass = 'border-gray-200';
+            let borderClass = 'border-l-4 border-l-gray-300'; // Default for Pending
             if (item.decision === 'yes') borderClass = 'border-l-4 border-l-green-500';
             else if (item.decision === 'no') borderClass = 'border-l-4 border-l-red-500';
             else if (item.decision === 'maybe') borderClass = 'border-l-4 border-l-blue-500';
@@ -455,7 +461,7 @@
             const selectDiv = document.createElement('div');
             const select = document.createElement('select');
             
-            let selectColorClass = 'bg-gray-50 border-gray-200 text-gray-700';
+            let selectColorClass = 'bg-gray-100 border-gray-300 text-gray-600 font-medium'; // Default for Pending
             if (item.decision === 'yes') selectColorClass = 'bg-green-50 border-green-200 text-green-700 font-bold';
             else if (item.decision === 'no') selectColorClass = 'bg-red-50 border-red-200 text-red-700 font-bold';
             else if (item.decision === 'maybe') selectColorClass = 'bg-blue-50 border-blue-200 text-blue-700 font-bold';
@@ -463,11 +469,13 @@
             select.className = `text-sm border rounded-lg px-2 py-1.5 outline-none cursor-pointer shadow-sm transition-colors ${selectColorClass}`;
             
             select.innerHTML = `
+                <option value="pending" ${!item.decision || item.decision === 'pending' ? 'selected' : ''}>Pending</option>
                 <option value="yes" ${item.decision === 'yes' ? 'selected' : ''}>Yes</option>
                 <option value="maybe" ${item.decision === 'maybe' ? 'selected' : ''}>Maybe</option>
                 <option value="no" ${item.decision === 'no' ? 'selected' : ''}>No</option>
             `;
-            select.onchange = (e) => updateHistoryDecision(item.id, e.target.value, div);
+            // Pass null back to DB if they select 'pending'
+            select.onchange = (e) => updateHistoryDecision(item.id, e.target.value === 'pending' ? null : e.target.value, div);
             selectDiv.appendChild(select);
 
             div.appendChild(infoDiv);
