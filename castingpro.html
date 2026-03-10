@@ -208,10 +208,15 @@
     <div id="templatesModalOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl transform transition-all flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
-                <h3 class="text-lg font-bold text-gray-900">Email Templates</h3>
+                <h3 class="text-lg font-bold text-gray-900">Email Settings</h3>
                 <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark fa-lg"></i></button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4">
+                <div class="pb-4 border-b border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Sender Email (Apple Mail Default)</label>
+                    <input type="email" id="tmplSender" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="dan@debbieobrien.net">
+                    <p class="text-[10px] text-gray-400 mt-1">This specific account will be auto-selected as the 'From' address in the Mac Mail app.</p>
+                </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Template Type</label>
                     <select id="tmplType" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition cursor-pointer" onchange="loadTemplateForm(this.value)">
@@ -226,7 +231,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Body</label>
-                    <textarea id="tmplBody" rows="12" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm font-mono"></textarea>
+                    <textarea id="tmplBody" rows="10" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm font-mono"></textarea>
                 </div>
                 <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-xs text-blue-800 leading-relaxed">
                     <strong>Supported Placeholders:</strong><br/>
@@ -234,7 +239,7 @@
                 </div>
                 <div class="pt-2">
                     <button id="saveTmplBtn" onclick="saveTemplate()" class="w-full bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md shadow-blue-500/30 hover:bg-blue-700 active:scale-[0.98] transition flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-save"></i> Save Template
+                        <i class="fa-solid fa-save"></i> Save Settings
                     </button>
                 </div>
             </div>
@@ -258,7 +263,7 @@
         // --- UNDO STACK ---
         var undoStack = [];
 
-        // --- DEFAULT TEMPLATES (Updated to address the Agent) ---
+        // --- DEFAULT TEMPLATES ---
         const BOILERPLATES = {
             audition: { 
                 subject: "{{project_name}} - {{first_name}} {{last_name}} - Audition", 
@@ -372,11 +377,10 @@
             const { data: tData } = await supabase.from('templates').select('*').eq('project_id', activeProject.id);
             templates = tData || [];
 
-            // Fetch Auditions 
+            // Fetch Auditions
             const { data: aData, error } = await supabase.from('auditions')
                 .select('*')
-                .eq('project_id', activeProject.id)
-                .neq('status', 'archived'); // Native clean view
+                .eq('project_id', activeProject.id);
 
             if (error) { console.error("Error fetching auditions:", error); return; }
             
@@ -391,7 +395,7 @@
         }
 
         // ============================================================================
-        // FILTERS & UI RENDER
+        // FILTERS & UI RENDER (Enforcing Rigid Schedule Grid)
         // ============================================================================
         function updateFilterOptions() {
             const dateSelect = document.getElementById('filterDate');
@@ -441,7 +445,7 @@
             const list = document.getElementById('auditionsList');
             list.innerHTML = '';
 
-            // Apply Filters
+            // Apply Filters first
             let filteredAuditions = auditions;
             const dFilter = document.getElementById('filterDate').value;
             const sFilter = document.getElementById('filterStatus').value;
@@ -451,8 +455,9 @@
             if (sFilter !== 'ALL') {
                 filteredAuditions = filteredAuditions.filter(a => a.status === sFilter);
             } else {
-                // By default, hide declined and archived from standard view
-                filteredAuditions = filteredAuditions.filter(a => a.status !== 'declined' && a.status !== 'archived');
+                // By default, hide completely archived rows from standard view 
+                // (these are rows that were replaced by empty slots during a move)
+                filteredAuditions = filteredAuditions.filter(a => a.status !== 'archived');
             }
 
             if (filteredAuditions.length === 0) {
@@ -464,14 +469,15 @@
                 return;
             }
 
-            // Group by Date, Sort by Time
-            const grouped = filteredAuditions.reduce((acc, curr) => {
-                if (!acc[curr.date]) acc[curr.date] = [];
-                acc[curr.date].push(curr);
-                return acc;
-            }, {});
+            // OVERRIDING PRINCIPLE: Group strictly by Date and Time to ensure the structure NEVER changes
+            const scheduleMap = {};
+            filteredAuditions.forEach(a => {
+                const key = `${a.date}_${a.time}`;
+                if (!scheduleMap[key]) scheduleMap[key] = [];
+                scheduleMap[key].push(a);
+            });
 
-            const sortedDates = Object.keys(grouped).sort();
+            const sortedDates = [...new Set(filteredAuditions.map(a => a.date))].sort();
 
             sortedDates.forEach(date => {
                 let displayDate = date;
@@ -488,54 +494,74 @@
                 dateHeader.innerHTML = `<h2 class="text-sm font-bold text-gray-500 uppercase tracking-widest pl-2">${displayDate}</h2>`;
                 list.appendChild(dateHeader);
 
-                grouped[date].sort((a, b) => a.time.localeCompare(b.time));
-
+                const timesForDate = [...new Set(filteredAuditions.filter(a => a.date === date).map(a => a.time))].sort();
                 const slotsContainer = document.createElement('div');
                 slotsContainer.className = 'space-y-3';
 
-                grouped[date].forEach(slot => {
-                    const el = document.createElement('div');
+                timesForDate.forEach(time => {
+                    const records = scheduleMap[`${date}_${time}`];
+                    if (!records) return;
+
+                    let recordsToDisplay = records;
                     
-                    if (slot.status === 'empty') {
-                        el.className = 'flex border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-white hover:border-blue-400 transition cursor-pointer group overflow-hidden';
-                        el.onclick = () => openNewAuditionModal(slot.id);
-                        el.innerHTML = `
-                            <div class="w-20 bg-gray-100 flex flex-col justify-center items-center py-3 border-r border-dashed border-gray-300 group-hover:bg-blue-50 group-hover:border-blue-200 transition">
-                                <span class="text-lg font-bold text-gray-500 group-hover:text-blue-600">${slot.time}</span>
-                            </div>
-                            <div class="flex-1 px-4 py-3 flex items-center text-gray-400 font-medium group-hover:text-blue-500 transition">
-                                <i class="fa-solid fa-plus-circle mr-2"></i> Tap to fill slot
-                            </div>
-                        `;
-                    } else {
-                        // Color assignment logic based on common statuses
-                        let badgeColor = 'bg-yellow-100 text-yellow-700 border-yellow-200'; // Default/Pending
-                        const ls = slot.status.toLowerCase();
-                        
-                        if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-green-100 text-green-700 border-green-200';
-                        else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-700 border-purple-200';
-                        else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-700 border-red-200';
-                        
-                        el.className = `flex border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden ${ls === 'declined' ? 'opacity-50' : ''}`;
-                        el.onclick = () => openActionSheet(slot.id);
-                        el.innerHTML = `
-                            <div class="w-20 bg-gray-50 flex flex-col justify-center items-center py-3 border-r border-gray-100">
-                                <span class="text-lg font-bold text-gray-800">${slot.time}</span>
-                            </div>
-                            <div class="flex-1 px-4 py-3 flex justify-between items-center">
-                                <div>
-                                    <h3 class="font-bold text-gray-900 text-base">${slot.firstName || ''} ${slot.lastName || ''}</h3>
-                                    <p class="text-sm text-gray-500 font-medium">${slot.role || 'Unspecified Role'}</p>
-                                </div>
-                                <span class="px-2.5 py-1 text-xs font-bold rounded-md border ${badgeColor} uppercase tracking-wide flex-shrink-0 text-center leading-tight">
-                                    ${slot.status}
-                                </span>
-                            </div>
-                        `;
+                    // If viewing "ALL", we strictly enforce the 1-slot-per-time rule to keep the structure visually locked
+                    if (sFilter === 'ALL') {
+                        const actives = records.filter(r => !['empty', 'declined'].includes(r.status));
+                        if (actives.length > 0) {
+                            recordsToDisplay = actives; // Show active actor
+                        } else {
+                            const empty = records.find(r => r.status === 'empty');
+                            if (empty) recordsToDisplay = [empty]; // Show empty slot if actor was declined
+                            else {
+                                const declined = records.find(r => r.status === 'declined');
+                                if (declined) recordsToDisplay = [declined]; // Fallback to declined view if no empty slot exists
+                            }
+                        }
                     }
-                    slotsContainer.appendChild(el);
+
+                    recordsToDisplay.forEach(slot => {
+                        const el = document.createElement('div');
+                        
+                        if (slot.status === 'empty') {
+                            el.className = 'flex border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-white hover:border-blue-400 transition cursor-pointer group overflow-hidden';
+                            el.onclick = () => openNewAuditionModal(slot.id);
+                            el.innerHTML = `
+                                <div class="w-20 bg-gray-100 flex flex-col justify-center items-center py-3 border-r border-dashed border-gray-300 group-hover:bg-blue-50 group-hover:border-blue-200 transition">
+                                    <span class="text-lg font-bold text-gray-500 group-hover:text-blue-600">${slot.time}</span>
+                                </div>
+                                <div class="flex-1 px-4 py-3 flex items-center text-gray-400 font-medium group-hover:text-blue-500 transition">
+                                    <i class="fa-solid fa-plus-circle mr-2"></i> Tap to fill slot
+                                </div>
+                            `;
+                        } else {
+                            // Color assignment logic based on common statuses
+                            let badgeColor = 'bg-yellow-100 text-yellow-700 border-yellow-200'; // Default/Pending
+                            const ls = slot.status.toLowerCase();
+                            
+                            if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-green-100 text-green-700 border-green-200';
+                            else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-700 border-purple-200';
+                            else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-700 border-red-200';
+                            
+                            el.className = `flex border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden ${ls === 'declined' ? 'opacity-50' : ''}`;
+                            el.onclick = () => openActionSheet(slot.id);
+                            el.innerHTML = `
+                                <div class="w-20 bg-gray-50 flex flex-col justify-center items-center py-3 border-r border-gray-100">
+                                    <span class="text-lg font-bold text-gray-800">${slot.time}</span>
+                                </div>
+                                <div class="flex-1 px-4 py-3 flex justify-between items-center">
+                                    <div>
+                                        <h3 class="font-bold text-gray-900 text-base">${slot.firstName || ''} ${slot.lastName || ''}</h3>
+                                        <p class="text-sm text-gray-500 font-medium">${slot.role || 'Unspecified Role'}</p>
+                                    </div>
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded-md border ${badgeColor} uppercase tracking-wide flex-shrink-0 text-center leading-tight">
+                                        ${slot.status}
+                                    </span>
+                                </div>
+                            `;
+                        }
+                        slotsContainer.appendChild(el);
+                    });
                 });
-                
                 list.appendChild(slotsContainer);
             });
         }
@@ -543,7 +569,8 @@
 
         // ============================================================================
         // UNDO SYSTEM 
-        // - Strictly tracks changes. Never deletes an actor's underlying data.
+        // - ZERO DELETION ARCHITECTURE: Strictly tracks changes. 
+        // - Never deletes an actor's underlying data. Safe Archiving only.
         // ============================================================================
         function pushUndo(actionType, data) {
             undoStack.push({ type: actionType, data: data });
@@ -577,20 +604,33 @@
                     if(action.data.newEmptySlotId) {
                         const { data: slotCheck } = await supabase.from('auditions').select('status').eq('id', action.data.newEmptySlotId).single();
                         if(slotCheck && slotCheck.status === 'empty') {
-                            await supabase.from('auditions').delete().eq('id', action.data.newEmptySlotId);
+                            // Archive the empty slot instead of deleting it
+                            await supabase.from('auditions').update({ status: 'archived' }).eq('id', action.data.newEmptySlotId);
+                        } else {
+                            alert("Cannot undo cancel: The slot has already been filled by another actor.");
+                            return; // Halt the undo if the slot was filled
                         }
                     }
                     // 2. Restore actor back to original status. (Actor is NEVER deleted).
                     await supabase.from('auditions').update(action.data.oldState).eq('id', action.data.id);
                 } 
                 else if (action.type === 'move_slot') {
-                    // Re-swaps the data across the two slots.
-                    await supabase.from('auditions').update(action.data.oldSlotState).eq('id', action.data.oldSlotId);
+                    // Revert the target slot back to empty
                     await supabase.from('auditions').update(action.data.newSlotState).eq('id', action.data.newSlotId);
+                    // Un-archive the actor's original slot, bringing them back
+                    await supabase.from('auditions').update(action.data.oldSlotState).eq('id', action.data.oldSlotId);
+                    // Archive the temporary empty slot that was generated to hold their old time open
+                    if (action.data.newFreedSlotId) {
+                        await supabase.from('auditions').update({ status: 'archived' }).eq('id', action.data.newFreedSlotId);
+                    }
                 } 
                 else if (action.type === 'manual_status') {
                     // Revert granular status change
                     await supabase.from('auditions').update(action.data.oldState).eq('id', action.data.id);
+                    // Restore the archived empty slot if we were un-doing a restoration from 'declined'
+                    if (action.data.archivedEmptySlotId) {
+                        await supabase.from('auditions').update({ status: 'empty' }).eq('id', action.data.archivedEmptySlotId);
+                    }
                 }
                 else if (action.type === 'autofill_links') {
                     for(const slot of action.data.slots) {
@@ -598,9 +638,9 @@
                     }
                 } 
                 else if (action.type === 'import_csv') {
-                    // Undo CSV Import: Remove freshly imported rows
+                    // Undo CSV Import: Archive freshly imported rows instead of deleting
                     if(action.data.newIds && action.data.newIds.length > 0) {
-                        await supabase.from('auditions').delete().in('id', action.data.newIds);
+                        await supabase.from('auditions').update({ status: 'archived' }).in('id', action.data.newIds);
                     }
                     // Resurrect the previously truncated data perfectly
                     if(action.data.oldAuditions && action.data.oldAuditions.length > 0) {
@@ -800,8 +840,22 @@
             const a = auditions.find(x => x.id === activeAuditionId);
             if(!a || a.status === newStatus) return;
 
+            let emptySlotToArchive = null;
+            if (a.status === 'declined' && ['pending', 'confirmed', 'Audition Not Sent'].includes(newStatus)) {
+                // We are restoring an actor to the timeline.
+                // Must consume the empty slot to maintain exact visual schedule structure.
+                const emptySlot = auditions.find(x => x.date === a.date && x.time === a.time && x.status === 'empty');
+                if (emptySlot) {
+                    emptySlotToArchive = emptySlot.id;
+                    await supabase.from('auditions').update({ status: 'archived' }).eq('id', emptySlot.id);
+                } else {
+                    alert("Cannot restore: This time slot is already filled by another actor. Please free up the slot first.");
+                    return;
+                }
+            }
+
             const oldState = { status: a.status };
-            pushUndo('manual_status', { id: a.id, oldState: oldState });
+            pushUndo('manual_status', { id: a.id, oldState: oldState, archivedEmptySlotId: emptySlotToArchive });
 
             await supabase.from('auditions').update({ status: newStatus }).eq('id', a.id);
             
@@ -838,7 +892,7 @@
             // 1. Update current actor to declined (We strictly DO NOT delete the row, preserving history)
             await supabase.from('auditions').update({ status: 'declined' }).eq('id', a.id);
             
-            // 2. Insert new empty slot at that specific time to "Free up slot"
+            // 2. Insert new empty slot at that specific time to "Free up slot" structurally
             const { data: newRow } = await supabase.from('auditions').insert({
                 project_id: a.project_id,
                 date: a.date,
@@ -895,7 +949,7 @@
             const newA = auditions.find(x => x.id === newSlotId);
             if(!oldA || !newA) return;
 
-            const oldSlotState = { firstName: oldA.firstName, lastName: oldA.lastName, agent: oldA.agent, email: oldA.email, role: oldA.role, status: oldA.status };
+            const oldSlotState = { status: oldA.status };
             const newSlotState = { firstName: newA.firstName, lastName: newA.lastName, agent: newA.agent, email: newA.email, role: newA.role, status: newA.status };
 
             // 1. Move actor logic into new slot, setting status to 'pending'
@@ -908,18 +962,24 @@
                 status: 'pending'
             }).eq('id', newSlotId);
 
-            // 2. Clear out the old slot to 'empty'
-            await supabase.from('auditions').update({
-                firstName: null,
-                lastName: null,
-                agent: null,
-                email: null,
-                role: null,
+            // 2. Archive the old slot instead of deleting/overwriting it to preserve history
+            await supabase.from('auditions').update({ status: 'archived' }).eq('id', oldA.id);
+            
+            // 3. Insert new empty slot at old time to maintain the schedule grid
+            const { data: newFreedSlot } = await supabase.from('auditions').insert({
+                project_id: oldA.project_id,
+                date: oldA.date,
+                time: oldA.time,
+                duration: oldA.duration,
                 status: 'empty'
-            }).eq('id', oldA.id);
+            }).select().single();
 
-            // Save for undo - Swaps the records perfectly.
-            pushUndo('move_slot', { oldSlotId: oldA.id, oldSlotState, newSlotId: newSlotId, newSlotState });
+            // Save for undo
+            pushUndo('move_slot', { 
+                oldSlotId: oldA.id, oldSlotState, 
+                newSlotId: newSlotId, newSlotState,
+                newFreedSlotId: newFreedSlot?.id 
+            });
 
             // Temporarily update data locally so email string builds correctly right now
             const payload = { firstName: oldA.firstName, lastName: oldA.lastName, email: oldA.email, role: oldA.role };
@@ -1031,6 +1091,7 @@
         function openTemplatesModal() {
             if(!activeProject) return alert("Please load a project first.");
             document.getElementById('tmplType').value = 'audition';
+            document.getElementById('tmplSender').value = localStorage.getItem('casting_sender_email') || 'dan@debbieobrien.net';
             loadTemplateForm('audition');
             document.getElementById('templatesModalOverlay').classList.add('active');
         }
@@ -1047,6 +1108,9 @@
             const originalHTML = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
             
+            const senderEmail = document.getElementById('tmplSender').value.trim();
+            localStorage.setItem('casting_sender_email', senderEmail);
+
             const type = document.getElementById('tmplType').value;
             const subject = document.getElementById('tmplSubject').value;
             const body = document.getElementById('tmplBody').value;
@@ -1110,7 +1174,7 @@
                 .replace(/\{\{material_link\}\}/gi, activeProject.material_link || 'TBC')
                 .replace(/\{\{project_name\}\}/gi, activeProject.name || 'Our Project');
             
-            const senderEmail = 'dan@debbieobrien.net';
+            const senderEmail = localStorage.getItem('casting_sender_email') || 'dan@debbieobrien.net';
             const mailto = `mailto:${a.email}?subject=${encodeURIComponent(rep(tmpl.subject))}&body=${encodeURIComponent(rep(tmpl.body))}&from=${encodeURIComponent(senderEmail)}`;
             window.location.href = mailto;
         }
