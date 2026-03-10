@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Casting Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -13,38 +13,22 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         
-        :root {
-            /* iOS Safe Area variables */
-            --sat: env(safe-area-inset-top);
-            --sab: env(safe-area-inset-bottom);
-            --sal: env(safe-area-inset-left);
-            --sar: env(safe-area-inset-right);
-        }
-
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
             background-color: #f3f4f6; 
             -webkit-tap-highlight-color: transparent; 
-            overscroll-behavior-y: none; 
             color: #111827;
+            /* iOS Safe Area Padding for Landscape/Notch */
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
 
-        /* Main wrapper to manage iPhone safe areas cleanly */
-        .app-container {
-            padding-top: var(--sat);
-            padding-bottom: var(--sab);
-            padding-left: var(--sal);
-            padding-right: var(--sar);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
+        .safe-top { padding-top: env(safe-area-inset-top); }
+        .safe-bottom { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+
         .bottom-sheet { 
             transform: translateY(100%); 
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            /* Ensure bottom sheet accounts for home indicator */
-            padding-bottom: calc(1rem + var(--sab)); 
         }
         .bottom-sheet.active { 
             transform: translateY(0); 
@@ -71,7 +55,7 @@
         }
     </style>
 </head>
-<body class="overflow-hidden">
+<body class="min-h-screen flex flex-col">
 
     <!-- AUTH OVERLAY -->
     <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-[100] flex flex-col justify-center items-center p-4">
@@ -97,74 +81,72 @@
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
-    <div class="app-container">
+    <!-- STICKY HEADER & FILTERS -->
+    <div class="sticky top-0 z-30 ios-blur shadow-sm border-b border-gray-200 safe-top">
         
-        <!-- COMBINED HEADER & FILTERS (Sticky to prevent scrolling/overlap issues) -->
-        <div class="z-30 ios-blur shadow-sm border-b border-gray-200 shrink-0">
-            
-            <!-- App Header -->
-            <header class="px-4 py-3 flex justify-between items-center gap-2">
-                <div class="flex-1 min-w-0">
-                    <h1 class="text-lg font-black text-gray-900 tracking-tight truncate">Casting Pro</h1>
-                    <select id="projectSelector" class="w-full text-xs text-gray-500 bg-transparent outline-none mt-0.5 font-bold cursor-pointer truncate" onchange="changeProject(this.value)">
-                        <option value="">Loading Projects...</option>
-                    </select>
-                </div>
-                <!-- Icons condensed slightly for iPhone 17 Pro narrow width -->
-                <div class="flex gap-1 shrink-0">
-                    <button id="undoBtn" onclick="executeUndo()" class="bg-gray-100 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition opacity-50 cursor-not-allowed" disabled title="Undo Last Action">
-                        <i class="fa-solid fa-rotate-left text-xs"></i>
-                    </button>
-                    <button onclick="openTemplatesModal()" class="bg-blue-50 text-blue-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition" title="Edit Email Templates">
-                        <i class="fa-solid fa-envelope-open-text text-xs"></i>
-                    </button>
-                    <button onclick="autoFillFromLinks()" class="bg-purple-50 text-purple-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-purple-100 transition" title="AutoFill from Links">
-                        <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-                    </button>
-                    <button onclick="document.getElementById('csvInput').click()" class="bg-gray-100 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition" title="Import CSV (Replaces Project)">
-                        <i class="fa-solid fa-file-import text-xs"></i>
-                    </button>
-                    <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
-                    
-                    <button onclick="refreshData()" class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-700 transition" title="Refresh">
-                        <i class="fa-solid fa-rotate-right text-xs"></i>
-                    </button>
-                    <button onclick="handleLogout()" class="bg-red-50 text-red-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-100 transition" title="Sign Out">
-                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
-                    </button>
-                </div>
-            </header>
+        <!-- Row 1: Title and Core Actions -->
+        <header class="px-4 py-3 flex justify-between items-center gap-2">
+            <div class="flex-1 min-w-0 flex items-center gap-3">
+                <h1 class="text-lg font-black text-gray-900 tracking-tight shrink-0">Casting Pro</h1>
+                <select id="projectSelector" class="w-full text-xs text-gray-500 bg-transparent outline-none font-bold cursor-pointer truncate" onchange="changeProject(this.value)">
+                    <option value="">Loading Projects...</option>
+                </select>
+            </div>
+            <div class="flex gap-1.5 shrink-0">
+                <button id="undoBtn" onclick="executeUndo()" class="bg-gray-100 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition opacity-50 cursor-not-allowed" disabled title="Undo Last Action">
+                    <i class="fa-solid fa-rotate-left text-xs"></i>
+                </button>
+                <button onclick="refreshData()" class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-700 transition" title="Refresh">
+                    <i class="fa-solid fa-rotate-right text-xs"></i>
+                </button>
+                <button onclick="handleLogout()" class="bg-red-50 text-red-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-100 transition" title="Sign Out">
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                </button>
+            </div>
+        </header>
 
-            <!-- Filters Bar -->
-            <div class="px-4 py-2 bg-gray-50/50 flex gap-3">
+        <!-- Row 2: Tools and Filters (iPhone 17 Pro Optimized) -->
+        <div class="px-4 py-2.5 bg-gray-50/50 flex flex-wrap gap-3 items-end">
+            <!-- Tools -->
+            <div class="flex gap-1.5 shrink-0 pb-0.5">
+                <button onclick="openTemplatesModal()" class="bg-blue-50 text-blue-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition" title="Edit Email Templates">
+                    <i class="fa-solid fa-envelope-open-text text-xs"></i>
+                </button>
+                <button onclick="autoFillFromLinks()" class="bg-purple-50 text-purple-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-purple-100 transition" title="AutoFill from Links">
+                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                </button>
+                <button onclick="document.getElementById('csvInput').click()" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-300 transition" title="Import CSV (Replaces Project)">
+                    <i class="fa-solid fa-file-import text-xs"></i>
+                </button>
+                <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
+            </div>
+
+            <!-- Filters -->
+            <div class="flex-1 flex gap-2 min-w-[200px]">
                 <div class="flex-1 min-w-0">
-                    <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Filter Day</label>
-                    <select id="filterDate" onchange="renderAuditions()" class="w-full bg-white/80 border border-gray-200 text-gray-800 text-xs font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 outline-none cursor-pointer truncate">
+                    <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Day</label>
+                    <select id="filterDate" onchange="renderAuditions()" class="w-full bg-white/80 border border-gray-200 text-gray-800 text-xs font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 outline-none cursor-pointer truncate shadow-sm">
                         <option value="ALL">All Days</option>
                     </select>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Filter Status</label>
-                    <select id="filterStatus" onchange="renderAuditions()" class="w-full bg-white/80 border border-gray-200 text-gray-800 text-xs font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 outline-none cursor-pointer truncate">
+                    <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Status</label>
+                    <select id="filterStatus" onchange="renderAuditions()" class="w-full bg-white/80 border border-gray-200 text-gray-800 text-xs font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 outline-none cursor-pointer truncate shadow-sm">
                         <option value="ALL">All Active</option>
                     </select>
                 </div>
             </div>
-            
         </div>
-
-        <!-- Main Content List -->
-        <main id="auditionsList" class="flex-1 overflow-y-auto p-4 space-y-8 pb-10">
-            <!-- Rendered dynamically -->
-            <div class="flex items-center justify-center h-full text-gray-400">Loading schedule...</div>
-        </main>
-
     </div>
+
+    <!-- MAIN CONTENT LIST -->
+    <main id="auditionsList" class="flex-1 p-4 space-y-6 safe-bottom">
+        <div class="flex items-center justify-center h-full text-gray-400 py-10">Loading schedule...</div>
+    </main>
 
     <!-- ACTION SHEET (For Existing Actors) -->
     <div id="actionSheetOverlay" class="fixed inset-0 bg-black/40 modal-overlay z-40" onclick="closeAllModals()"></div>
-    <div id="actionSheet" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.1)] pt-2 px-4 max-h-[90vh] overflow-y-auto">
+    <div id="actionSheet" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.1)] pt-2 px-4 max-h-[90vh] overflow-y-auto safe-bottom">
         <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-5"></div>
         <div id="actionSheetContent">
             <!-- Dynamically populated -->
@@ -400,7 +382,7 @@
 
         async function loadData() {
             if (!activeProject) return;
-            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading schedule...</div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 py-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading schedule...</div>';
             
             const { data: tData } = await supabase.from('templates').select('*').eq('project_id', activeProject.id);
             templates = tData || [];
@@ -422,7 +404,7 @@
         }
 
         // ============================================================================
-        // FILTERS & UI RENDER (Enforcing Rigid Schedule Grid)
+        // FILTERS & UI RENDER (Supporting Multiple Slots Per Time)
         // ============================================================================
         function updateFilterOptions() {
             const dateSelect = document.getElementById('filterDate');
@@ -448,7 +430,7 @@
 
             const statusSelect = document.getElementById('filterStatus');
             const currentStatusVal = statusSelect.value;
-            statusSelect.innerHTML = '<option value="ALL">All Active Statuses</option>';
+            statusSelect.innerHTML = '<option value="ALL">All Active</option>';
             
             const standardStatuses = ['empty', 'pending', 'confirmed', 'Audition Not Sent', 'declined'];
             const allFoundStatuses = [...new Set(auditions.map(a => a.status))];
@@ -478,8 +460,9 @@
             if (sFilter !== 'ALL') {
                 filteredAuditions = filteredAuditions.filter(a => a.status === sFilter);
             } else {
-                // By default, hide completely archived rows from standard view 
-                filteredAuditions = filteredAuditions.filter(a => a.status !== 'archived');
+                // Hide strictly archived and declined from standard view.
+                // This ensures when an actor is declined, only the newly injected 'empty' slot is visible, keeping grid exactly stable.
+                filteredAuditions = filteredAuditions.filter(a => a.status !== 'archived' && a.status !== 'declined');
             }
 
             if (filteredAuditions.length === 0) {
@@ -490,14 +473,6 @@
                     </div>`;
                 return;
             }
-
-            // OVERRIDING PRINCIPLE: Group strictly by Date and Time to ensure the structure NEVER changes
-            const scheduleMap = {};
-            filteredAuditions.forEach(a => {
-                const key = `${a.date}_${a.time}`;
-                if (!scheduleMap[key]) scheduleMap[key] = [];
-                scheduleMap[key].push(a);
-            });
 
             const sortedDates = [...new Set(filteredAuditions.map(a => a.date))].sort();
 
@@ -516,75 +491,61 @@
                 dateHeader.innerHTML = `<h2 class="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">${displayDate}</h2>`;
                 list.appendChild(dateHeader);
 
-                const timesForDate = [...new Set(filteredAuditions.filter(a => a.date === date).map(a => a.time))].sort();
                 const slotsContainer = document.createElement('div');
                 slotsContainer.className = 'space-y-3';
-
-                timesForDate.forEach(time => {
-                    const records = scheduleMap[`${date}_${time}`];
-                    if (!records) return;
-
-                    let recordsToDisplay = records;
-                    
-                    // Enforce the 1-slot-per-time rule
-                    if (sFilter === 'ALL') {
-                        const actives = records.filter(r => !['empty', 'declined'].includes(r.status));
-                        if (actives.length > 0) {
-                            recordsToDisplay = actives; 
-                        } else {
-                            const empty = records.find(r => r.status === 'empty');
-                            if (empty) recordsToDisplay = [empty]; 
-                            else {
-                                const declined = records.find(r => r.status === 'declined');
-                                if (declined) recordsToDisplay = [declined]; 
-                            }
-                        }
-                    }
-
-                    recordsToDisplay.forEach(slot => {
-                        const el = document.createElement('div');
-                        
-                        if (slot.status === 'empty') {
-                            el.className = 'flex border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-white hover:border-blue-400 transition cursor-pointer group overflow-hidden';
-                            el.onclick = () => openNewAuditionModal(slot.id);
-                            el.innerHTML = `
-                                <div class="w-16 bg-gray-100 flex flex-col justify-center items-center py-3 border-r border-dashed border-gray-300 group-hover:bg-blue-50 group-hover:border-blue-200 transition shrink-0">
-                                    <span class="text-base font-bold text-gray-500 group-hover:text-blue-600">${slot.time}</span>
-                                </div>
-                                <div class="flex-1 px-4 py-3 flex items-center text-gray-400 font-medium group-hover:text-blue-500 transition text-sm">
-                                    <i class="fa-solid fa-plus-circle mr-2"></i> Fill slot
-                                </div>
-                            `;
-                        } else {
-                            let badgeColor = 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                            const ls = slot.status.toLowerCase();
-                            
-                            if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-green-100 text-green-700 border-green-200';
-                            else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-700 border-purple-200';
-                            else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-700 border-red-200';
-                            
-                            el.className = `flex border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden ${ls === 'declined' ? 'opacity-50' : ''}`;
-                            el.onclick = () => openActionSheet(slot.id);
-                            el.innerHTML = `
-                                <div class="w-16 bg-gray-50 flex flex-col justify-center items-center py-3 border-r border-gray-100 shrink-0">
-                                    <span class="text-base font-bold text-gray-800">${slot.time}</span>
-                                </div>
-                                <div class="flex-1 px-3 py-2 flex flex-col justify-center min-w-0">
-                                    <div class="flex justify-between items-start gap-2">
-                                        <div class="min-w-0 flex-1">
-                                            <h3 class="font-bold text-gray-900 text-sm truncate">${slot.firstName || ''} ${slot.lastName || ''}</h3>
-                                            <p class="text-[11px] text-gray-500 font-medium truncate">${slot.role || 'Unspecified'}</p>
-                                        </div>
-                                        <span class="px-2 py-0.5 text-[9px] font-bold rounded border ${badgeColor} uppercase tracking-wide flex-shrink-0 mt-0.5">
-                                            ${slot.status}
-                                        </span>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                        slotsContainer.appendChild(el);
-                    });
+                
+                // Get slots for date and sort by time. Stable sort multiple concurrent slots.
+                const slotsForDate = filteredAuditions.filter(a => a.date === date);
+                slotsForDate.sort((a,b) => {
+                    const timeDiff = a.time.localeCompare(b.time);
+                    if (timeDiff !== 0) return timeDiff;
+                    return a.id.localeCompare(b.id);
                 });
+
+                slotsForDate.forEach(slot => {
+                    const el = document.createElement('div');
+                    
+                    if (slot.status === 'empty') {
+                        el.className = 'flex border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-white hover:border-blue-400 transition cursor-pointer group overflow-hidden';
+                        el.onclick = () => openNewAuditionModal(slot.id);
+                        el.innerHTML = `
+                            <div class="w-16 bg-gray-100 flex flex-col justify-center items-center py-3 border-r border-dashed border-gray-300 group-hover:bg-blue-50 group-hover:border-blue-200 transition shrink-0">
+                                <span class="text-base font-bold text-gray-500 group-hover:text-blue-600">${slot.time}</span>
+                            </div>
+                            <div class="flex-1 px-4 py-3 flex items-center text-gray-400 font-medium group-hover:text-blue-500 transition text-sm">
+                                <i class="fa-solid fa-plus-circle mr-2"></i> Fill slot
+                            </div>
+                        `;
+                    } else {
+                        let badgeColor = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                        const ls = slot.status.toLowerCase();
+                        
+                        if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-green-100 text-green-700 border-green-200';
+                        else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-700 border-purple-200';
+                        else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-700 border-red-200';
+                        
+                        el.className = `flex border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden ${ls === 'declined' ? 'opacity-50' : ''}`;
+                        el.onclick = () => openActionSheet(slot.id);
+                        el.innerHTML = `
+                            <div class="w-16 bg-gray-50 flex flex-col justify-center items-center py-3 border-r border-gray-100 shrink-0">
+                                <span class="text-base font-bold text-gray-800">${slot.time}</span>
+                            </div>
+                            <div class="flex-1 px-3 py-2 flex flex-col justify-center min-w-0">
+                                <div class="flex justify-between items-start gap-2">
+                                    <div class="min-w-0 flex-1">
+                                        <h3 class="font-bold text-gray-900 text-sm truncate">${slot.firstName || ''} ${slot.lastName || ''}</h3>
+                                        <p class="text-[11px] text-gray-500 font-medium truncate">${slot.role || 'Unspecified'}</p>
+                                    </div>
+                                    <span class="px-2 py-0.5 text-[9px] font-bold rounded border ${badgeColor} uppercase tracking-wide flex-shrink-0 mt-0.5 whitespace-nowrap">
+                                        ${slot.status}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    slotsContainer.appendChild(el);
+                });
+                
                 list.appendChild(slotsContainer);
             });
         }
@@ -613,7 +574,7 @@
             if (undoStack.length === 0) return;
             const action = undoStack.pop();
             
-            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-blue-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Reverting Action...</div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-blue-500 font-bold py-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Reverting Action...</div>';
 
             try {
                 if (action.type === 'fill_slot') {
@@ -625,7 +586,7 @@
                         if(slotCheck && slotCheck.status === 'empty') {
                             await supabase.from('auditions').update({ status: 'archived' }).eq('id', action.data.newEmptySlotId);
                         } else {
-                            alert("Cannot undo cancel: The slot has already been filled by another actor.");
+                            alert("Cannot undo cancel: The freed up slot has already been filled by another actor.");
                             return; 
                         }
                     }
@@ -836,12 +797,14 @@
 
             let emptySlotToArchive = null;
             if (a.status === 'declined' && ['pending', 'confirmed', 'Audition Not Sent'].includes(newStatus)) {
+                // To safely restore an actor who was previously declined, we must consume an 'empty' slot
+                // that shares their exact time/date to prevent duplicating the schedule grid artificially.
                 const emptySlot = auditions.find(x => x.date === a.date && x.time === a.time && x.status === 'empty');
                 if (emptySlot) {
                     emptySlotToArchive = emptySlot.id;
                     await supabase.from('auditions').update({ status: 'archived' }).eq('id', emptySlot.id);
                 } else {
-                    alert("Cannot restore: This time slot is already filled by another actor. Please free up the slot first.");
+                    alert("Cannot restore: This specific time slot is fully booked. Please free up the slot first.");
                     return;
                 }
             }
@@ -977,7 +940,7 @@
         async function autoFillFromLinks() {
             if(!activeProject) return;
             
-            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-purple-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Auto-filling from links...</div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-purple-500 font-bold py-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Auto-filling from links...</div>';
 
             const { data: linksData, error } = await supabase.from('links').select('*');
             if (error) {
@@ -1139,7 +1102,7 @@
             const file = event.target.files[0];
             if (!file || !activeProject) return;
             
-            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-blue-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Truncating & Overwriting...</div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-blue-500 font-bold py-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Truncating & Overwriting...</div>';
             
             Papa.parse(file, {
                 header: true,
