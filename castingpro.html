@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Casting Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- CSV Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: #f3f4f6; 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: none; 
+            color: #111827;
+        }
+        
+        .bottom-sheet { 
+            transform: translateY(100%); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .bottom-sheet.active { 
+            transform: translateY(0); 
+        }
+
+        .modal-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* Hide scrollbars for cleaner UI */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 px-4 py-4 flex justify-between items-center z-20 sticky top-0 shadow-sm relative">
+        <div>
+            <h1 class="text-xl font-bold text-gray-900 tracking-tight">Casting Pro</h1>
+            <select id="projectSelector" class="text-sm text-gray-500 bg-transparent outline-none mt-1 font-medium cursor-pointer" onchange="changeProject(this.value)">
+                <option value="">Loading Projects...</option>
+            </select>
+        </div>
+        <div class="flex gap-2">
+            <!-- Undo Button -->
+            <button id="undoBtn" onclick="executeUndo()" class="bg-gray-100 text-gray-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-200 transition opacity-50 cursor-not-allowed" disabled title="Undo Last Action">
+                <i class="fa-solid fa-rotate-left"></i>
+            </button>
+            <!-- Edit Templates Button -->
+            <button onclick="openTemplatesModal()" class="bg-blue-50 text-blue-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-blue-100 transition" title="Edit Email Templates">
+                <i class="fa-solid fa-envelope-open-text"></i>
+            </button>
+            <!-- AutoFill Links Button -->
+            <button onclick="autoFillFromLinks()" class="bg-purple-100 text-purple-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-purple-200 transition" title="AutoFill from Links">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </button>
+            <!-- Import CSV Button -->
+            <button onclick="document.getElementById('csvInput').click()" class="bg-gray-100 text-gray-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-200 transition" title="Import CSV (Replaces Project)">
+                <i class="fa-solid fa-file-import"></i>
+            </button>
+            <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
+            <!-- Refresh Button -->
+            <button onclick="refreshData()" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md hover:bg-blue-700 transition" title="Refresh">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Filters Bar -->
+    <div class="bg-gray-50 border-b border-gray-200 px-4 py-3 flex gap-3 z-10 sticky top-[73px] shadow-sm">
+        <div class="flex-1 flex flex-col">
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Filter Day</label>
+            <select id="filterDate" onchange="renderAuditions()" class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer">
+                <option value="ALL">All Days</option>
+            </select>
+        </div>
+        <div class="flex-1 flex flex-col">
+            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Filter Status</label>
+            <select id="filterStatus" onchange="renderAuditions()" class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer">
+                <option value="ALL">All Active Statuses</option>
+                <!-- Populated Dynamically -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Main Content List -->
+    <main id="auditionsList" class="flex-1 overflow-y-auto p-4 pb-24 space-y-8">
+        <!-- Rendered dynamically -->
+        <div class="flex items-center justify-center h-full text-gray-400">Loading schedule...</div>
+    </main>
+
+    <!-- ACTION SHEET (For Existing Actors) -->
+    <div id="actionSheetOverlay" class="fixed inset-0 bg-black/40 modal-overlay z-40" onclick="closeAllModals()"></div>
+    <div id="actionSheet" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.1)] pb-8 pt-2 px-4 max-h-[90vh] overflow-y-auto">
+        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-5"></div>
+        <div id="actionSheetContent">
+            <!-- Dynamically populated -->
+        </div>
+    </div>
+
+    <!-- MODAL: NEW AUDITION / EDIT -->
+    <div id="editModalOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900" id="editModalTitle">Fill Audition Slot</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark fa-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                
+                <!-- AUTO FILL / SEARCH -->
+                <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-2">
+                    <label class="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1.5"><i class="fa-solid fa-magnifying-glass mr-1"></i> Auto-fill From Unbooked Links</label>
+                    <input type="text" id="inpSearchActor" list="actorList" class="w-full bg-white border border-blue-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm" placeholder="Start typing a name..." onchange="handleActorSearch(this.value)">
+                    <datalist id="actorList"></datalist>
+                </div>
+                
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-gray-200"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-[10px] font-bold tracking-wider uppercase">Or Enter Manually</span>
+                    <div class="flex-grow border-t border-gray-200"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">First Name</label>
+                        <input type="text" id="inpFirstName" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="John">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Last Name</label>
+                        <input type="text" id="inpLastName" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="Doe">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Agent Email</label>
+                    <input type="email" id="inpEmail" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="agent@example.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Agent Name</label>
+                    <input type="text" id="inpAgent" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="Agency Name">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Role</label>
+                    <input type="text" id="inpRole" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" placeholder="Lead Role">
+                </div>
+                
+                <div class="pt-4">
+                    <button onclick="saveNewAudition()" class="w-full bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md shadow-blue-500/30 hover:bg-blue-700 active:scale-[0.98] transition flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Save & Email Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: MOVE AUDITION -->
+    <div id="moveModalOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all flex flex-col max-h-[80vh]" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
+                <h3 class="text-lg font-bold text-gray-900">Select New Slot</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark fa-lg"></i></button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1 bg-gray-50" id="freeSlotsList">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TEMPLATES -->
+    <div id="templatesModalOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl transform transition-all flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
+                <h3 class="text-lg font-bold text-gray-900">Email Templates</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark fa-lg"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Template Type</label>
+                    <select id="tmplType" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition cursor-pointer" onchange="loadTemplateForm(this.value)">
+                        <option value="audition">Initial Audition</option>
+                        <option value="modification">Time Change (Move)</option>
+                        <option value="chase">Chase Confirmation</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Subject</label>
+                    <input type="text" id="tmplSubject" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Body</label>
+                    <textarea id="tmplBody" rows="12" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm font-mono"></textarea>
+                </div>
+                <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-xs text-blue-800 leading-relaxed">
+                    <strong>Supported Placeholders:</strong><br/>
+                    <code>{{first_name}}</code>, <code>{{last_name}}</code>, <code>{{name}}</code> (Full Name), <code>{{agent}}</code>, <code>{{role}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{venue}}</code>, <code>{{material_link}}</code>, <code>{{project_name}}</code>
+                </div>
+                <div class="pt-2">
+                    <button id="saveTmplBtn" onclick="saveTemplate()" class="w-full bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-md shadow-blue-500/30 hover:bg-blue-700 active:scale-[0.98] transition flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Save Template
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- SUPABASE CONFIGURATION ---
+        var SUPABASE_URL = 'https://oaltkxblacpjjecpauya.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbHRreGJsYWNwamplY3BhdXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTc2ODQsImV4cCI6MjA4NDQ3MzY4NH0.zDfKgAKfWjXMQsOP5ZpD_nl6yhZS1O4H794HqSRDLVo';
+        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- STATE & DATA ---
+        var projects = [];
+        var activeProject = null;
+        var auditions = [];
+        var templates = [];
+        var activeAuditionId = null;
+        var uniqueActorsData = []; // Populated dynamically with unbooked links
+        
+        // --- UNDO STACK ---
+        var undoStack = [];
+
+        // --- DEFAULT TEMPLATES (Updated to address the Agent) ---
+        const BOILERPLATES = {
+            audition: { 
+                subject: "{{project_name}} - {{first_name}} {{last_name}} - Audition", 
+                body: "Hi all,\n\nI trust this email finds you well and having a good week so far.\n\nThank you so much for suggesting {{first_name}} for the upcoming run of {{project_name}}.\n\nI'd love to arrange a meeting for {{first_name}} with the team as follows :\n\nROLE : {{role}}\n\nDATE : {{date}}\n\nTIME : {{time}}\n\nVenue : {{venue}}\n\nTo Prepare\nPlease could we ask {{first_name}} to prepare as per the audition information sheet in the Dropbox link below :\n\n{{material_link}}\n\nIf you have any questions, please do let me know. Otherwise, I'd be very grateful if you could confirm whether {{first_name}} will be attending that would be very much appreciated.\n\n\nThanks so much,\n\nDan" 
+            },
+            modification: { 
+                subject: "{{project_name}} - {{first_name}} {{last_name}} - Updated Audition Time", 
+                body: "Hi all,\n\nI trust this email finds you well.\n\nWe have moved the audition for {{first_name}} for the role of {{role}}. The new slot is {{time}} on {{date}}.\n\nVenue : {{venue}}\n\nTo Prepare\nPlease could we ask {{first_name}} to prepare as per the audition information sheet in the Dropbox link below :\n\n{{material_link}}\n\nPlease reply to confirm this new time works for them.\n\n\nThanks so much,\n\nDan" 
+            },
+            chase: {
+                subject: "{{project_name}} - {{first_name}} {{last_name}} - Audition Confirmation",
+                body: "Hi all,\n\nI trust this email finds you well.\n\nAs this is soon, I am just following up to see if we can get confirmation for {{first_name}}'s audition for the upcoming run of {{project_name}}.\n\nROLE : {{role}}\nDATE : {{date}}\nTIME : {{time}}\nVenue : {{venue}}\n\nPlease could you confirm whether {{first_name}} will be attending?\n\n\nThanks so much,\n\nDan"
+            }
+        };
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadProjects();
+        });
+
+        // ============================================================================
+        // CORE DATA LOADERS
+        // ============================================================================
+        async function loadProjects() {
+            const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+            if (error) return console.error("Error fetching projects", error);
+            
+            projects = data || [];
+            const selector = document.getElementById('projectSelector');
+            selector.innerHTML = '';
+            
+            if (projects.length === 0) {
+                const { data: newProj } = await supabase.from('projects').insert({ name: 'Untitled Project' }).select().single();
+                if(newProj) projects.push(newProj);
+                else { selector.innerHTML = '<option>No Projects</option>'; return; }
+            }
+
+            projects.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name;
+                selector.appendChild(opt);
+            });
+
+            if(projects.length > 0) {
+                activeProject = projects[0];
+                selector.value = activeProject.id;
+                await loadData();
+            }
+        }
+
+        async function changeProject(projectId) {
+            activeProject = projects.find(p => p.id === projectId);
+            if (activeProject) {
+                undoStack = []; // clear undo state on project change
+                updateUndoButton();
+                await loadData();
+            }
+        }
+
+        async function loadData() {
+            if (!activeProject) return;
+            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading schedule...</div>';
+            
+            // Fetch Templates
+            const { data: tData } = await supabase.from('templates').select('*').eq('project_id', activeProject.id);
+            templates = tData || [];
+
+            // Fetch Auditions 
+            const { data: aData, error } = await supabase.from('auditions')
+                .select('*')
+                .eq('project_id', activeProject.id)
+                .neq('status', 'archived'); // Native clean view
+
+            if (error) { console.error("Error fetching auditions:", error); return; }
+            
+            auditions = aData || [];
+            
+            updateFilterOptions();
+            renderAuditions();
+        }
+
+        function refreshData() {
+            loadData();
+        }
+
+        // ============================================================================
+        // FILTERS & UI RENDER
+        // ============================================================================
+        function updateFilterOptions() {
+            const dateSelect = document.getElementById('filterDate');
+            const currentVal = dateSelect.value;
+            dateSelect.innerHTML = '<option value="ALL">All Days</option>';
+            
+            const uniqueDates = [...new Set(auditions.map(a => a.date))].sort();
+            uniqueDates.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                let displayDate = d;
+                try {
+                    const parts = d.split('/');
+                    if(parts.length === 3) {
+                        const dateObj = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                        displayDate = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                    }
+                } catch(e) {}
+                opt.textContent = displayDate;
+                dateSelect.appendChild(opt);
+            });
+            if(uniqueDates.includes(currentVal)) dateSelect.value = currentVal;
+
+            // Status Filter - Automatically adapts to CSV imported statuses!
+            const statusSelect = document.getElementById('filterStatus');
+            const currentStatusVal = statusSelect.value;
+            statusSelect.innerHTML = '<option value="ALL">All Active Statuses</option>';
+            
+            const standardStatuses = ['empty', 'pending', 'confirmed', 'Audition Not Sent', 'declined'];
+            const allFoundStatuses = [...new Set(auditions.map(a => a.status))];
+            
+            const combinedStatuses = [...new Set([...standardStatuses, ...allFoundStatuses])].sort();
+
+            combinedStatuses.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                // Capitalize first letter cleanly
+                opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+                statusSelect.appendChild(opt);
+            });
+
+            // Retain selected filter if possible
+            if(combinedStatuses.includes(currentStatusVal)) statusSelect.value = currentStatusVal;
+        }
+
+        function renderAuditions() {
+            const list = document.getElementById('auditionsList');
+            list.innerHTML = '';
+
+            // Apply Filters
+            let filteredAuditions = auditions;
+            const dFilter = document.getElementById('filterDate').value;
+            const sFilter = document.getElementById('filterStatus').value;
+
+            if (dFilter !== 'ALL') filteredAuditions = filteredAuditions.filter(a => a.date === dFilter);
+            
+            if (sFilter !== 'ALL') {
+                filteredAuditions = filteredAuditions.filter(a => a.status === sFilter);
+            } else {
+                // By default, hide declined and archived from standard view
+                filteredAuditions = filteredAuditions.filter(a => a.status !== 'declined' && a.status !== 'archived');
+            }
+
+            if (filteredAuditions.length === 0) {
+                list.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-4">
+                        <i class="fa-solid fa-calendar-xmark text-5xl opacity-20"></i>
+                        <p>No slots found matching criteria.</p>
+                    </div>`;
+                return;
+            }
+
+            // Group by Date, Sort by Time
+            const grouped = filteredAuditions.reduce((acc, curr) => {
+                if (!acc[curr.date]) acc[curr.date] = [];
+                acc[curr.date].push(curr);
+                return acc;
+            }, {});
+
+            const sortedDates = Object.keys(grouped).sort();
+
+            sortedDates.forEach(date => {
+                let displayDate = date;
+                try {
+                    const parts = date.split('/');
+                    if(parts.length === 3) {
+                        const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                        displayDate = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                    }
+                } catch(e) {}
+
+                const dateHeader = document.createElement('div');
+                dateHeader.className = 'sticky top-0 bg-[#f3f4f6]/95 backdrop-blur py-2 z-10';
+                dateHeader.innerHTML = `<h2 class="text-sm font-bold text-gray-500 uppercase tracking-widest pl-2">${displayDate}</h2>`;
+                list.appendChild(dateHeader);
+
+                grouped[date].sort((a, b) => a.time.localeCompare(b.time));
+
+                const slotsContainer = document.createElement('div');
+                slotsContainer.className = 'space-y-3';
+
+                grouped[date].forEach(slot => {
+                    const el = document.createElement('div');
+                    
+                    if (slot.status === 'empty') {
+                        el.className = 'flex border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-white hover:border-blue-400 transition cursor-pointer group overflow-hidden';
+                        el.onclick = () => openNewAuditionModal(slot.id);
+                        el.innerHTML = `
+                            <div class="w-20 bg-gray-100 flex flex-col justify-center items-center py-3 border-r border-dashed border-gray-300 group-hover:bg-blue-50 group-hover:border-blue-200 transition">
+                                <span class="text-lg font-bold text-gray-500 group-hover:text-blue-600">${slot.time}</span>
+                            </div>
+                            <div class="flex-1 px-4 py-3 flex items-center text-gray-400 font-medium group-hover:text-blue-500 transition">
+                                <i class="fa-solid fa-plus-circle mr-2"></i> Tap to fill slot
+                            </div>
+                        `;
+                    } else {
+                        // Color assignment logic based on common statuses
+                        let badgeColor = 'bg-yellow-100 text-yellow-700 border-yellow-200'; // Default/Pending
+                        const ls = slot.status.toLowerCase();
+                        
+                        if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-green-100 text-green-700 border-green-200';
+                        else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-700 border-purple-200';
+                        else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-700 border-red-200';
+                        
+                        el.className = `flex border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden ${ls === 'declined' ? 'opacity-50' : ''}`;
+                        el.onclick = () => openActionSheet(slot.id);
+                        el.innerHTML = `
+                            <div class="w-20 bg-gray-50 flex flex-col justify-center items-center py-3 border-r border-gray-100">
+                                <span class="text-lg font-bold text-gray-800">${slot.time}</span>
+                            </div>
+                            <div class="flex-1 px-4 py-3 flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-base">${slot.firstName || ''} ${slot.lastName || ''}</h3>
+                                    <p class="text-sm text-gray-500 font-medium">${slot.role || 'Unspecified Role'}</p>
+                                </div>
+                                <span class="px-2.5 py-1 text-xs font-bold rounded-md border ${badgeColor} uppercase tracking-wide flex-shrink-0 text-center leading-tight">
+                                    ${slot.status}
+                                </span>
+                            </div>
+                        `;
+                    }
+                    slotsContainer.appendChild(el);
+                });
+                
+                list.appendChild(slotsContainer);
+            });
+        }
+
+
+        // ============================================================================
+        // UNDO SYSTEM 
+        // - Strictly tracks changes. Never deletes an actor's underlying data.
+        // ============================================================================
+        function pushUndo(actionType, data) {
+            undoStack.push({ type: actionType, data: data });
+            updateUndoButton();
+        }
+
+        function updateUndoButton() {
+            const btn = document.getElementById('undoBtn');
+            if (undoStack.length > 0) {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.disabled = false;
+            } else {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.disabled = true;
+            }
+        }
+
+        async function executeUndo() {
+            if (undoStack.length === 0) return;
+            const action = undoStack.pop();
+            
+            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-blue-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Reverting Action...</div>';
+
+            try {
+                if (action.type === 'fill_slot') {
+                    // Reverts pending/filled actor back to empty
+                    await supabase.from('auditions').update(action.data.oldState).eq('id', action.data.id);
+                } 
+                else if (action.type === 'cancel_slot') {
+                    // 1. If we undo a cancellation, we verify the newly generated empty slot is STILL empty. 
+                    if(action.data.newEmptySlotId) {
+                        const { data: slotCheck } = await supabase.from('auditions').select('status').eq('id', action.data.newEmptySlotId).single();
+                        if(slotCheck && slotCheck.status === 'empty') {
+                            await supabase.from('auditions').delete().eq('id', action.data.newEmptySlotId);
+                        }
+                    }
+                    // 2. Restore actor back to original status. (Actor is NEVER deleted).
+                    await supabase.from('auditions').update(action.data.oldState).eq('id', action.data.id);
+                } 
+                else if (action.type === 'move_slot') {
+                    // Re-swaps the data across the two slots.
+                    await supabase.from('auditions').update(action.data.oldSlotState).eq('id', action.data.oldSlotId);
+                    await supabase.from('auditions').update(action.data.newSlotState).eq('id', action.data.newSlotId);
+                } 
+                else if (action.type === 'manual_status') {
+                    // Revert granular status change
+                    await supabase.from('auditions').update(action.data.oldState).eq('id', action.data.id);
+                }
+                else if (action.type === 'autofill_links') {
+                    for(const slot of action.data.slots) {
+                        await supabase.from('auditions').update(slot.oldState).eq('id', slot.id);
+                    }
+                } 
+                else if (action.type === 'import_csv') {
+                    // Undo CSV Import: Remove freshly imported rows
+                    if(action.data.newIds && action.data.newIds.length > 0) {
+                        await supabase.from('auditions').delete().in('id', action.data.newIds);
+                    }
+                    // Resurrect the previously truncated data perfectly
+                    if(action.data.oldAuditions && action.data.oldAuditions.length > 0) {
+                        await supabase.from('auditions').insert(action.data.oldAuditions);
+                    }
+                }
+            } catch (err) {
+                console.error("Undo execution failed", err);
+                alert("Failed to undo the last action.");
+            }
+
+            updateUndoButton();
+            await loadData();
+        }
+
+
+        // ============================================================================
+        // FLOW 1: NEW AUDITION / FILL SLOT
+        // ============================================================================
+        
+        // Find users from links WHO DO NOT ALREADY HAVE AN AUDITION.
+        async function fetchAvailableLinksForDatalist() {
+            const list = document.getElementById('actorList');
+            list.innerHTML = '';
+            uniqueActorsData = [];
+            
+            const { data: linksData } = await supabase.from('links').select('*');
+            if(!linksData) return;
+
+            // Gather exactly who is already on the board
+            const existingNames = new Set(
+                auditions.filter(a => a.firstName).map(a => `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase())
+            );
+
+            const seen = new Set();
+            linksData.forEach(l => {
+                if(!l.name) return;
+                const fullName = l.name.trim();
+                const lowerName = fullName.toLowerCase();
+                
+                // Only inject if they don't already have a slot
+                if(!existingNames.has(lowerName) && !seen.has(lowerName)) {
+                    seen.add(lowerName);
+                    
+                    const nameParts = fullName.split(' ');
+                    const fName = nameParts[0] || '';
+                    const lName = nameParts.slice(1).join(' ') || '';
+
+                    uniqueActorsData.push({
+                        firstName: fName,
+                        lastName: lName,
+                        email: l.agents_email || '',
+                        agent: l.agents || '',
+                        role: l.role || ''
+                    });
+
+                    const opt = document.createElement('option');
+                    opt.value = fullName;
+                    list.appendChild(opt);
+                }
+            });
+        }
+
+        function handleActorSearch(searchValue) {
+            const actor = uniqueActorsData.find(a => `${a.firstName} ${a.lastName}`.trim().toLowerCase() === searchValue.trim().toLowerCase());
+            if(actor) {
+                document.getElementById('inpFirstName').value = actor.firstName || '';
+                document.getElementById('inpLastName').value = actor.lastName || '';
+                document.getElementById('inpEmail').value = actor.email || '';
+                document.getElementById('inpAgent').value = actor.agent || '';
+                if(actor.role) document.getElementById('inpRole').value = actor.role;
+            }
+        }
+
+        function openNewAuditionModal(id) {
+            activeAuditionId = id;
+            document.getElementById('inpSearchActor').value = '';
+            document.getElementById('inpFirstName').value = '';
+            document.getElementById('inpLastName').value = '';
+            document.getElementById('inpEmail').value = '';
+            document.getElementById('inpAgent').value = '';
+            document.getElementById('inpRole').value = '';
+            
+            // Populate list of available unbooked links asynchronously
+            fetchAvailableLinksForDatalist();
+            
+            document.getElementById('editModalOverlay').classList.add('active');
+        }
+
+        async function saveNewAudition() {
+            if(!activeAuditionId) return;
+            
+            const oldA = auditions.find(x => x.id === activeAuditionId);
+            const oldState = { firstName: oldA.firstName, lastName: oldA.lastName, email: oldA.email, agent: oldA.agent, role: oldA.role, status: oldA.status };
+            
+            const payload = {
+                firstName: document.getElementById('inpFirstName').value.trim(),
+                lastName: document.getElementById('inpLastName').value.trim(),
+                email: document.getElementById('inpEmail').value.trim(),
+                agent: document.getElementById('inpAgent').value.trim(),
+                role: document.getElementById('inpRole').value.trim(),
+                status: 'pending' // Force Pending Status on manual slot fill
+            };
+
+            // Save for Undo
+            pushUndo('fill_slot', { id: activeAuditionId, oldState });
+
+            // Update Database
+            const { error } = await supabase.from('auditions').update(payload).eq('id', activeAuditionId);
+            if (error) return alert("Failed to save audition.");
+
+            const aIndex = auditions.findIndex(x => x.id === activeAuditionId);
+            if(aIndex > -1) auditions[aIndex] = { ...auditions[aIndex], ...payload };
+
+            sendEmail('audition', activeAuditionId);
+            
+            closeAllModals();
+            loadData();
+        }
+
+
+        // ============================================================================
+        // FLOW 2 & 3: ACTION SHEET (Cancel & Move) + MANUAL STATUS
+        // ============================================================================
+        function openActionSheet(id) {
+            activeAuditionId = id;
+            const a = auditions.find(x => x.id === id);
+            if(!a) return;
+
+            const content = document.getElementById('actionSheetContent');
+            content.innerHTML = `
+                <div class="mb-6 px-2 text-center">
+                    <h3 class="text-xl font-bold text-gray-900">${a.firstName} ${a.lastName}</h3>
+                    <p class="text-gray-500 text-sm">${a.date} @ ${a.time} • ${a.role || 'No Role'}</p>
+                </div>
+
+                <!-- Manual Granular Status Updates -->
+                <div class="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Manually Set Status</label>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="manuallyUpdateStatus('pending')" class="px-3 py-1.5 text-xs font-bold rounded-md border bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200 transition">Pending</button>
+                        <button onclick="manuallyUpdateStatus('confirmed')" class="px-3 py-1.5 text-xs font-bold rounded-md border bg-green-100 text-green-700 border-green-200 hover:bg-green-200 transition">Confirmed</button>
+                        <button onclick="manuallyUpdateStatus('Audition Not Sent')" class="px-3 py-1.5 text-xs font-bold rounded-md border bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 transition">Not Sent</button>
+                        <button onclick="manuallyUpdateStatus('declined')" class="px-3 py-1.5 text-xs font-bold rounded-md border bg-red-100 text-red-700 border-red-200 hover:bg-red-200 transition">Declined</button>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <button onclick="startMoveFlow()" class="w-full flex items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition text-left group border border-transparent">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-4 group-hover:scale-110 transition">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-900">Move Audition</p>
+                            <p class="text-xs text-gray-500">Transfer actor to an empty slot & email agent</p>
+                        </div>
+                    </button>
+
+                    <button onclick="executeCancelFlow()" class="w-full flex items-center p-4 bg-red-50 hover:bg-red-100 rounded-xl transition text-left group border border-transparent">
+                        <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-4 group-hover:scale-110 transition">
+                            <i class="fa-solid fa-user-xmark"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-red-700">Cancel Audition</p>
+                            <p class="text-xs text-red-500/80">Declines actor and explicitly frees up this time slot</p>
+                        </div>
+                    </button>
+                    
+                    <button onclick="handleResendDetails()" class="w-full flex items-center p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition text-left group mt-4 border border-gray-200">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-4">
+                            <i class="fa-regular fa-envelope"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-700">Resend Details</p>
+                            <p class="text-xs text-gray-500">Open email client with audition template</p>
+                        </div>
+                    </button>
+
+                    <button onclick="sendEmail('chase'); closeAllModals();" class="w-full flex items-center p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition text-left group mt-2 border border-orange-200">
+                        <div class="w-10 h-10 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center mr-4">
+                            <i class="fa-regular fa-clock"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-orange-800">Chase Confirmation</p>
+                            <p class="text-xs text-orange-600">Send "as this is soon" follow-up email</p>
+                        </div>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('actionSheetOverlay').classList.add('active');
+            document.getElementById('actionSheet').classList.add('active');
+        }
+
+        async function manuallyUpdateStatus(newStatus) {
+            if(!activeAuditionId) return;
+            const a = auditions.find(x => x.id === activeAuditionId);
+            if(!a || a.status === newStatus) return;
+
+            const oldState = { status: a.status };
+            pushUndo('manual_status', { id: a.id, oldState: oldState });
+
+            await supabase.from('auditions').update({ status: newStatus }).eq('id', a.id);
+            
+            closeAllModals();
+            loadData();
+        }
+
+        async function handleResendDetails() {
+            if(!activeAuditionId) return;
+            const a = auditions.find(x => x.id === activeAuditionId);
+            if(!a) return;
+
+            // Trigger the email
+            sendEmail('audition');
+
+            // Automatically upgrade status to pending if it was unsent
+            if (a.status === 'Audition Not Sent') {
+                const oldState = { status: a.status };
+                pushUndo('manual_status', { id: a.id, oldState: oldState });
+                await supabase.from('auditions').update({ status: 'pending' }).eq('id', a.id);
+                loadData();
+            }
+
+            closeAllModals();
+        }
+
+        async function executeCancelFlow() {
+            if(!activeAuditionId) return;
+            const a = auditions.find(x => x.id === activeAuditionId);
+            if(!a) return;
+
+            const oldState = { status: a.status };
+
+            // 1. Update current actor to declined (We strictly DO NOT delete the row, preserving history)
+            await supabase.from('auditions').update({ status: 'declined' }).eq('id', a.id);
+            
+            // 2. Insert new empty slot at that specific time to "Free up slot"
+            const { data: newRow } = await supabase.from('auditions').insert({
+                project_id: a.project_id,
+                date: a.date,
+                time: a.time,
+                duration: a.duration,
+                status: 'empty'
+            }).select().single();
+
+            // Save for undo
+            pushUndo('cancel_slot', { id: a.id, oldState: oldState, newEmptySlotId: newRow?.id });
+
+            closeAllModals();
+            loadData();
+        }
+
+        function startMoveFlow() {
+            document.getElementById('actionSheetOverlay').classList.remove('active');
+            document.getElementById('actionSheet').classList.remove('active');
+            
+            const list = document.getElementById('freeSlotsList');
+            list.innerHTML = '';
+            
+            const emptySlots = auditions.filter(x => x.status === 'empty');
+            if(emptySlots.length === 0) {
+                list.innerHTML = `<div class="p-6 text-center text-gray-500">No empty slots available to move into.</div>`;
+            } else {
+                emptySlots.sort((a,b) => {
+                    const diff = a.date.localeCompare(b.date);
+                    return diff !== 0 ? diff : a.time.localeCompare(b.time);
+                });
+
+                emptySlots.forEach(slot => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left p-4 mb-2 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition flex justify-between items-center';
+                    btn.innerHTML = `
+                        <div>
+                            <p class="font-bold text-gray-900">${slot.date}</p>
+                            <p class="text-sm text-gray-500">Duration: ${slot.duration}m</p>
+                        </div>
+                        <div class="bg-blue-50 text-blue-700 font-bold px-3 py-1.5 rounded-lg border border-blue-100">
+                            ${slot.time}
+                        </div>
+                    `;
+                    btn.onclick = () => executeMoveFlow(slot.id);
+                    list.appendChild(btn);
+                });
+            }
+            
+            document.getElementById('moveModalOverlay').classList.add('active');
+        }
+
+        async function executeMoveFlow(newSlotId) {
+            const oldA = auditions.find(x => x.id === activeAuditionId);
+            const newA = auditions.find(x => x.id === newSlotId);
+            if(!oldA || !newA) return;
+
+            const oldSlotState = { firstName: oldA.firstName, lastName: oldA.lastName, agent: oldA.agent, email: oldA.email, role: oldA.role, status: oldA.status };
+            const newSlotState = { firstName: newA.firstName, lastName: newA.lastName, agent: newA.agent, email: newA.email, role: newA.role, status: newA.status };
+
+            // 1. Move actor logic into new slot, setting status to 'pending'
+            await supabase.from('auditions').update({
+                firstName: oldA.firstName,
+                lastName: oldA.lastName,
+                agent: oldA.agent,
+                email: oldA.email,
+                role: oldA.role,
+                status: 'pending'
+            }).eq('id', newSlotId);
+
+            // 2. Clear out the old slot to 'empty'
+            await supabase.from('auditions').update({
+                firstName: null,
+                lastName: null,
+                agent: null,
+                email: null,
+                role: null,
+                status: 'empty'
+            }).eq('id', oldA.id);
+
+            // Save for undo - Swaps the records perfectly.
+            pushUndo('move_slot', { oldSlotId: oldA.id, oldSlotState, newSlotId: newSlotId, newSlotState });
+
+            // Temporarily update data locally so email string builds correctly right now
+            const payload = { firstName: oldA.firstName, lastName: oldA.lastName, email: oldA.email, role: oldA.role };
+            const newIndex = auditions.findIndex(x => x.id === newSlotId);
+            if(newIndex > -1) auditions[newIndex] = { ...auditions[newIndex], ...payload };
+            
+            // Send email alerting them of the move
+            sendEmail('modification', newSlotId);
+
+            closeAllModals();
+            loadData();
+        }
+
+        // ============================================================================
+        // AUTOFILL FROM LINKS (Bulk Processing)
+        // ============================================================================
+        async function autoFillFromLinks() {
+            if(!activeProject) return;
+            
+            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-purple-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Auto-filling from links...</div>';
+
+            const { data: linksData, error } = await supabase.from('links').select('*');
+            if (error) {
+                console.error("Error fetching links", error);
+                alert("Failed to fetch links data.");
+                loadData();
+                return;
+            }
+
+            // Existing full names to avoid inserting people already in the auditions list
+            const existingNames = new Set(
+                auditions.filter(a => a.firstName).map(a => `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase())
+            );
+
+            // Extract unique available links NOT matching an existing audition
+            const uniqueAvailableLinks = [];
+            const seenAvailable = new Set();
+            for (const l of linksData) {
+                if(!l.name) continue;
+                const lowerName = l.name.trim().toLowerCase();
+                if(!existingNames.has(lowerName) && !seenAvailable.has(lowerName)) {
+                    seenAvailable.add(lowerName);
+                    uniqueAvailableLinks.push(l);
+                }
+            }
+
+            const emptySlots = auditions.filter(a => a.status === 'empty');
+            emptySlots.sort((a,b) => {
+                const diff = a.date.localeCompare(b.date);
+                return diff !== 0 ? diff : a.time.localeCompare(b.time);
+            });
+
+            if(emptySlots.length === 0) {
+                alert("No empty slots available to fill.");
+                loadData();
+                return;
+            }
+
+            if(uniqueAvailableLinks.length === 0) {
+                alert("No new unique actors found in links to auto-fill.");
+                loadData();
+                return;
+            }
+
+            const updatesToMake = [];
+            const undoSlots = [];
+            const limit = Math.min(emptySlots.length, uniqueAvailableLinks.length);
+
+            for(let i=0; i < limit; i++) {
+                const slot = emptySlots[i];
+                const link = uniqueAvailableLinks[i];
+
+                undoSlots.push({ 
+                    id: slot.id, 
+                    oldState: { firstName: null, lastName: null, agent: null, email: null, role: null, status: 'empty' } 
+                });
+
+                const nameParts = link.name.trim().split(' ');
+                const fName = nameParts[0] || '';
+                const lName = nameParts.slice(1).join(' ') || '';
+
+                updatesToMake.push({
+                    id: slot.id,
+                    firstName: fName,
+                    lastName: lName,
+                    agent: link.agents || null,
+                    email: link.agents_email || null,
+                    role: link.role || null,
+                    status: 'Audition Not Sent' // Enforced exactly as requested
+                });
+            }
+
+            pushUndo('autofill_links', { slots: undoSlots });
+
+            // Execute DB updates
+            for(const u of updatesToMake) {
+                const { id, ...payload } = u;
+                await supabase.from('auditions').update(payload).eq('id', id);
+            }
+
+            loadData();
+        }
+
+
+        // ============================================================================
+        // EMAIL GENERATOR & TEMPLATE MANAGEMENT
+        // ============================================================================
+        
+        function openTemplatesModal() {
+            if(!activeProject) return alert("Please load a project first.");
+            document.getElementById('tmplType').value = 'audition';
+            loadTemplateForm('audition');
+            document.getElementById('templatesModalOverlay').classList.add('active');
+        }
+
+        function loadTemplateForm(type) {
+            let tmpl = templates.find(x => x.type === type) || BOILERPLATES[type];
+            document.getElementById('tmplSubject').value = tmpl.subject;
+            document.getElementById('tmplBody').value = tmpl.body;
+        }
+
+        async function saveTemplate() {
+            if(!activeProject) return;
+            const btn = document.getElementById('saveTmplBtn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            
+            const type = document.getElementById('tmplType').value;
+            const subject = document.getElementById('tmplSubject').value;
+            const body = document.getElementById('tmplBody').value;
+
+            const existing = templates.find(x => x.type === type);
+            
+            let error;
+            if(existing) {
+                const res = await supabase.from('templates').update({ subject, body, updated_at: new Date().toISOString() }).eq('id', existing.id);
+                error = res.error;
+            } else {
+                const res = await supabase.from('templates').insert({ project_id: activeProject.id, type, subject, body });
+                error = res.error;
+            }
+
+            if(error) {
+                console.error(error);
+                alert("Failed to save template.");
+                btn.innerHTML = originalHTML;
+            } else {
+                // Refresh local templates cache immediately so next clicks utilize it
+                const { data: tData } = await supabase.from('templates').select('*').eq('project_id', activeProject.id);
+                templates = tData || [];
+                
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+                btn.classList.replace('bg-blue-600', 'bg-green-600');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.replace('bg-green-600', 'bg-blue-600');
+                    btn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+                    closeAllModals();
+                }, 1000);
+            }
+        }
+
+        function sendEmail(type, targetId = null) {
+            const id = targetId || activeAuditionId;
+            const a = auditions.find(x => x.id === id);
+            
+            // Ensure we have an email address to send to
+            if(!a || !a.email) {
+                console.warn("No email address found for this audition.");
+                return;
+            }
+            
+            let tmpl = templates.find(x => x.type === type) || BOILERPLATES[type];
+            if(!tmpl) return;
+
+            // Updated replacement logic to handle agent data
+            const rep = (str) => str
+                .replace(/\{\{name\}\}/gi, ((a.firstName || '') + ' ' + (a.lastName||'')).trim())
+                .replace(/\{\{first_name\}\}/gi, a.firstName || 'your client')
+                .replace(/\{\{last_name\}\}/gi, a.lastName || '')
+                .replace(/\{\{agent\}\}/gi, a.agent || 'Agent')
+                .replace(/\{\{role\}\}/gi, a.role || 'the role')
+                .replace(/\{\{date\}\}/gi, a.date || '')
+                .replace(/\{\{time\}\}/gi, a.time || '')
+                .replace(/\{\{venue\}\}/gi, activeProject.venue || 'TBC')
+                .replace(/\{\{material_link\}\}/gi, activeProject.material_link || 'TBC')
+                .replace(/\{\{project_name\}\}/gi, activeProject.name || 'Our Project');
+            
+            const senderEmail = 'dan@debbieobrien.net';
+            const mailto = `mailto:${a.email}?subject=${encodeURIComponent(rep(tmpl.subject))}&body=${encodeURIComponent(rep(tmpl.body))}&from=${encodeURIComponent(senderEmail)}`;
+            window.location.href = mailto;
+        }
+
+
+        // ============================================================================
+        // UTILS & CSV TRUNCATE AND REPLACE IMPORT
+        // ============================================================================
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.bottom-sheet').forEach(el => el.classList.remove('active'));
+            activeAuditionId = null;
+        }
+
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file || !activeProject) return;
+            
+            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-blue-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Truncating & Overwriting Project...</div>';
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async function(results) {
+                    
+                    // 1. Fetch exact current state across ALL columns to save to undo stack
+                    const { data: currentAuds } = await supabase.from('auditions').select('*').eq('project_id', activeProject.id);
+                    const oldAuditions = currentAuds || [];
+
+                    // 2. Truncate (delete) current project's auditions entirely
+                    await supabase.from('auditions').delete().eq('project_id', activeProject.id);
+
+                    // 3. Format and insert new ones
+                    const inserts = results.data.map(row => {
+                        const hasActor = row['First Name'] && row['First Name'].trim() !== '';
+                        
+                        // Parse status directly from CSV - Check multiple common column names
+                        let parsedStatus = row['Status'] || row['status'] || row['Merge status'];
+                        if (!parsedStatus) {
+                            parsedStatus = hasActor ? 'pending' : 'empty';
+                        }
+
+                        return {
+                            project_id: activeProject.id,
+                            date: row['Date'] || '',
+                            time: row['Time'] || '',
+                            duration: parseInt(row['Duration']) || 15,
+                            firstName: row['First Name'] || null,
+                            lastName: row['Second Name'] || row['Last Name'] || null,
+                            agent: row['Agent'] || null,
+                            email: row['Email'] || null,
+                            role: row['Role'] || null,
+                            status: parsedStatus
+                        };
+                    });
+                    
+                    // Supabase will return the newly created records so we know their IDs for the undo stack
+                    const { data: newlyInserted, error } = await supabase.from('auditions').insert(inserts).select();
+                    if (error) alert("Error importing data.");
+                    
+                    pushUndo('import_csv', { 
+                        oldAuditions: oldAuditions,
+                        newIds: newlyInserted ? newlyInserted.map(i => i.id) : [] 
+                    });
+
+                    event.target.value = ''; // Reset input to allow re-uploading same file
+                    loadData();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
