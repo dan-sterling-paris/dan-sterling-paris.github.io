@@ -11,47 +11,53 @@
     <!-- CSV Parser -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
         
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            background-color: #f3f4f6; 
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: #f0f2f5; 
             -webkit-tap-highlight-color: transparent; 
             color: #111827;
-            /* iOS Safe Area Padding for Landscape/Notch */
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
+            overscroll-behavior-y: none; /* Prevents pull-to-refresh rubber banding */
         }
 
-        .safe-top { padding-top: env(safe-area-inset-top); }
-        .safe-bottom { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+        .safe-top { padding-top: max(1rem, env(safe-area-inset-top)); }
+        .safe-bottom { padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
 
         .bottom-sheet { 
             transform: translateY(100%); 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); 
         }
-        .bottom-sheet.active { 
-            transform: translateY(0); 
-        }
+        .bottom-sheet.active { transform: translateY(0); }
 
         .modal-overlay {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
         
-        /* Hide scrollbars for cleaner UI */
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
-        /* Native iOS blur effects for fixed elements */
         .ios-blur {
             background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Prevent iOS zoom */
+        input, select, textarea { font-size: 16px !important; }
+
+        /* Fat-finger utility classes */
+        .input-massive {
+            @apply h-20 rounded-[1.5rem] text-xl px-6 bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none w-full shadow-sm font-black text-gray-800 transition-all;
+        }
+
+        /* Edge-to-Edge Zero Precision Buttons */
+        .btn-zero-precision {
+            @apply w-full bg-blue-600 text-white font-black text-3xl uppercase tracking-widest flex justify-center items-center gap-4 transition-colors active:bg-blue-800;
+            padding-top: 2rem;
+            padding-bottom: max(2rem, env(safe-area-inset-bottom)); /* Extends into the iOS home indicator safe area */
         }
     </style>
 </head>
@@ -59,249 +65,258 @@
 
     <!-- AUTH OVERLAY -->
     <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-[100] flex flex-col justify-center items-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-sm p-8 shadow-2xl">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-black text-gray-900 tracking-tight mb-1">Casting Pro</h2>
-                <p class="text-sm text-gray-500 font-medium">Please sign in to continue</p>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-8 space-y-8 flex-1">
+                <div class="text-center mt-4">
+                    <i class="fa-solid fa-clapperboard text-7xl text-blue-600 mb-6 drop-shadow-md"></i>
+                    <h2 class="text-5xl font-black text-gray-900 tracking-tight">Casting</h2>
+                    <p class="text-xl text-gray-500 font-bold mt-3">Sign in to begin</p>
+                </div>
+                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                    <input type="email" id="authEmail" class="input-massive bg-gray-50" placeholder="Email Address" required>
+                    <input type="password" id="authPassword" class="input-massive bg-gray-50" placeholder="Password" required>
+                    <div id="authError" class="text-red-500 text-lg font-bold text-center hidden"></div>
+                </form>
             </div>
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Email</label>
-                    <input type="email" id="authEmail" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Password</label>
-                    <input type="password" id="authPassword" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" required>
-                </div>
-                <div id="authError" class="text-red-500 text-xs font-semibold hidden"></div>
-                <button type="submit" id="authBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-blue-700 transition flex justify-center items-center gap-2 mt-2">
-                    Sign In
-                </button>
-            </form>
+            <!-- Zero Precision Login Button -->
+            <button form="loginForm" type="submit" id="authBtn" class="btn-zero-precision shadow-[0_-10px_30px_rgba(0,0,0,0.1)] shrink-0">
+                Sign In <i class="fa-solid fa-arrow-right-to-bracket text-4xl"></i>
+            </button>
         </div>
     </div>
 
     <!-- STICKY HEADER & FILTERS -->
-    <div class="sticky top-0 z-30 ios-blur shadow-sm border-b border-gray-200 safe-top">
+    <div class="sticky top-0 z-30 ios-blur shadow-sm border-b border-gray-200 safe-top flex flex-col gap-4 pb-4">
         
-        <!-- Row 1: Title and Core Actions -->
-        <header class="px-4 py-3 flex justify-between items-center gap-2">
-            <div class="flex-1 min-w-0 flex items-center gap-3">
-                <h1 class="text-lg font-black text-gray-900 tracking-tight shrink-0">Casting Pro</h1>
-                <select id="projectSelector" class="w-full text-xs text-gray-500 bg-transparent outline-none font-bold cursor-pointer truncate" onchange="changeProject(this.value)">
+        <!-- Row 1: Header -->
+        <header class="px-5 flex justify-between items-center gap-3">
+            <div class="flex-1 min-w-0 bg-gray-100 rounded-[1.5rem] px-5 py-2 flex items-center h-16">
+                <select id="projectSelector" class="w-full bg-transparent outline-none font-black text-xl text-gray-800 cursor-pointer truncate" onchange="changeProject(this.value)">
                     <option value="">Loading Projects...</option>
                 </select>
             </div>
-            <div class="flex gap-1.5 shrink-0">
-                <button id="undoBtn" onclick="executeUndo()" class="bg-gray-100 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 transition opacity-50 cursor-not-allowed" disabled title="Undo Last Action">
-                    <i class="fa-solid fa-rotate-left text-xs"></i>
-                </button>
-                <button onclick="refreshData()" class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-700 transition" title="Refresh">
-                    <i class="fa-solid fa-rotate-right text-xs"></i>
-                </button>
-                <button onclick="handleLogout()" class="bg-red-50 text-red-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-100 transition" title="Sign Out">
-                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
-                </button>
-            </div>
+            <button id="undoBtn" onclick="executeUndo()" class="bg-gray-100 text-gray-600 w-16 h-16 rounded-[1.5rem] flex items-center justify-center active:bg-gray-200 transition opacity-50 cursor-not-allowed shrink-0">
+                <i class="fa-solid fa-rotate-left text-2xl"></i>
+            </button>
         </header>
 
-        <!-- Row 2: Tools and Filters (iPhone 17 Pro Optimized) -->
-        <div class="px-4 py-2.5 bg-gray-50/50 flex flex-wrap gap-3 items-end">
-            <!-- Tools -->
-            <div class="flex gap-1.5 shrink-0 pb-0.5">
-                <button onclick="openTemplatesModal()" class="bg-blue-50 text-blue-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition" title="Edit Email Templates">
-                    <i class="fa-solid fa-envelope-open-text text-xs"></i>
-                </button>
-                <button onclick="autoFillFromLinks()" class="bg-purple-50 text-purple-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-purple-100 transition" title="AutoFill from Links">
-                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
-                </button>
-                <button onclick="document.getElementById('csvInput').click()" class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-300 transition" title="Import CSV (Replaces Project)">
-                    <i class="fa-solid fa-file-import text-xs"></i>
-                </button>
-                <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
-            </div>
+        <!-- Row 2: One-Tap Tools -->
+        <div class="px-5 flex gap-3">
+            <button onclick="autoFillFromLinks()" class="flex-1 bg-purple-100 text-purple-700 h-16 rounded-[1.5rem] flex items-center justify-center font-black text-xl active:bg-purple-200 gap-3 shadow-sm border border-purple-200">
+                <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i> AutoFill
+            </button>
+            <button onclick="openTemplatesModal()" class="bg-blue-100 text-blue-700 w-16 h-16 rounded-[1.5rem] flex items-center justify-center active:bg-blue-200 shrink-0 shadow-sm border border-blue-200">
+                <i class="fa-solid fa-envelope-open-text text-2xl"></i>
+            </button>
+            <button onclick="document.getElementById('csvInput').click()" class="bg-gray-200 text-gray-700 w-16 h-16 rounded-[1.5rem] flex items-center justify-center active:bg-gray-300 shrink-0 shadow-sm border border-gray-300">
+                <i class="fa-solid fa-file-import text-2xl"></i>
+            </button>
+            <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
+        </div>
 
-            <!-- Filters -->
-            <div class="flex-1 flex gap-2 min-w-[200px]">
-                <div class="flex-1 min-w-0">
-                    <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Day</label>
-                    <select id="filterDate" onchange="renderAuditions()" class="w-full bg-white/80 border border-gray-200 text-gray-800 text-xs font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 outline-none cursor-pointer truncate shadow-sm">
-                        <option value="ALL">All Days</option>
-                    </select>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <label class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Status</label>
-                    <select id="filterStatus" onchange="renderAuditions()" class="w-full bg-white/80 border border-gray-200 text-gray-800 text-xs font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5 outline-none cursor-pointer truncate shadow-sm">
-                        <option value="ALL">All Active</option>
-                    </select>
-                </div>
+        <!-- Row 3: Search Bar -->
+        <div class="px-5">
+            <div class="relative w-full">
+                <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-2xl"></i>
+                <input type="text" id="searchFilter" oninput="renderAuditions()" class="w-full h-20 bg-white rounded-[2rem] pl-16 pr-5 font-black text-2xl text-gray-800 shadow-sm border-[3px] border-gray-200 outline-none focus:border-blue-400 placeholder-gray-400 transition" placeholder="Search actor name...">
+            </div>
+        </div>
+
+        <!-- Row 4: Status & Date Filters -->
+        <div class="px-5 flex gap-3">
+            <div class="flex-1 relative">
+                <select id="filterDate" onchange="renderAuditions()" class="w-full h-16 bg-white border-2 border-gray-200 font-black text-gray-700 rounded-[1.5rem] pl-4 pr-10 outline-none shadow-sm text-lg appearance-none cursor-pointer truncate">
+                    <option value="ALL">All Dates</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            </div>
+            <div class="flex-1 relative">
+                <select id="filterStatus" onchange="renderAuditions()" class="w-full h-16 bg-white border-2 border-gray-200 font-black text-gray-700 rounded-[1.5rem] pl-4 pr-10 outline-none shadow-sm text-lg appearance-none cursor-pointer truncate">
+                    <option value="ALL">All Active</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
             </div>
         </div>
     </div>
 
     <!-- MAIN CONTENT LIST -->
-    <main id="auditionsList" class="flex-1 p-4 space-y-6 safe-bottom">
-        <div class="flex items-center justify-center h-full text-gray-400 py-10">Loading schedule...</div>
+    <main id="auditionsList" class="flex-1 px-4 py-6 space-y-8 safe-bottom">
+        <div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-4 pt-16">
+            <i class="fa-solid fa-circle-notch fa-spin text-5xl"></i>
+            <p class="text-xl font-bold">Loading schedule...</p>
+        </div>
     </main>
 
     <!-- ACTION SHEET (For Existing Actors) -->
-    <div id="actionSheetOverlay" class="fixed inset-0 bg-black/40 modal-overlay z-40" onclick="closeAllModals()"></div>
-    <div id="actionSheet" class="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.1)] pt-2 px-4 max-h-[90vh] overflow-y-auto safe-bottom">
-        <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-5"></div>
-        <div id="actionSheetContent">
+    <div id="actionSheetOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-40" onclick="closeAllModals()"></div>
+    <div id="actionSheet" class="fixed bottom-0 left-0 right-0 bg-gray-50 rounded-t-[2.5rem] z-50 bottom-sheet shadow-[0_-20px_50px_rgba(0,0,0,0.15)] pt-4 px-5 max-h-[90vh] overflow-y-auto safe-bottom pb-10 border-t border-gray-200">
+        <div class="w-20 h-2 bg-gray-300 rounded-full mx-auto mb-8"></div>
+        <div id="actionSheetContent" class="space-y-4">
             <!-- Dynamically populated -->
         </div>
     </div>
 
-    <!-- MODAL: NEW AUDITION / EDIT -->
-    <div id="editModalOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden shadow-2xl transform transition-all" onclick="event.stopPropagation()">
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center shrink-0">
-                <h3 class="text-lg font-bold text-gray-900" id="editModalTitle">Fill Audition Slot</h3>
-                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark fa-lg"></i></button>
+    <!-- MODAL: ZERO-TYPING FILL SLOT (Tinder Style) -->
+    <div id="fillModalOverlay" class="fixed inset-0 bg-black/60 modal-overlay z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-gray-100 w-full sm:max-w-md h-[95vh] sm:h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col shadow-2xl transform transition-transform" onclick="event.stopPropagation()">
+            <div class="px-6 py-6 bg-white rounded-t-[2.5rem] sm:rounded-t-[2.5rem] border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+                <div>
+                    <h3 class="text-3xl font-black text-gray-900">Who to cast?</h3>
+                    <p class="text-gray-500 font-bold text-base mt-1">Tap an actor to auto-fill</p>
+                </div>
+                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-14 h-14 rounded-full flex items-center justify-center active:bg-gray-200 transition">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
             </div>
-            <div class="p-5 overflow-y-auto space-y-4">
-                
-                <!-- AUTO FILL / SEARCH -->
-                <div class="bg-blue-50/50 p-3.5 rounded-xl border border-blue-100 mb-1">
-                    <label class="block text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1.5"><i class="fa-solid fa-magnifying-glass mr-1"></i> Auto-fill Unbooked Link</label>
-                    <input type="text" id="inpSearchActor" list="actorList" class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm" placeholder="Start typing a name..." onchange="handleActorSearch(this.value)">
-                    <datalist id="actorList"></datalist>
+            
+            <!-- Quick Search -->
+            <div class="p-5 bg-white border-b border-gray-200">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-2xl"></i>
+                    <input type="text" id="fillActorSearch" oninput="filterUnbookedActors(this.value)" class="w-full h-20 bg-gray-100 rounded-[2rem] pl-16 pr-5 font-black text-xl text-gray-800 outline-none focus:bg-gray-200 transition" placeholder="Search unbooked...">
                 </div>
-                
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-gray-200"></div>
-                    <span class="flex-shrink-0 mx-4 text-gray-400 text-[10px] font-bold tracking-wider uppercase">Or Enter Manually</span>
-                    <div class="flex-grow border-t border-gray-200"></div>
-                </div>
+            </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">First Name</label>
-                        <input type="text" id="inpFirstName" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm" placeholder="John">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Last Name</label>
-                        <input type="text" id="inpLastName" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm" placeholder="Doe">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Agent Email</label>
-                    <input type="email" id="inpEmail" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm" placeholder="agent@example.com">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Agent Name</label>
-                    <input type="text" id="inpAgent" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm" placeholder="Agency Name">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Role</label>
-                    <input type="text" id="inpRole" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm" placeholder="Lead Role">
-                </div>
-                
-                <div class="pt-2 pb-2">
-                    <button onclick="saveNewAudition()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl shadow-md shadow-blue-500/30 hover:bg-blue-700 active:scale-[0.98] transition flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-paper-plane"></i> Save & Email Details
+            <div class="flex-1 overflow-y-auto p-4 space-y-3" id="unbookedActorsList">
+                <!-- Zero-typing buttons populate here -->
+            </div>
+
+            <!-- Fallback Manual Entry -->
+            <div class="p-5 bg-white border-t border-gray-200 safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+                <button onclick="toggleManualEntry()" class="w-full h-16 border-[3px] border-gray-300 rounded-[2rem] text-gray-500 font-black text-xl flex justify-center items-center gap-3 active:bg-gray-50 transition">
+                    <i class="fa-solid fa-keyboard text-2xl"></i> Or type manually
+                </button>
+                <div id="manualEntryForm" class="hidden mt-6 space-y-4 pb-4">
+                    <input type="text" id="inpFirstName" class="input-massive" placeholder="First Name">
+                    <input type="text" id="inpLastName" class="input-massive" placeholder="Last Name">
+                    <input type="email" id="inpEmail" class="input-massive" placeholder="Agent Email">
+                    <input type="text" id="inpAgent" class="input-massive" placeholder="Agent Name">
+                    <input type="text" id="inpRole" class="input-massive" placeholder="Role">
+                    <button onclick="saveManualAudition()" class="w-full h-20 rounded-[2rem] text-2xl font-black shadow-xl flex items-center justify-center gap-4 active:scale-[0.98] bg-blue-600 text-white mt-4">
+                        Save & Send <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: MOVE AUDITION -->
-    <div id="moveModalOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden shadow-2xl transform transition-all" onclick="event.stopPropagation()">
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 shrink-0">
-                <h3 class="text-lg font-bold text-gray-900">Select New Slot</h3>
-                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark fa-lg"></i></button>
+    <!-- MODAL: ZERO-TYPING MOVE SLOT -->
+    <div id="moveModalOverlay" class="fixed inset-0 bg-black/60 modal-overlay z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-gray-100 w-full sm:max-w-md h-[90vh] sm:h-[80vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
+            <div class="px-6 py-6 bg-white rounded-t-[2.5rem] border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+                <div>
+                    <h3 class="text-3xl font-black text-gray-900">Select New Time</h3>
+                    <p class="text-gray-500 font-bold text-base mt-1">Tap an empty slot to move</p>
+                </div>
+                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-14 h-14 rounded-full flex items-center justify-center active:bg-gray-200">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
             </div>
-            <div class="p-4 overflow-y-auto flex-1 bg-gray-50" id="freeSlotsList">
-                <!-- Populated dynamically -->
+            <div class="flex-1 overflow-y-auto p-5 space-y-4" id="freeSlotsList">
+                <!-- Zero-typing move buttons populate here -->
             </div>
         </div>
     </div>
 
     <!-- MODAL: TEMPLATES -->
-    <div id="templatesModalOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl transform transition-all" onclick="event.stopPropagation()">
-            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 shrink-0">
-                <h3 class="text-lg font-bold text-gray-900">Email Settings</h3>
-                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark fa-lg"></i></button>
+    <div id="templatesModalOverlay" class="fixed inset-0 bg-black/60 modal-overlay z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-white w-full sm:max-w-xl h-[95vh] sm:h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="px-6 py-6 border-b border-gray-200 flex justify-between items-center bg-white z-10 shrink-0">
+                <h3 class="text-3xl font-black text-gray-900">Email Templates</h3>
+                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-14 h-14 rounded-full flex items-center justify-center active:bg-gray-200">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
             </div>
-            <div class="p-5 overflow-y-auto space-y-4">
-                <div class="pb-3 border-b border-gray-200">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Sender (Apple Mail Default)</label>
-                    <input type="email" id="tmplSender" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm" placeholder="dan@debbieobrien.net">
-                    <p class="text-[9px] text-gray-400 mt-1">This specific account will be auto-selected as the 'From' address in the Mac Mail app.</p>
+            
+            <!-- Scrollable Form Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+                <div>
+                    <label class="block text-base font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Default Sender</label>
+                    <input type="email" id="tmplSender" class="input-massive bg-gray-50 border-none px-6" placeholder="dan@debbieobrien.net">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Template Type</label>
-                    <select id="tmplType" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm cursor-pointer" onchange="loadTemplateForm(this.value)">
-                        <option value="audition">Initial Audition</option>
-                        <option value="modification">Time Change (Move)</option>
-                        <option value="chase">Chase Confirmation</option>
-                    </select>
+                    <label class="block text-base font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Select Template</label>
+                    <div class="relative">
+                        <select id="tmplType" class="input-massive bg-gray-50 border-none px-6 appearance-none cursor-pointer" onchange="loadTemplateForm(this.value)">
+                            <option value="audition">Initial Audition</option>
+                            <option value="modification">Time Change (Move)</option>
+                            <option value="chase">Chase Confirmation</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 text-xl pointer-events-none"></i>
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Subject</label>
-                    <input type="text" id="tmplSubject" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-sm">
+                    <label class="block text-base font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Subject</label>
+                    <input type="text" id="tmplSubject" class="input-massive bg-gray-50 border-none px-6">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Body</label>
-                    <textarea id="tmplBody" rows="8" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-xs font-mono"></textarea>
+                    <label class="block text-base font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Body</label>
+                    <textarea id="tmplBody" rows="10" class="w-full bg-gray-50 rounded-[2rem] p-6 text-xl font-bold text-gray-800 outline-none border-none focus:ring-4 focus:ring-blue-100 resize-none leading-relaxed shadow-inner"></textarea>
                 </div>
-                <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100 text-[10px] text-blue-800 leading-relaxed">
-                    <strong>Supported Placeholders:</strong><br/>
-                    <code>{{first_name}}</code>, <code>{{last_name}}</code>, <code>{{name}}</code>, <code>{{agent}}</code>, <code>{{role}}</code>, <code>{{date}}</code>, <code>{{time}}</code>, <code>{{venue}}</code>, <code>{{material_link}}</code>, <code>{{project_name}}</code>
-                </div>
-                <div class="pt-2 pb-2">
-                    <button id="saveTmplBtn" onclick="saveTemplate()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl shadow-md shadow-blue-500/30 hover:bg-blue-700 active:scale-[0.98] transition flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-save"></i> Save Settings
-                    </button>
+                <div class="bg-blue-50 p-6 rounded-[2rem] text-base text-blue-900 font-bold leading-relaxed border border-blue-100">
+                    Supported Placeholders:<br/>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<First Name>></span>
+                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Second Name>></span>
+                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Role>></span>
+                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Date>></span>
+                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Time>></span>
+                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Venue>></span>
+                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Link>></span>
+                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Project>></span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Zero Precision Save Button (Sticky to bottom) -->
+            <button id="saveTmplBtn" onclick="saveTemplate()" class="btn-zero-precision shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.15)] z-20">
+                <i class="fa-solid fa-floppy-disk text-4xl"></i> Save Settings
+            </button>
         </div>
     </div>
 
     <script>
         // --- SUPABASE CONFIGURATION ---
-        var SUPABASE_URL = 'https://oaltkxblacpjjecpauya.supabase.co';
-        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbHRreGJsYWNwamplY3BhdXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTc2ODQsImV4cCI6MjA4NDQ3MzY4NH0.zDfKgAKfWjXMQsOP5ZpD_nl6yhZS1O4H794HqSRDLVo';
-        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_URL = 'https://oaltkxblacpjjecpauya.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbHRreGJsYWNwamplY3BhdXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTc2ODQsImV4cCI6MjA4NDQ3MzY4NH0.zDfKgAKfWjXMQsOP5ZpD_nl6yhZS1O4H794HqSRDLVo';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // --- STATE & DATA ---
-        var projects = [];
-        var activeProject = null;
-        var auditions = [];
-        var templates = [];
-        var activeAuditionId = null;
-        var uniqueActorsData = [];
-        var undoStack = [];
+        let projects = [];
+        let activeProject = null;
+        let auditions = [];
+        let templates = [];
+        let uniqueActorsData = []; // Available from links
+        
+        let activeAuditionId = null;
+        let undoStack = [];
 
-        // --- DEFAULT TEMPLATES ---
+        // Exact Placeholders requested by user
         const BOILERPLATES = {
             audition: { 
-                subject: "{{project_name}} - {{first_name}} {{last_name}} - Audition", 
-                body: "Hi all,\n\nI trust this email finds you well and having a good week so far.\n\nThank you so much for suggesting {{first_name}} for the upcoming run of {{project_name}}.\n\nI'd love to arrange a meeting for {{first_name}} with the team as follows :\n\nROLE : {{role}}\n\nDATE : {{date}}\n\nTIME : {{time}}\n\nVenue : {{venue}}\n\nTo Prepare\nPlease could we ask {{first_name}} to prepare as per the audition information sheet in the Dropbox link below :\n\n{{material_link}}\n\nIf you have any questions, please do let me know. Otherwise, I'd be very grateful if you could confirm whether {{first_name}} will be attending that would be very much appreciated.\n\n\nThanks so much,\n\nDan" 
+                subject: "<<Project>> - <<First Name>> <<Second Name>> - Audition", 
+                body: "Hi all,\n\nI trust this email finds you well and having a good week so far.\n\nThank you so much for suggesting <<First Name>> for the upcoming run of <<Project>>.\n\nI'd love to arrange a meeting for <<First Name>> with the team as follows :\n\nROLE : <<Role>>\n\nDATE : <<Date>>\n\nTIME : <<Time>>\n\nVenue : <<Venue>>\n\nTo Prepare\nPlease could we ask <<First Name>> to prepare as per the audition information sheet in the Dropbox link below :\n\n<<Link>>\n\nIf you have any questions, please do let me know. Otherwise, I'd be very grateful if you could confirm whether <<First Name>> will be attending that would be very much appreciated.\n\n\nThanks so much,\n\nDan" 
             },
             modification: { 
-                subject: "{{project_name}} - {{first_name}} {{last_name}} - Updated Audition Time", 
-                body: "Hi all,\n\nI trust this email finds you well.\n\nWe have moved the audition for {{first_name}} for the role of {{role}}. The new slot is {{time}} on {{date}}.\n\nVenue : {{venue}}\n\nTo Prepare\nPlease could we ask {{first_name}} to prepare as per the audition information sheet in the Dropbox link below :\n\n{{material_link}}\n\nPlease reply to confirm this new time works for them.\n\n\nThanks so much,\n\nDan" 
+                subject: "<<Project>> - <<First Name>> <<Second Name>> - Updated Audition Time", 
+                body: "Hi all,\n\nI trust this email finds you well.\n\nWe have moved the audition for <<First Name>> for the role of <<Role>>. The new slot is <<Time>> on <<Date>>.\n\nVenue : <<Venue>>\n\nTo Prepare\nPlease could we ask <<First Name>> to prepare as per the audition information sheet in the Dropbox link below :\n\n<<Link>>\n\nPlease reply to confirm this new time works for them.\n\n\nThanks so much,\n\nDan" 
             },
             chase: {
-                subject: "{{project_name}} - {{first_name}} {{last_name}} - Audition Confirmation",
-                body: "Hi all,\n\nI trust this email finds you well.\n\nAs this is soon, I am just following up to see if we can get confirmation for {{first_name}}'s audition for the upcoming run of {{project_name}}.\n\nROLE : {{role}}\nDATE : {{date}}\nTIME : {{time}}\nVenue : {{venue}}\n\nPlease could you confirm whether {{first_name}} will be attending?\n\n\nThanks so much,\n\nDan"
+                subject: "<<Project>> - <<First Name>> <<Second Name>> - Audition Confirmation",
+                body: "Hi all,\n\nI trust this email finds you well.\n\nAs this is soon, I am just following up to see if we can get confirmation for <<First Name>>'s audition for the upcoming run of <<Project>>.\n\nROLE : <<Role>>\nDATE : <<Date>>\nTIME : <<Time>>\nVenue : <<Venue>>\n\nPlease could you confirm whether <<First Name>> will be attending?\n\n\nThanks so much,\n\nDan"
             }
         };
 
         // --- AUTH & INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 document.getElementById('authOverlay').classList.add('hidden');
                 await loadProjects();
             }
 
-            supabase.auth.onAuthStateChange(async (event, session) => {
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN') {
                     document.getElementById('authOverlay').classList.add('hidden');
                     await loadProjects();
@@ -323,28 +338,29 @@
             const err = document.getElementById('authError');
             
             err.classList.add('hidden');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-5xl"></i> SIGNING IN...';
             btn.disabled = true;
 
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
             
             if (error) {
                 err.textContent = error.message;
                 err.classList.remove('hidden');
-                btn.innerHTML = 'Sign In';
+                btn.innerHTML = originalHTML;
                 btn.disabled = false;
             }
         }
 
         async function handleLogout() {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
         }
 
         // ============================================================================
         // CORE DATA LOADERS
         // ============================================================================
         async function loadProjects() {
-            const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('projects').select('*').order('created_at', { ascending: false });
             if (error) return console.error("Error fetching projects", error);
             
             projects = data || [];
@@ -352,7 +368,7 @@
             selector.innerHTML = '';
             
             if (projects.length === 0) {
-                const { data: newProj } = await supabase.from('projects').insert({ name: 'Untitled Project' }).select().single();
+                const { data: newProj } = await supabaseClient.from('projects').insert({ name: 'Untitled Project' }).select().single();
                 if(newProj) projects.push(newProj);
                 else { selector.innerHTML = '<option>No Projects</option>'; return; }
             }
@@ -382,12 +398,13 @@
 
         async function loadData() {
             if (!activeProject) return;
-            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 py-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading schedule...</div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-4 pt-16"><i class="fa-solid fa-circle-notch fa-spin text-6xl"></i><p class="text-2xl font-bold">Loading schedule...</p></div>';
             
-            const { data: tData } = await supabase.from('templates').select('*').eq('project_id', activeProject.id);
+            // Pull templates for cross-device sync
+            const { data: tData } = await supabaseClient.from('templates').select('*').eq('project_id', activeProject.id);
             templates = tData || [];
 
-            const { data: aData, error } = await supabase.from('auditions')
+            const { data: aData, error } = await supabaseClient.from('auditions')
                 .select('*')
                 .eq('project_id', activeProject.id);
 
@@ -397,19 +414,19 @@
             
             updateFilterOptions();
             renderAuditions();
+            prefetchLinks(); // Preload for zero-typing list
         }
 
-        function refreshData() {
-            loadData();
-        }
+        function refreshData() { loadData(); }
 
         // ============================================================================
-        // FILTERS & UI RENDER (Supporting Multiple Slots Per Time)
+        // FILTERS & UI RENDER (Fat Finger Optimized)
         // ============================================================================
         function updateFilterOptions() {
+            // Date Filter
             const dateSelect = document.getElementById('filterDate');
             const currentVal = dateSelect.value;
-            dateSelect.innerHTML = '<option value="ALL">All Days</option>';
+            dateSelect.innerHTML = '<option value="ALL">All Dates</option>';
             
             const uniqueDates = [...new Set(auditions.map(a => a.date))].sort();
             uniqueDates.forEach(d => {
@@ -420,7 +437,7 @@
                     const parts = d.split('/');
                     if(parts.length === 3) {
                         const dateObj = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                        displayDate = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                        displayDate = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
                     }
                 } catch(e) {}
                 opt.textContent = displayDate;
@@ -428,6 +445,7 @@
             });
             if(uniqueDates.includes(currentVal)) dateSelect.value = currentVal;
 
+            // Status Filter (Requirement 7 & 8)
             const statusSelect = document.getElementById('filterStatus');
             const currentStatusVal = statusSelect.value;
             statusSelect.innerHTML = '<option value="ALL">All Active</option>';
@@ -435,7 +453,9 @@
             const standardStatuses = ['empty', 'pending', 'confirmed', 'Audition Not Sent', 'declined'];
             const allFoundStatuses = [...new Set(auditions.map(a => a.status))];
             
-            const combinedStatuses = [...new Set([...standardStatuses, ...allFoundStatuses])].sort();
+            const combinedStatuses = [...new Set([...standardStatuses, ...allFoundStatuses])]
+                .filter(s => s !== 'archived')
+                .sort();
 
             combinedStatuses.forEach(s => {
                 const opt = document.createElement('option');
@@ -454,22 +474,34 @@
             let filteredAuditions = auditions;
             const dFilter = document.getElementById('filterDate').value;
             const sFilter = document.getElementById('filterStatus').value;
+            const qSearch = document.getElementById('searchFilter').value.toLowerCase().trim();
 
+            // Apply Date Filter
             if (dFilter !== 'ALL') filteredAuditions = filteredAuditions.filter(a => a.date === dFilter);
             
+            // Apply Status Filter
             if (sFilter !== 'ALL') {
                 filteredAuditions = filteredAuditions.filter(a => a.status === sFilter);
             } else {
-                // Hide strictly archived and declined from standard view.
-                // This ensures when an actor is declined, only the newly injected 'empty' slot is visible, keeping grid exactly stable.
+                // Default view hides archived/declined unless directly specified
                 filteredAuditions = filteredAuditions.filter(a => a.status !== 'archived' && a.status !== 'declined');
+            }
+
+            // Apply Search Filter (Requirement 15)
+            if (qSearch) {
+                filteredAuditions = filteredAuditions.filter(a => {
+                    const fullName = `${a.firstName || ''} ${a.lastName || ''}`.toLowerCase();
+                    return fullName.includes(qSearch) && a.status !== 'empty'; 
+                });
             }
 
             if (filteredAuditions.length === 0) {
                 list.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-4 pt-10">
-                        <i class="fa-solid fa-calendar-xmark text-5xl opacity-20"></i>
-                        <p class="text-sm">No slots found.</p>
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-6 pt-24">
+                        <div class="w-36 h-36 bg-gray-200 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-ghost text-7xl text-gray-400"></i>
+                        </div>
+                        <p class="text-3xl font-black">No slots found</p>
                     </div>`;
                 return;
             }
@@ -482,19 +514,18 @@
                     const parts = date.split('/');
                     if(parts.length === 3) {
                         const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                        displayDate = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                        displayDate = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                     }
                 } catch(e) {}
 
-                const dateHeader = document.createElement('div');
-                dateHeader.className = 'py-1';
-                dateHeader.innerHTML = `<h2 class="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">${displayDate}</h2>`;
+                const dateHeader = document.createElement('h2');
+                dateHeader.className = 'text-3xl font-black text-gray-900 mt-12 mb-6 tracking-tight ml-2';
+                dateHeader.textContent = displayDate;
                 list.appendChild(dateHeader);
 
                 const slotsContainer = document.createElement('div');
-                slotsContainer.className = 'space-y-3';
+                slotsContainer.className = 'space-y-5';
                 
-                // Get slots for date and sort by time. Stable sort multiple concurrent slots.
                 const slotsForDate = filteredAuditions.filter(a => a.date === date);
                 slotsForDate.sort((a,b) => {
                     const timeDiff = a.time.localeCompare(b.time);
@@ -506,144 +537,67 @@
                     const el = document.createElement('div');
                     
                     if (slot.status === 'empty') {
-                        el.className = 'flex border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 hover:bg-white hover:border-blue-400 transition cursor-pointer group overflow-hidden';
-                        el.onclick = () => openNewAuditionModal(slot.id);
+                        // Massive Empty Slot
+                        el.className = 'flex items-center bg-transparent border-[3px] border-dashed border-gray-300 rounded-[2.5rem] p-3 hover:bg-white hover:border-blue-300 transition-colors cursor-pointer group active:scale-[0.98]';
+                        el.onclick = () => openZeroTypingFillModal(slot.id);
                         el.innerHTML = `
-                            <div class="w-16 bg-gray-100 flex flex-col justify-center items-center py-3 border-r border-dashed border-gray-300 group-hover:bg-blue-50 group-hover:border-blue-200 transition shrink-0">
-                                <span class="text-base font-bold text-gray-500 group-hover:text-blue-600">${slot.time}</span>
+                            <div class="w-28 h-28 bg-gray-200/50 rounded-[2rem] flex flex-col justify-center items-center shrink-0 group-hover:bg-blue-50 transition-colors">
+                                <span class="text-2xl font-black text-gray-600 group-hover:text-blue-600">${slot.time}</span>
                             </div>
-                            <div class="flex-1 px-4 py-3 flex items-center text-gray-400 font-medium group-hover:text-blue-500 transition text-sm">
-                                <i class="fa-solid fa-plus-circle mr-2"></i> Fill slot
+                            <div class="flex-1 px-6">
+                                <h3 class="text-3xl font-black text-gray-400 group-hover:text-blue-500">Available</h3>
+                                <p class="text-gray-400 font-bold text-xl mt-1">Tap to cast someone</p>
+                            </div>
+                            <div class="px-5 text-gray-300 group-hover:text-blue-400">
+                                <i class="fa-solid fa-plus-circle text-5xl"></i>
                             </div>
                         `;
                     } else {
-                        let badgeColor = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                        // Massive Filled Slot
+                        let badgeColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
                         const ls = slot.status.toLowerCase();
                         
-                        if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-green-100 text-green-700 border-green-200';
-                        else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-700 border-purple-200';
-                        else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-700 border-red-200';
+                        if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-green-100 text-green-800 border-green-200';
+                        else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-800 border-purple-200';
+                        else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-800 border-red-200';
                         
-                        el.className = `flex border border-gray-200 rounded-xl bg-white shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden ${ls === 'declined' ? 'opacity-50' : ''}`;
+                        el.className = `flex bg-white rounded-[2.5rem] p-3 shadow-[0_8px_30px_rgb(0,0,0,0.06)] cursor-pointer active:scale-[0.98] transition-transform overflow-hidden ${ls === 'declined' ? 'opacity-60' : ''}`;
                         el.onclick = () => openActionSheet(slot.id);
                         el.innerHTML = `
-                            <div class="w-16 bg-gray-50 flex flex-col justify-center items-center py-3 border-r border-gray-100 shrink-0">
-                                <span class="text-base font-bold text-gray-800">${slot.time}</span>
+                            <div class="w-28 h-28 bg-blue-50 rounded-[2rem] flex flex-col justify-center items-center shrink-0 border border-blue-100">
+                                <span class="text-2xl font-black text-blue-700">${slot.time}</span>
                             </div>
-                            <div class="flex-1 px-3 py-2 flex flex-col justify-center min-w-0">
-                                <div class="flex justify-between items-start gap-2">
-                                    <div class="min-w-0 flex-1">
-                                        <h3 class="font-bold text-gray-900 text-sm truncate">${slot.firstName || ''} ${slot.lastName || ''}</h3>
-                                        <p class="text-[11px] text-gray-500 font-medium truncate">${slot.role || 'Unspecified'}</p>
-                                    </div>
-                                    <span class="px-2 py-0.5 text-[9px] font-bold rounded border ${badgeColor} uppercase tracking-wide flex-shrink-0 mt-0.5 whitespace-nowrap">
-                                        ${slot.status}
-                                    </span>
-                                </div>
+                            <div class="flex-1 px-6 flex flex-col justify-center min-w-0">
+                                <h3 class="font-black text-gray-900 text-3xl truncate">${slot.firstName || ''} ${slot.lastName || ''}</h3>
+                                <p class="text-xl text-gray-500 font-bold truncate mt-1.5">${slot.role || 'Any Role'}</p>
+                            </div>
+                            <div class="px-4 flex items-center justify-center">
+                                <span class="px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest border ${badgeColor}">
+                                    ${slot.status}
+                                </span>
                             </div>
                         `;
                     }
                     slotsContainer.appendChild(el);
                 });
-                
                 list.appendChild(slotsContainer);
             });
         }
 
-
         // ============================================================================
-        // UNDO SYSTEM - ZERO DELETION ARCHITECTURE
+        // ZERO TYPING FILL FLOW (Tinder Style)
         // ============================================================================
-        function pushUndo(actionType, data) {
-            undoStack.push({ type: actionType, data: data });
-            updateUndoButton();
-        }
-
-        function updateUndoButton() {
-            const btn = document.getElementById('undoBtn');
-            if (undoStack.length > 0) {
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                btn.disabled = false;
-            } else {
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                btn.disabled = true;
-            }
-        }
-
-        async function executeUndo() {
-            if (undoStack.length === 0) return;
-            const action = undoStack.pop();
+        async function prefetchLinks() {
+            const { data } = await supabaseClient.from('links').select('*');
+            if(!data) return;
             
-            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-blue-500 font-bold py-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Reverting Action...</div>';
-
-            try {
-                if (action.type === 'fill_slot') {
-                    await supabase.from('auditions').update(action.data.oldState).eq('id', action.data.id);
-                } 
-                else if (action.type === 'cancel_slot') {
-                    if(action.data.newEmptySlotId) {
-                        const { data: slotCheck } = await supabase.from('auditions').select('status').eq('id', action.data.newEmptySlotId).single();
-                        if(slotCheck && slotCheck.status === 'empty') {
-                            await supabase.from('auditions').update({ status: 'archived' }).eq('id', action.data.newEmptySlotId);
-                        } else {
-                            alert("Cannot undo cancel: The freed up slot has already been filled by another actor.");
-                            return; 
-                        }
-                    }
-                    await supabase.from('auditions').update(action.data.oldState).eq('id', action.data.id);
-                } 
-                else if (action.type === 'move_slot') {
-                    await supabase.from('auditions').update(action.data.newSlotState).eq('id', action.data.newSlotId);
-                    await supabase.from('auditions').update(action.data.oldSlotState).eq('id', action.data.oldSlotId);
-                    if (action.data.newFreedSlotId) {
-                        await supabase.from('auditions').update({ status: 'archived' }).eq('id', action.data.newFreedSlotId);
-                    }
-                } 
-                else if (action.type === 'manual_status') {
-                    await supabase.from('auditions').update(action.data.oldState).eq('id', action.data.id);
-                    if (action.data.archivedEmptySlotId) {
-                        await supabase.from('auditions').update({ status: 'empty' }).eq('id', action.data.archivedEmptySlotId);
-                    }
-                }
-                else if (action.type === 'autofill_links') {
-                    for(const slot of action.data.slots) {
-                        await supabase.from('auditions').update(slot.oldState).eq('id', slot.id);
-                    }
-                } 
-                else if (action.type === 'import_csv') {
-                    if(action.data.newIds && action.data.newIds.length > 0) {
-                        await supabase.from('auditions').update({ status: 'archived' }).in('id', action.data.newIds);
-                    }
-                    if(action.data.oldAuditions && action.data.oldAuditions.length > 0) {
-                        await supabase.from('auditions').insert(action.data.oldAuditions);
-                    }
-                }
-            } catch (err) {
-                console.error("Undo execution failed", err);
-                alert("Failed to undo the last action.");
-            }
-
-            updateUndoButton();
-            await loadData();
-        }
-
-        // ============================================================================
-        // FLOW 1: NEW AUDITION / FILL SLOT
-        // ============================================================================
-        async function fetchAvailableLinksForDatalist() {
-            const list = document.getElementById('actorList');
-            list.innerHTML = '';
-            uniqueActorsData = [];
-            
-            const { data: linksData } = await supabase.from('links').select('*');
-            if(!linksData) return;
-
             const existingNames = new Set(
                 auditions.filter(a => a.firstName).map(a => `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase())
             );
 
+            uniqueActorsData = [];
             const seen = new Set();
-            linksData.forEach(l => {
+            data.forEach(l => {
                 if(!l.name) return;
                 const fullName = l.name.trim();
                 const lowerName = fullName.toLowerCase();
@@ -651,64 +605,78 @@
                 if(!existingNames.has(lowerName) && !seen.has(lowerName)) {
                     seen.add(lowerName);
                     const nameParts = fullName.split(' ');
-                    
                     uniqueActorsData.push({
+                        fullName: fullName,
                         firstName: nameParts[0] || '',
                         lastName: nameParts.slice(1).join(' ') || '',
                         email: l.agents_email || '',
                         agent: l.agents || '',
                         role: l.role || ''
                     });
-
-                    const opt = document.createElement('option');
-                    opt.value = fullName;
-                    list.appendChild(opt);
                 }
             });
         }
 
-        function handleActorSearch(searchValue) {
-            const actor = uniqueActorsData.find(a => `${a.firstName} ${a.lastName}`.trim().toLowerCase() === searchValue.trim().toLowerCase());
-            if(actor) {
-                document.getElementById('inpFirstName').value = actor.firstName || '';
-                document.getElementById('inpLastName').value = actor.lastName || '';
-                document.getElementById('inpEmail').value = actor.email || '';
-                document.getElementById('inpAgent').value = actor.agent || '';
-                if(actor.role) document.getElementById('inpRole').value = actor.role;
+        function openZeroTypingFillModal(slotId) {
+            activeAuditionId = slotId;
+            document.getElementById('fillActorSearch').value = '';
+            document.getElementById('manualEntryForm').classList.add('hidden');
+            
+            prefetchLinks().then(() => {
+                renderUnbookedActorsList(uniqueActorsData);
+            });
+            
+            document.getElementById('fillModalOverlay').classList.add('active');
+        }
+
+        function filterUnbookedActors(query) {
+            const q = query.toLowerCase().trim();
+            const filtered = uniqueActorsData.filter(a => a.fullName.toLowerCase().includes(q));
+            renderUnbookedActorsList(filtered);
+        }
+
+        function renderUnbookedActorsList(actors) {
+            const list = document.getElementById('unbookedActorsList');
+            list.innerHTML = '';
+
+            if (actors.length === 0) {
+                list.innerHTML = `<div class="text-center text-gray-400 font-bold text-lg p-10">No unbooked actors found. Type manually below.</div>`;
+                return;
             }
+
+            actors.forEach(actor => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 text-left flex justify-between items-center active:bg-blue-50 transition active:scale-[0.98] group';
+                btn.onclick = () => autoFillSingleActor(actor);
+                btn.innerHTML = `
+                    <div>
+                        <h4 class="text-2xl font-black text-gray-900 group-hover:text-blue-700">${actor.fullName}</h4>
+                        <p class="text-lg text-gray-500 font-bold mt-2"><i class="fa-solid fa-user-tie text-gray-400 mr-2"></i>${actor.agent || 'No Agent'} • ${actor.role || 'Any Role'}</p>
+                    </div>
+                    <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-chevron-right text-2xl"></i>
+                    </div>
+                `;
+                list.appendChild(btn);
+            });
         }
 
-        function openNewAuditionModal(id) {
-            activeAuditionId = id;
-            document.getElementById('inpSearchActor').value = '';
-            document.getElementById('inpFirstName').value = '';
-            document.getElementById('inpLastName').value = '';
-            document.getElementById('inpEmail').value = '';
-            document.getElementById('inpAgent').value = '';
-            document.getElementById('inpRole').value = '';
-            
-            fetchAvailableLinksForDatalist();
-            document.getElementById('editModalOverlay').classList.add('active');
-        }
-
-        async function saveNewAudition() {
+        async function autoFillSingleActor(actor) {
             if(!activeAuditionId) return;
-            
             const oldA = auditions.find(x => x.id === activeAuditionId);
             const oldState = { firstName: oldA.firstName, lastName: oldA.lastName, email: oldA.email, agent: oldA.agent, role: oldA.role, status: oldA.status };
             
             const payload = {
-                firstName: document.getElementById('inpFirstName').value.trim(),
-                lastName: document.getElementById('inpLastName').value.trim(),
-                email: document.getElementById('inpEmail').value.trim(),
-                agent: document.getElementById('inpAgent').value.trim(),
-                role: document.getElementById('inpRole').value.trim(),
-                status: 'pending'
+                firstName: actor.firstName,
+                lastName: actor.lastName,
+                email: actor.email,
+                agent: actor.agent,
+                role: actor.role,
+                status: 'pending' // Fulfills Requirement 1
             };
 
             pushUndo('fill_slot', { id: activeAuditionId, oldState });
-            const { error } = await supabase.from('auditions').update(payload).eq('id', activeAuditionId);
-            if (error) return alert("Failed to save audition.");
+            await supabaseClient.from('auditions').update(payload).eq('id', activeAuditionId);
 
             const aIndex = auditions.findIndex(x => x.id === activeAuditionId);
             if(aIndex > -1) auditions[aIndex] = { ...auditions[aIndex], ...payload };
@@ -718,8 +686,49 @@
             loadData();
         }
 
+        function toggleManualEntry() {
+            const form = document.getElementById('manualEntryForm');
+            form.classList.toggle('hidden');
+            if(!form.classList.contains('hidden')) {
+                document.getElementById('unbookedActorsList').innerHTML = ''; 
+                setTimeout(() => document.getElementById('fillModalOverlay').scrollTo(0, 1000), 100);
+            } else {
+                renderUnbookedActorsList(uniqueActorsData); 
+            }
+        }
+
+        async function saveManualAudition() {
+            if(!activeAuditionId) return;
+            const fn = document.getElementById('inpFirstName').value.trim();
+            if(!fn) return alert("First name is required.");
+
+            const oldA = auditions.find(x => x.id === activeAuditionId);
+            const oldState = { firstName: oldA.firstName, lastName: oldA.lastName, email: oldA.email, agent: oldA.agent, role: oldA.role, status: oldA.status };
+            
+            const payload = {
+                firstName: fn,
+                lastName: document.getElementById('inpLastName').value.trim(),
+                email: document.getElementById('inpEmail').value.trim(),
+                agent: document.getElementById('inpAgent').value.trim(),
+                role: document.getElementById('inpRole').value.trim(),
+                status: 'pending'
+            };
+
+            pushUndo('fill_slot', { id: activeAuditionId, oldState });
+            await supabaseClient.from('auditions').update(payload).eq('id', activeAuditionId);
+
+            const aIndex = auditions.findIndex(x => x.id === activeAuditionId);
+            if(aIndex > -1) auditions[aIndex] = { ...auditions[aIndex], ...payload };
+
+            sendEmail('audition', activeAuditionId);
+            closeAllModals();
+            loadData();
+            
+            ['inpFirstName', 'inpLastName', 'inpEmail', 'inpAgent', 'inpRole'].forEach(id => document.getElementById(id).value = '');
+        }
+
         // ============================================================================
-        // FLOW 2 & 3: ACTION SHEET (Cancel & Move) + MANUAL STATUS
+        // FAT FINGER ACTION SHEET & MANUAL STATUS
         // ============================================================================
         function openActionSheet(id) {
             activeAuditionId = id;
@@ -728,59 +737,51 @@
 
             const content = document.getElementById('actionSheetContent');
             content.innerHTML = `
-                <div class="mb-5 px-2 text-center">
-                    <h3 class="text-xl font-bold text-gray-900">${a.firstName} ${a.lastName}</h3>
-                    <p class="text-gray-500 text-xs mt-1">${a.date} @ ${a.time} • ${a.role || 'No Role'}</p>
+                <div class="mb-8 text-center">
+                    <h3 class="text-4xl font-black text-gray-900 tracking-tight">${a.firstName} ${a.lastName}</h3>
+                    <p class="text-gray-500 text-xl font-bold mt-2">${a.date} @ ${a.time} • ${a.role || 'No Role'}</p>
                 </div>
 
-                <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2">Manually Set Status</label>
-                    <div class="flex gap-1.5 flex-wrap">
-                        <button onclick="manuallyUpdateStatus('pending')" class="flex-1 px-2 py-1.5 text-[10px] font-bold rounded border bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200 transition">Pending</button>
-                        <button onclick="manuallyUpdateStatus('confirmed')" class="flex-1 px-2 py-1.5 text-[10px] font-bold rounded border bg-green-100 text-green-700 border-green-200 hover:bg-green-200 transition">Confirmed</button>
-                        <button onclick="manuallyUpdateStatus('Audition Not Sent')" class="flex-1 px-2 py-1.5 text-[10px] font-bold rounded border bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 transition whitespace-nowrap">Not Sent</button>
-                        <button onclick="manuallyUpdateStatus('declined')" class="flex-1 px-2 py-1.5 text-[10px] font-bold rounded border bg-red-100 text-red-700 border-red-200 hover:bg-red-200 transition">Declined</button>
+                <div class="bg-white rounded-[2.5rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 mb-5">
+                    <label class="block text-sm font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Quick Status</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="manuallyUpdateStatus('pending')" class="h-20 text-xl font-black rounded-[1.5rem] bg-yellow-50 text-yellow-700 active:bg-yellow-200 transition">Pending</button>
+                        <button onclick="manuallyUpdateStatus('confirmed')" class="h-20 text-xl font-black rounded-[1.5rem] bg-green-50 text-green-700 active:bg-green-200 transition">Confirmed</button>
+                        <button onclick="manuallyUpdateStatus('Audition Not Sent')" class="h-20 text-xl font-black rounded-[1.5rem] bg-purple-50 text-purple-700 active:bg-purple-200 transition">Not Sent</button>
+                        <button onclick="manuallyUpdateStatus('declined')" class="h-20 text-xl font-black rounded-[1.5rem] bg-red-50 text-red-700 active:bg-red-200 transition">Declined</button>
                     </div>
                 </div>
                 
-                <div class="space-y-1.5">
-                    <button onclick="startMoveFlow()" class="w-full flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition text-left group border border-transparent">
-                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3 shrink-0 group-hover:scale-110 transition">
-                            <i class="fa-solid fa-calendar-days text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="font-bold text-gray-900 text-sm truncate">Move Audition</p>
-                            <p class="text-[10px] text-gray-500 truncate">Transfer to an empty slot & email</p>
+                <div class="space-y-4">
+                    <button onclick="startMoveFlow()" class="w-full flex items-center p-6 bg-blue-600 text-white rounded-[2.5rem] shadow-xl active:scale-[0.98] transition">
+                        <i class="fa-solid fa-calendar-days text-4xl w-16 text-center"></i>
+                        <div class="text-left flex-1 pl-4">
+                            <p class="font-black text-2xl">Move Audition</p>
+                            <p class="font-bold text-blue-200 text-base mt-1">Select a new slot instantly</p>
                         </div>
                     </button>
 
-                    <button onclick="executeCancelFlow()" class="w-full flex items-center p-3 bg-red-50 hover:bg-red-100 rounded-xl transition text-left group border border-transparent">
-                        <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-3 shrink-0 group-hover:scale-110 transition">
-                            <i class="fa-solid fa-user-xmark text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="font-bold text-red-700 text-sm truncate">Cancel Audition</p>
-                            <p class="text-[10px] text-red-500/80 truncate">Declines actor and frees up slot</p>
+                    <button onclick="executeCancelFlow()" class="w-full flex items-center p-6 bg-red-50 text-red-700 rounded-[2.5rem] border-[3px] border-transparent active:border-red-200 active:bg-red-100 transition">
+                        <i class="fa-solid fa-user-xmark text-4xl w-16 text-center text-red-500"></i>
+                        <div class="text-left flex-1 pl-4">
+                            <p class="font-black text-2xl">Cancel Audition</p>
+                            <p class="font-bold text-red-500 text-base mt-1">Declines & frees this exact slot</p>
                         </div>
                     </button>
                     
-                    <button onclick="handleResendDetails()" class="w-full flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition text-left group mt-3 border border-gray-200">
-                        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-3 shrink-0">
-                            <i class="fa-regular fa-envelope text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="font-bold text-gray-700 text-sm truncate">Resend Details</p>
-                            <p class="text-[10px] text-gray-500 truncate">Open email client with template</p>
+                    <button onclick="handleResendDetails()" class="w-full flex items-center p-6 bg-white text-gray-800 rounded-[2.5rem] shadow-sm active:bg-gray-100 transition">
+                        <i class="fa-regular fa-paper-plane text-4xl w-16 text-center text-gray-400"></i>
+                        <div class="text-left flex-1 pl-4">
+                            <p class="font-black text-2xl">Resend Details</p>
+                            <p class="font-bold text-gray-500 text-base mt-1">Opens default mail template</p>
                         </div>
                     </button>
 
-                    <button onclick="sendEmail('chase'); closeAllModals();" class="w-full flex items-center p-3 bg-orange-50 hover:bg-orange-100 rounded-xl transition text-left group border border-orange-200">
-                        <div class="w-8 h-8 rounded-full bg-orange-200 text-orange-700 flex items-center justify-center mr-3 shrink-0">
-                            <i class="fa-regular fa-clock text-sm"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="font-bold text-orange-800 text-sm truncate">Chase Confirmation</p>
-                            <p class="text-[10px] text-orange-600 truncate">Send "as this is soon" follow-up</p>
+                    <button onclick="sendEmail('chase'); closeAllModals();" class="w-full flex items-center p-6 bg-orange-50 text-orange-800 rounded-[2.5rem] shadow-sm active:bg-orange-100 transition">
+                        <i class="fa-regular fa-clock text-4xl w-16 text-center text-orange-500"></i>
+                        <div class="text-left flex-1 pl-4">
+                            <p class="font-black text-2xl">Chase Confirmation</p>
+                            <p class="font-bold text-orange-600 text-base mt-1">Send "as this is soon" email</p>
                         </div>
                     </button>
                 </div>
@@ -797,14 +798,12 @@
 
             let emptySlotToArchive = null;
             if (a.status === 'declined' && ['pending', 'confirmed', 'Audition Not Sent'].includes(newStatus)) {
-                // To safely restore an actor who was previously declined, we must consume an 'empty' slot
-                // that shares their exact time/date to prevent duplicating the schedule grid artificially.
                 const emptySlot = auditions.find(x => x.date === a.date && x.time === a.time && x.status === 'empty');
                 if (emptySlot) {
                     emptySlotToArchive = emptySlot.id;
-                    await supabase.from('auditions').update({ status: 'archived' }).eq('id', emptySlot.id);
+                    await supabaseClient.from('auditions').update({ status: 'archived' }).eq('id', emptySlot.id);
                 } else {
-                    alert("Cannot restore: This specific time slot is fully booked. Please free up the slot first.");
+                    alert("Cannot restore: This time slot is fully booked. Free up a slot first.");
                     return;
                 }
             }
@@ -812,7 +811,7 @@
             const oldState = { status: a.status };
             pushUndo('manual_status', { id: a.id, oldState: oldState, archivedEmptySlotId: emptySlotToArchive });
 
-            await supabase.from('auditions').update({ status: newStatus }).eq('id', a.id);
+            await supabaseClient.from('auditions').update({ status: newStatus }).eq('id', a.id);
             closeAllModals();
             loadData();
         }
@@ -827,23 +826,22 @@
             if (a.status === 'Audition Not Sent') {
                 const oldState = { status: a.status };
                 pushUndo('manual_status', { id: a.id, oldState: oldState });
-                await supabase.from('auditions').update({ status: 'pending' }).eq('id', a.id);
+                await supabaseClient.from('auditions').update({ status: 'pending' }).eq('id', a.id);
                 loadData();
             }
-
             closeAllModals();
         }
 
         async function executeCancelFlow() {
+            // Requirement 2: Move to Declined status -> Free up slot
             if(!activeAuditionId) return;
             const a = auditions.find(x => x.id === activeAuditionId);
             if(!a) return;
 
             const oldState = { status: a.status };
-
-            await supabase.from('auditions').update({ status: 'declined' }).eq('id', a.id);
+            await supabaseClient.from('auditions').update({ status: 'declined' }).eq('id', a.id);
             
-            const { data: newRow } = await supabase.from('auditions').insert({
+            const { data: newRow } = await supabaseClient.from('auditions').insert({
                 project_id: a.project_id,
                 date: a.date,
                 time: a.time,
@@ -852,7 +850,6 @@
             }).select().single();
 
             pushUndo('cancel_slot', { id: a.id, oldState: oldState, newEmptySlotId: newRow?.id });
-
             closeAllModals();
             loadData();
         }
@@ -866,7 +863,7 @@
             
             const emptySlots = auditions.filter(x => x.status === 'empty');
             if(emptySlots.length === 0) {
-                list.innerHTML = `<div class="p-6 text-center text-gray-500 text-sm">No empty slots available to move into.</div>`;
+                list.innerHTML = `<div class="p-12 text-center text-gray-500 font-bold text-2xl">No empty slots available.</div>`;
             } else {
                 emptySlots.sort((a,b) => {
                     const diff = a.date.localeCompare(b.date);
@@ -875,12 +872,13 @@
 
                 emptySlots.forEach(slot => {
                     const btn = document.createElement('button');
-                    btn.className = 'w-full text-left p-3 mb-2 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition flex justify-between items-center';
+                    btn.className = 'w-full bg-white rounded-[2rem] p-7 shadow-sm mb-4 flex justify-between items-center active:bg-blue-50 active:scale-[0.98] transition border border-gray-100';
                     btn.innerHTML = `
-                        <div>
-                            <p class="font-bold text-gray-900 text-sm">${slot.date}</p>
+                        <div class="text-left">
+                            <p class="font-black text-gray-900 text-2xl">${slot.date}</p>
+                            <p class="font-bold text-gray-500 text-lg mt-1">Tap to move here</p>
                         </div>
-                        <div class="bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded border border-blue-100 text-sm">
+                        <div class="bg-blue-100 text-blue-700 font-black text-2xl px-6 py-4 rounded-[1.5rem]">
                             ${slot.time}
                         </div>
                     `;
@@ -888,11 +886,11 @@
                     list.appendChild(btn);
                 });
             }
-            
             document.getElementById('moveModalOverlay').classList.add('active');
         }
 
         async function executeMoveFlow(newSlotId) {
+            // Requirement 3: Move to Free Slot -> Email -> Pending
             const oldA = auditions.find(x => x.id === activeAuditionId);
             const newA = auditions.find(x => x.id === newSlotId);
             if(!oldA || !newA) return;
@@ -900,30 +898,19 @@
             const oldSlotState = { status: oldA.status };
             const newSlotState = { firstName: newA.firstName, lastName: newA.lastName, agent: newA.agent, email: newA.email, role: newA.role, status: newA.status };
 
-            await supabase.from('auditions').update({
-                firstName: oldA.firstName,
-                lastName: oldA.lastName,
-                agent: oldA.agent,
-                email: oldA.email,
-                role: oldA.role,
+            await supabaseClient.from('auditions').update({
+                firstName: oldA.firstName, lastName: oldA.lastName,
+                agent: oldA.agent, email: oldA.email, role: oldA.role,
                 status: 'pending'
             }).eq('id', newSlotId);
 
-            await supabase.from('auditions').update({ status: 'archived' }).eq('id', oldA.id);
+            await supabaseClient.from('auditions').update({ status: 'archived' }).eq('id', oldA.id);
             
-            const { data: newFreedSlot } = await supabase.from('auditions').insert({
-                project_id: oldA.project_id,
-                date: oldA.date,
-                time: oldA.time,
-                duration: oldA.duration,
-                status: 'empty'
+            const { data: newFreedSlot } = await supabaseClient.from('auditions').insert({
+                project_id: oldA.project_id, date: oldA.date, time: oldA.time, duration: oldA.duration, status: 'empty'
             }).select().single();
 
-            pushUndo('move_slot', { 
-                oldSlotId: oldA.id, oldSlotState, 
-                newSlotId: newSlotId, newSlotState,
-                newFreedSlotId: newFreedSlot?.id 
-            });
+            pushUndo('move_slot', { oldSlotId: oldA.id, oldSlotState, newSlotId: newSlotId, newSlotState, newFreedSlotId: newFreedSlot?.id });
 
             const payload = { firstName: oldA.firstName, lastName: oldA.lastName, email: oldA.email, role: oldA.role };
             const newIndex = auditions.findIndex(x => x.id === newSlotId);
@@ -935,19 +922,14 @@
         }
 
         // ============================================================================
-        // AUTOFILL FROM LINKS
+        // AUTOFILL FROM LINKS (Req 6)
         // ============================================================================
         async function autoFillFromLinks() {
             if(!activeProject) return;
-            
-            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-purple-500 font-bold py-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Auto-filling from links...</div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-purple-600 space-y-4 pt-16"><i class="fa-solid fa-wand-magic-sparkles fa-bounce text-6xl"></i><p class="text-2xl font-bold">Auto-filling magic...</p></div>';
 
-            const { data: linksData, error } = await supabase.from('links').select('*');
-            if (error) {
-                console.error(error);
-                loadData();
-                return;
-            }
+            const { data: linksData } = await supabaseClient.from('links').select('*');
+            if (!linksData) { loadData(); return; }
 
             const existingNames = new Set(auditions.filter(a => a.firstName).map(a => `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase()));
             const uniqueAvailableLinks = [];
@@ -968,7 +950,7 @@
             });
 
             if(emptySlots.length === 0 || uniqueAvailableLinks.length === 0) {
-                alert("No empty slots available or no new actors found.");
+                alert("No empty slots available or no unbooked actors found.");
                 loadData();
                 return;
             }
@@ -985,12 +967,8 @@
 
                 const nameParts = link.name.trim().split(' ');
                 updatesToMake.push({
-                    id: slot.id,
-                    firstName: nameParts[0] || '',
-                    lastName: nameParts.slice(1).join(' ') || '',
-                    agent: link.agents || null,
-                    email: link.agents_email || null,
-                    role: link.role || null,
+                    id: slot.id, firstName: nameParts[0] || '', lastName: nameParts.slice(1).join(' ') || '',
+                    agent: link.agents || null, email: link.agents_email || null, role: link.role || null,
                     status: 'Audition Not Sent' 
                 });
             }
@@ -999,13 +977,13 @@
 
             for(const u of updatesToMake) {
                 const { id, ...payload } = u;
-                await supabase.from('auditions').update(payload).eq('id', id);
+                await supabaseClient.from('auditions').update(payload).eq('id', id);
             }
             loadData();
         }
 
         // ============================================================================
-        // EMAIL GENERATOR & TEMPLATE MANAGEMENT
+        // ROBUST EMAIL GENERATOR & TEMPLATE MANAGEMENT
         // ============================================================================
         function openTemplatesModal() {
             if(!activeProject) return alert("Please load a project first.");
@@ -1021,43 +999,72 @@
             document.getElementById('tmplBody').value = tmpl.body;
         }
 
+        // Extremely Strict Try/Catch Delete+Insert to Fix Cross-Device Unique Errors
         async function saveTemplate() {
-            if(!activeProject) return;
+            if(!activeProject) {
+                alert("No active project loaded.");
+                return;
+            }
+            
             const btn = document.getElementById('saveTmplBtn');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
             
-            const senderEmail = document.getElementById('tmplSender').value.trim();
-            localStorage.setItem('casting_sender_email', senderEmail);
+            try {
+                // Engage loading UI
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-5xl"></i> SAVING...';
+                btn.disabled = true;
+                
+                const senderEmail = document.getElementById('tmplSender').value.trim();
+                localStorage.setItem('casting_sender_email', senderEmail);
 
-            const type = document.getElementById('tmplType').value;
-            const subject = document.getElementById('tmplSubject').value;
-            const body = document.getElementById('tmplBody').value;
+                const type = document.getElementById('tmplType').value;
+                const subject = document.getElementById('tmplSubject').value;
+                const body = document.getElementById('tmplBody').value;
 
-            const existing = templates.find(x => x.type === type);
-            let error;
-            if(existing) {
-                const res = await supabase.from('templates').update({ subject, body, updated_at: new Date().toISOString() }).eq('id', existing.id);
-                error = res.error;
-            } else {
-                const res = await supabase.from('templates').insert({ project_id: activeProject.id, type, subject, body });
-                error = res.error;
-            }
+                // 1. Delete to bypass exact ID matching & unique constraint schema issues
+                await supabaseClient
+                    .from('templates')
+                    .delete()
+                    .eq('project_id', activeProject.id)
+                    .eq('type', type);
 
-            if(error) {
-                alert("Failed to save template.");
-                btn.innerHTML = originalHTML;
-            } else {
-                const { data: tData } = await supabase.from('templates').select('*').eq('project_id', activeProject.id);
-                templates = tData || [];
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
-                btn.classList.replace('bg-blue-600', 'bg-green-600');
+                // 2. Insert fresh template logic for absolute cross-device reliability
+                const { error: insertError } = await supabaseClient
+                    .from('templates')
+                    .insert({ 
+                        project_id: activeProject.id, 
+                        type: type, 
+                        subject: subject, 
+                        body: body 
+                    });
+
+                if (insertError) {
+                    throw new Error(insertError.message);
+                }
+
+                // Force refresh local template cache globally so app recognizes the new template
+                await loadData();
+                
+                // Success Visuals
+                btn.innerHTML = '<i class="fa-solid fa-check text-5xl"></i> SAVED!';
+                btn.classList.remove('bg-blue-600', 'active:bg-blue-800');
+                btn.classList.add('bg-green-500', 'active:bg-green-600');
                 
                 setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                    btn.classList.replace('bg-green-600', 'bg-blue-600');
                     closeAllModals();
                 }, 1000);
+
+            } catch(err) {
+                console.error("Save Template Exception:", err);
+                alert("Save Failed: " + (err.message || "Unknown error"));
+            } finally {
+                // Guaranteed button UI reset
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('bg-green-500', 'active:bg-green-600');
+                    btn.classList.add('bg-blue-600', 'active:bg-blue-800');
+                    btn.disabled = false;
+                }, 1200);
             }
         }
 
@@ -1065,24 +1072,20 @@
             const id = targetId || activeAuditionId;
             const a = auditions.find(x => x.id === id);
             
-            if(!a || !a.email) {
-                console.warn("No email address found.");
-                return;
-            }
+            if(!a || !a.email) return alert("No agent email address found to send to.");
             
+            // Will pull from correctly updated `templates` variable
             let tmpl = templates.find(x => x.type === type) || BOILERPLATES[type];
 
             const rep = (str) => str
-                .replace(/\{\{name\}\}/gi, ((a.firstName || '') + ' ' + (a.lastName||'')).trim())
-                .replace(/\{\{first_name\}\}/gi, a.firstName || 'your client')
-                .replace(/\{\{last_name\}\}/gi, a.lastName || '')
-                .replace(/\{\{agent\}\}/gi, a.agent || 'Agent')
-                .replace(/\{\{role\}\}/gi, a.role || 'the role')
-                .replace(/\{\{date\}\}/gi, a.date || '')
-                .replace(/\{\{time\}\}/gi, a.time || '')
-                .replace(/\{\{venue\}\}/gi, activeProject.venue || 'TBC')
-                .replace(/\{\{material_link\}\}/gi, activeProject.material_link || 'TBC')
-                .replace(/\{\{project_name\}\}/gi, activeProject.name || 'Our Project');
+                .replace(/<<First Name>>/gi, a.firstName || 'your client')
+                .replace(/<<Second Name>>/gi, a.lastName || '')
+                .replace(/<<Role>>/gi, a.role || 'the role')
+                .replace(/<<Date>>/gi, a.date || '')
+                .replace(/<<Time>>/gi, a.time || '')
+                .replace(/<<Venue>>/gi, activeProject.venue || 'TBC')
+                .replace(/<<Link>>/gi, activeProject.material_link || 'TBC')
+                .replace(/<<Project>>/gi, activeProject.name || 'Our Project');
             
             const senderEmail = localStorage.getItem('casting_sender_email') || 'dan@debbieobrien.net';
             const mailto = `mailto:${a.email}?subject=${encodeURIComponent(rep(tmpl.subject))}&body=${encodeURIComponent(rep(tmpl.body))}&from=${encodeURIComponent(senderEmail)}`;
@@ -1090,53 +1093,91 @@
         }
 
         // ============================================================================
-        // UTILS & CSV TRUNCATE AND REPLACE IMPORT
+        // UTILS & UNDO & CSV
         // ============================================================================
         function closeAllModals() {
             document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.bottom-sheet').forEach(el => el.classList.remove('active'));
+            document.getElementById('manualEntryForm')?.classList.add('hidden');
             activeAuditionId = null;
+        }
+
+        function pushUndo(actionType, data) {
+            undoStack.push({ type: actionType, data: data });
+            updateUndoButton();
+        }
+
+        function updateUndoButton() {
+            const btn = document.getElementById('undoBtn');
+            if (undoStack.length > 0) {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed', 'text-gray-600');
+                btn.classList.add('text-blue-600');
+                btn.disabled = false;
+            } else {
+                btn.classList.add('opacity-50', 'cursor-not-allowed', 'text-gray-600');
+                btn.classList.remove('text-blue-600');
+                btn.disabled = true;
+            }
+        }
+
+        async function executeUndo() {
+            if (undoStack.length === 0) return;
+            const action = undoStack.pop();
+            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-blue-600 space-y-4 pt-16"><i class="fa-solid fa-rotate-left fa-spin-reverse text-7xl"></i><p class="text-2xl font-bold">Reverting action...</p></div>';
+
+            try {
+                if (action.type === 'fill_slot') await supabaseClient.from('auditions').update(action.data.oldState).eq('id', action.data.id);
+                else if (action.type === 'cancel_slot') {
+                    if(action.data.newEmptySlotId) {
+                        const { data: slotCheck } = await supabaseClient.from('auditions').select('status').eq('id', action.data.newEmptySlotId).single();
+                        if(slotCheck && slotCheck.status === 'empty') await supabaseClient.from('auditions').update({ status: 'archived' }).eq('id', action.data.newEmptySlotId);
+                    }
+                    await supabaseClient.from('auditions').update(action.data.oldState).eq('id', action.data.id);
+                } 
+                else if (action.type === 'move_slot') {
+                    await supabaseClient.from('auditions').update(action.data.newSlotState).eq('id', action.data.newSlotId);
+                    await supabaseClient.from('auditions').update(action.data.oldSlotState).eq('id', action.data.oldSlotId);
+                    if (action.data.newFreedSlotId) await supabaseClient.from('auditions').update({ status: 'archived' }).eq('id', action.data.newFreedSlotId);
+                } 
+                else if (action.type === 'manual_status') {
+                    await supabaseClient.from('auditions').update(action.data.oldState).eq('id', action.data.id);
+                    if (action.data.archivedEmptySlotId) await supabaseClient.from('auditions').update({ status: 'empty' }).eq('id', action.data.archivedEmptySlotId);
+                }
+                else if (action.type === 'autofill_links') {
+                    for(const slot of action.data.slots) await supabaseClient.from('auditions').update(slot.oldState).eq('id', slot.id);
+                } 
+                else if (action.type === 'import_csv') {
+                    if(action.data.newIds && action.data.newIds.length > 0) await supabaseClient.from('auditions').update({ status: 'archived' }).in('id', action.data.newIds);
+                    if(action.data.oldAuditions && action.data.oldAuditions.length > 0) await supabaseClient.from('auditions').insert(action.data.oldAuditions);
+                }
+            } catch (err) { console.error("Undo failed", err); }
+            updateUndoButton();
+            loadData();
         }
 
         function handleCSVUpload(event) {
             const file = event.target.files[0];
             if (!file || !activeProject) return;
-            
-            document.getElementById('auditionsList').innerHTML = '<div class="flex items-center justify-center h-full text-blue-500 font-bold py-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Truncating & Overwriting...</div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-blue-600 space-y-4 pt-16"><i class="fa-solid fa-file-import fa-bounce text-7xl"></i><p class="text-2xl font-bold">Importing Data...</p></div>';
             
             Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
+                header: true, skipEmptyLines: true,
                 complete: async function(results) {
-                    const { data: currentAuds } = await supabase.from('auditions').select('*').eq('project_id', activeProject.id);
-                    const oldAuditions = currentAuds || [];
-
-                    await supabase.from('auditions').delete().eq('project_id', activeProject.id);
+                    const { data: currentAuds } = await supabaseClient.from('auditions').select('*').eq('project_id', activeProject.id);
+                    await supabaseClient.from('auditions').delete().eq('project_id', activeProject.id); // Truncate
 
                     const inserts = results.data.map(row => {
                         const hasActor = row['First Name'] && row['First Name'].trim() !== '';
-                        let parsedStatus = row['Status'] || row['status'] || row['Merge status'];
-                        if (!parsedStatus) parsedStatus = hasActor ? 'pending' : 'empty';
-
+                        let parsedStatus = row['Status'] || row['status'] || row['Merge status'] || (hasActor ? 'pending' : 'empty');
                         return {
-                            project_id: activeProject.id,
-                            date: row['Date'] || '',
-                            time: row['Time'] || '',
-                            duration: parseInt(row['Duration']) || 15,
-                            firstName: row['First Name'] || null,
-                            lastName: row['Second Name'] || row['Last Name'] || null,
-                            agent: row['Agent'] || null,
-                            email: row['Email'] || null,
-                            role: row['Role'] || null,
-                            status: parsedStatus
+                            project_id: activeProject.id, date: row['Date'] || '', time: row['Time'] || '', duration: parseInt(row['Duration']) || 15,
+                            firstName: row['First Name'] || null, lastName: row['Second Name'] || row['Last Name'] || null, agent: row['Agent'] || null,
+                            email: row['Email'] || null, role: row['Role'] || null, status: parsedStatus
                         };
                     });
                     
-                    const { data: newlyInserted, error } = await supabase.from('auditions').insert(inserts).select();
-                    if (error) alert("Error importing data.");
-                    
-                    pushUndo('import_csv', { oldAuditions: oldAuditions, newIds: newlyInserted ? newlyInserted.map(i => i.id) : [] });
-
+                    const { data: newlyInserted } = await supabaseClient.from('auditions').insert(inserts).select();
+                    pushUndo('import_csv', { oldAuditions: currentAuds || [], newIds: newlyInserted ? newlyInserted.map(i => i.id) : [] });
                     event.target.value = ''; 
                     loadData();
                 }
