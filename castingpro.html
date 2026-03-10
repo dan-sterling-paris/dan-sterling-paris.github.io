@@ -15,12 +15,12 @@
         
         body { 
             font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif; 
-            background-color: #f0f2f5; 
+            background-color: #f4f5f7; /* Matches screenshot background */
             -webkit-tap-highlight-color: transparent; 
             color: #111827;
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
-            overscroll-behavior-y: none; /* Prevents pull-to-refresh rubber banding */
+            overscroll-behavior-y: none; 
         }
 
         .safe-top { padding-top: max(1rem, env(safe-area-inset-top)); }
@@ -40,7 +40,7 @@
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
         .ios-blur {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(244, 245, 247, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
@@ -48,68 +48,64 @@
         /* Prevent iOS zoom */
         input, select, textarea { font-size: 16px !important; }
 
-        /* Fat-finger utility classes */
-        .input-massive {
-            @apply h-20 rounded-[1.5rem] text-xl px-6 bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none w-full shadow-sm font-black text-gray-800 transition-all;
+        /* SLEEK FAT-FINGER UTILITIES */
+        .btn-sleek-primary {
+            @apply w-full h-16 bg-blue-600 text-white rounded-full font-black text-xl shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] transition-transform flex items-center justify-center gap-3;
         }
-
-        /* Edge-to-Edge Zero Precision Buttons */
-        .btn-zero-precision {
-            @apply w-full bg-blue-600 text-white font-black text-3xl uppercase tracking-widest flex justify-center items-center gap-4 transition-colors active:bg-blue-800;
-            padding-top: 2rem;
-            padding-bottom: max(2rem, env(safe-area-inset-bottom)); /* Extends into the iOS home indicator safe area */
+        .input-sleek {
+            @apply w-full h-14 bg-gray-50 border border-gray-200 rounded-2xl px-5 font-bold text-lg text-gray-800 outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all;
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <!-- AUTH OVERLAY -->
-    <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-[100] flex flex-col justify-center items-center p-4">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
-            <div class="p-8 space-y-8 flex-1">
-                <div class="text-center mt-4">
-                    <i class="fa-solid fa-clapperboard text-7xl text-blue-600 mb-6 drop-shadow-md"></i>
-                    <h2 class="text-5xl font-black text-gray-900 tracking-tight">Casting</h2>
-                    <p class="text-xl text-gray-500 font-bold mt-3">Sign in to begin</p>
+    <div id="authOverlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-sm z-[100] flex flex-col justify-center items-center p-6">
+        <div class="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl overflow-hidden flex flex-col p-8 space-y-6 relative">
+            <div class="text-center mt-2">
+                <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fa-solid fa-clapperboard text-4xl text-blue-600"></i>
                 </div>
-                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
-                    <input type="email" id="authEmail" class="input-massive bg-gray-50" placeholder="Email Address" required>
-                    <input type="password" id="authPassword" class="input-massive bg-gray-50" placeholder="Password" required>
-                    <div id="authError" class="text-red-500 text-lg font-bold text-center hidden"></div>
-                </form>
+                <h2 class="text-3xl font-black text-gray-900 tracking-tight">Casting Pro</h2>
+                <p class="text-base text-gray-500 font-bold mt-1">Sign in to your account</p>
             </div>
-            <!-- Zero Precision Login Button -->
-            <button form="loginForm" type="submit" id="authBtn" class="btn-zero-precision shadow-[0_-10px_30px_rgba(0,0,0,0.1)] shrink-0">
-                Sign In <i class="fa-solid fa-arrow-right-to-bracket text-4xl"></i>
-            </button>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 pb-2">
+                <input type="email" id="authEmail" class="input-sleek" placeholder="Email Address" required>
+                <input type="password" id="authPassword" class="input-sleek" placeholder="Password" required>
+                <div id="authError" class="text-red-500 text-sm font-bold text-center hidden"></div>
+                <button type="submit" id="authBtn" class="btn-sleek-primary mt-6">
+                    Sign In <i class="fa-solid fa-arrow-right-to-bracket ml-1"></i>
+                </button>
+            </form>
         </div>
     </div>
 
     <!-- STICKY HEADER & FILTERS -->
-    <div class="sticky top-0 z-30 ios-blur shadow-sm border-b border-gray-200 safe-top flex flex-col gap-4 pb-4">
+    <div class="sticky top-0 z-30 ios-blur safe-top flex flex-col gap-4 pb-4">
         
-        <!-- Row 1: Header -->
-        <header class="px-5 flex justify-between items-center gap-3">
-            <div class="flex-1 min-w-0 bg-gray-100 rounded-[1.5rem] px-5 py-2 flex items-center h-16">
-                <select id="projectSelector" class="w-full bg-transparent outline-none font-black text-xl text-gray-800 cursor-pointer truncate" onchange="changeProject(this.value)">
+        <!-- Row 1: Header matches screenshot perfectly -->
+        <header class="px-5 flex justify-between items-center gap-3 pt-2">
+            <div class="flex-1 relative bg-white rounded-full shadow-sm border border-gray-100 flex items-center h-14 px-5">
+                <select id="projectSelector" class="w-full bg-transparent outline-none font-black text-[15px] text-slate-800 uppercase tracking-wide cursor-pointer appearance-none truncate">
                     <option value="">Loading Projects...</option>
                 </select>
+                <i class="fa-solid fa-sort absolute right-5 text-gray-400 text-sm pointer-events-none"></i>
             </div>
-            <button id="undoBtn" onclick="executeUndo()" class="bg-gray-100 text-gray-600 w-16 h-16 rounded-[1.5rem] flex items-center justify-center active:bg-gray-200 transition opacity-50 cursor-not-allowed shrink-0">
-                <i class="fa-solid fa-rotate-left text-2xl"></i>
+            <button id="undoBtn" onclick="executeUndo()" class="bg-gray-200 text-gray-500 w-14 h-14 rounded-full flex items-center justify-center active:bg-gray-300 transition opacity-50 cursor-not-allowed shrink-0">
+                <i class="fa-solid fa-rotate-left text-xl"></i>
             </button>
         </header>
 
-        <!-- Row 2: One-Tap Tools -->
+        <!-- Row 2: One-Tap Tools styled like screenshot -->
         <div class="px-5 flex gap-3">
-            <button onclick="autoFillFromLinks()" class="flex-1 bg-purple-100 text-purple-700 h-16 rounded-[1.5rem] flex items-center justify-center font-black text-xl active:bg-purple-200 gap-3 shadow-sm border border-purple-200">
-                <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i> AutoFill
+            <button onclick="autoFillFromLinks()" class="flex-1 bg-[#f4ebff] text-[#7e22ce] h-14 rounded-[2rem] flex items-center justify-center font-bold text-[17px] active:bg-[#e9d5ff] transition-colors gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-xl"></i> AutoFill
             </button>
-            <button onclick="openTemplatesModal()" class="bg-blue-100 text-blue-700 w-16 h-16 rounded-[1.5rem] flex items-center justify-center active:bg-blue-200 shrink-0 shadow-sm border border-blue-200">
-                <i class="fa-solid fa-envelope-open-text text-2xl"></i>
+            <button onclick="openTemplatesModal()" class="bg-[#e0f2fe] text-[#1d4ed8] w-14 h-14 rounded-2xl flex items-center justify-center active:bg-[#bae6fd] transition-colors shrink-0">
+                <i class="fa-solid fa-envelope-open-text text-xl"></i>
             </button>
-            <button onclick="document.getElementById('csvInput').click()" class="bg-gray-200 text-gray-700 w-16 h-16 rounded-[1.5rem] flex items-center justify-center active:bg-gray-300 shrink-0 shadow-sm border border-gray-300">
-                <i class="fa-solid fa-file-import text-2xl"></i>
+            <button onclick="document.getElementById('csvInput').click()" class="bg-gray-200 text-gray-700 w-14 h-14 rounded-2xl flex items-center justify-center active:bg-gray-300 transition-colors shrink-0">
+                <i class="fa-solid fa-file-import text-xl"></i>
             </button>
             <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
         </div>
@@ -117,63 +113,63 @@
         <!-- Row 3: Search Bar -->
         <div class="px-5">
             <div class="relative w-full">
-                <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-2xl"></i>
-                <input type="text" id="searchFilter" oninput="renderAuditions()" class="w-full h-20 bg-white rounded-[2rem] pl-16 pr-5 font-black text-2xl text-gray-800 shadow-sm border-[3px] border-gray-200 outline-none focus:border-blue-400 placeholder-gray-400 transition" placeholder="Search actor name...">
+                <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                <input type="text" id="searchFilter" oninput="renderAuditions()" class="w-full h-14 bg-white border border-gray-200 rounded-full pl-12 pr-5 font-bold text-gray-800 shadow-sm outline-none focus:border-blue-400 placeholder-gray-400 text-[16px]" placeholder="Search actor name...">
             </div>
         </div>
 
         <!-- Row 4: Status & Date Filters -->
         <div class="px-5 flex gap-3">
             <div class="flex-1 relative">
-                <select id="filterDate" onchange="renderAuditions()" class="w-full h-16 bg-white border-2 border-gray-200 font-black text-gray-700 rounded-[1.5rem] pl-4 pr-10 outline-none shadow-sm text-lg appearance-none cursor-pointer truncate">
+                <select id="filterDate" onchange="renderAuditions()" class="w-full h-12 bg-white border border-gray-200 font-bold text-gray-700 rounded-full pl-5 pr-10 outline-none shadow-sm text-[15px] appearance-none cursor-pointer truncate">
                     <option value="ALL">All Dates</option>
                 </select>
-                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
             </div>
             <div class="flex-1 relative">
-                <select id="filterStatus" onchange="renderAuditions()" class="w-full h-16 bg-white border-2 border-gray-200 font-black text-gray-700 rounded-[1.5rem] pl-4 pr-10 outline-none shadow-sm text-lg appearance-none cursor-pointer truncate">
+                <select id="filterStatus" onchange="renderAuditions()" class="w-full h-12 bg-white border border-gray-200 font-bold text-gray-700 rounded-full pl-5 pr-10 outline-none shadow-sm text-[15px] appearance-none cursor-pointer truncate">
                     <option value="ALL">All Active</option>
                 </select>
-                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
             </div>
         </div>
     </div>
 
     <!-- MAIN CONTENT LIST -->
-    <main id="auditionsList" class="flex-1 px-4 py-6 space-y-8 safe-bottom">
+    <main id="auditionsList" class="flex-1 px-5 py-2 space-y-6 safe-bottom">
         <div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-4 pt-16">
-            <i class="fa-solid fa-circle-notch fa-spin text-5xl"></i>
-            <p class="text-xl font-bold">Loading schedule...</p>
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl"></i>
+            <p class="text-lg font-bold">Loading schedule...</p>
         </div>
     </main>
 
     <!-- ACTION SHEET (For Existing Actors) -->
-    <div id="actionSheetOverlay" class="fixed inset-0 bg-black/50 modal-overlay z-40" onclick="closeAllModals()"></div>
-    <div id="actionSheet" class="fixed bottom-0 left-0 right-0 bg-gray-50 rounded-t-[2.5rem] z-50 bottom-sheet shadow-[0_-20px_50px_rgba(0,0,0,0.15)] pt-4 px-5 max-h-[90vh] overflow-y-auto safe-bottom pb-10 border-t border-gray-200">
-        <div class="w-20 h-2 bg-gray-300 rounded-full mx-auto mb-8"></div>
+    <div id="actionSheetOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm modal-overlay z-40" onclick="closeAllModals()"></div>
+    <div id="actionSheet" class="fixed bottom-0 left-0 right-0 bg-[#f4f5f7] rounded-t-[2rem] z-50 bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.1)] pt-3 px-5 max-h-[90vh] overflow-y-auto safe-bottom pb-8">
+        <div class="w-16 h-1.5 bg-gray-300 rounded-full mx-auto mb-6"></div>
         <div id="actionSheetContent" class="space-y-4">
             <!-- Dynamically populated -->
         </div>
     </div>
 
-    <!-- MODAL: ZERO-TYPING FILL SLOT (Tinder Style) -->
-    <div id="fillModalOverlay" class="fixed inset-0 bg-black/60 modal-overlay z-50 flex items-end sm:items-center justify-center">
-        <div class="bg-gray-100 w-full sm:max-w-md h-[95vh] sm:h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col shadow-2xl transform transition-transform" onclick="event.stopPropagation()">
-            <div class="px-6 py-6 bg-white rounded-t-[2.5rem] sm:rounded-t-[2.5rem] border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+    <!-- MODAL: ZERO-TYPING FILL SLOT -->
+    <div id="fillModalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm modal-overlay z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-[#f4f5f7] w-full sm:max-w-md h-[95vh] sm:h-[85vh] rounded-t-[2rem] sm:rounded-[2rem] flex flex-col shadow-2xl overflow-hidden relative" onclick="event.stopPropagation()">
+            <div class="px-6 py-5 bg-white border-b border-gray-100 flex justify-between items-center sticky top-0 z-10 shrink-0">
                 <div>
-                    <h3 class="text-3xl font-black text-gray-900">Who to cast?</h3>
-                    <p class="text-gray-500 font-bold text-base mt-1">Tap an actor to auto-fill</p>
+                    <h3 class="text-2xl font-black text-gray-900">Who to cast?</h3>
+                    <p class="text-gray-500 font-bold text-sm mt-0.5">Tap an actor to auto-fill</p>
                 </div>
-                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-14 h-14 rounded-full flex items-center justify-center active:bg-gray-200 transition">
-                    <i class="fa-solid fa-xmark text-2xl"></i>
+                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-10 h-10 rounded-full flex items-center justify-center active:bg-gray-200 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             
             <!-- Quick Search -->
-            <div class="p-5 bg-white border-b border-gray-200">
+            <div class="p-5 bg-white border-b border-gray-100 shrink-0">
                 <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 text-2xl"></i>
-                    <input type="text" id="fillActorSearch" oninput="filterUnbookedActors(this.value)" class="w-full h-20 bg-gray-100 rounded-[2rem] pl-16 pr-5 font-black text-xl text-gray-800 outline-none focus:bg-gray-200 transition" placeholder="Search unbooked...">
+                    <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
+                    <input type="text" id="fillActorSearch" oninput="filterUnbookedActors(this.value)" class="w-full h-14 bg-gray-50 rounded-full pl-12 pr-5 font-bold text-[17px] text-gray-800 outline-none focus:bg-gray-100 transition" placeholder="Search unbooked...">
                 </div>
             </div>
 
@@ -182,17 +178,17 @@
             </div>
 
             <!-- Fallback Manual Entry -->
-            <div class="p-5 bg-white border-t border-gray-200 safe-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-                <button onclick="toggleManualEntry()" class="w-full h-16 border-[3px] border-gray-300 rounded-[2rem] text-gray-500 font-black text-xl flex justify-center items-center gap-3 active:bg-gray-50 transition">
-                    <i class="fa-solid fa-keyboard text-2xl"></i> Or type manually
+            <div class="p-5 bg-white border-t border-gray-100 safe-bottom shadow-[0_-10px_20px_rgba(0,0,0,0.02)] shrink-0">
+                <button onclick="toggleManualEntry()" class="w-full h-14 border-2 border-gray-200 rounded-[1.5rem] text-gray-500 font-bold text-[17px] flex justify-center items-center gap-2 active:bg-gray-50 transition">
+                    <i class="fa-solid fa-keyboard text-xl"></i> Or type manually
                 </button>
-                <div id="manualEntryForm" class="hidden mt-6 space-y-4 pb-4">
-                    <input type="text" id="inpFirstName" class="input-massive" placeholder="First Name">
-                    <input type="text" id="inpLastName" class="input-massive" placeholder="Last Name">
-                    <input type="email" id="inpEmail" class="input-massive" placeholder="Agent Email">
-                    <input type="text" id="inpAgent" class="input-massive" placeholder="Agent Name">
-                    <input type="text" id="inpRole" class="input-massive" placeholder="Role">
-                    <button onclick="saveManualAudition()" class="w-full h-20 rounded-[2rem] text-2xl font-black shadow-xl flex items-center justify-center gap-4 active:scale-[0.98] bg-blue-600 text-white mt-4">
+                <div id="manualEntryForm" class="hidden mt-5 space-y-4 pb-2">
+                    <input type="text" id="inpFirstName" class="input-sleek" placeholder="First Name">
+                    <input type="text" id="inpLastName" class="input-sleek" placeholder="Last Name">
+                    <input type="email" id="inpEmail" class="input-sleek" placeholder="Agent Email">
+                    <input type="text" id="inpAgent" class="input-sleek" placeholder="Agent Name">
+                    <input type="text" id="inpRole" class="input-sleek" placeholder="Role">
+                    <button onclick="saveManualAudition()" class="btn-sleek-primary mt-2">
                         Save & Send <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </div>
@@ -201,78 +197,81 @@
     </div>
 
     <!-- MODAL: ZERO-TYPING MOVE SLOT -->
-    <div id="moveModalOverlay" class="fixed inset-0 bg-black/60 modal-overlay z-50 flex items-end sm:items-center justify-center">
-        <div class="bg-gray-100 w-full sm:max-w-md h-[90vh] sm:h-[80vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col shadow-2xl" onclick="event.stopPropagation()">
-            <div class="px-6 py-6 bg-white rounded-t-[2.5rem] border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
+    <div id="moveModalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm modal-overlay z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-[#f4f5f7] w-full sm:max-w-md h-[90vh] sm:h-[80vh] rounded-t-[2rem] sm:rounded-[2rem] flex flex-col shadow-2xl overflow-hidden relative" onclick="event.stopPropagation()">
+            <div class="px-6 py-5 bg-white border-b border-gray-100 flex justify-between items-center sticky top-0 z-10 shrink-0">
                 <div>
-                    <h3 class="text-3xl font-black text-gray-900">Select New Time</h3>
-                    <p class="text-gray-500 font-bold text-base mt-1">Tap an empty slot to move</p>
+                    <h3 class="text-2xl font-black text-gray-900">Select New Time</h3>
+                    <p class="text-gray-500 font-bold text-sm mt-0.5">Tap an empty slot to move</p>
                 </div>
-                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-14 h-14 rounded-full flex items-center justify-center active:bg-gray-200">
-                    <i class="fa-solid fa-xmark text-2xl"></i>
+                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-10 h-10 rounded-full flex items-center justify-center active:bg-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-5 space-y-4" id="freeSlotsList">
+            <div class="flex-1 overflow-y-auto p-5 space-y-3" id="freeSlotsList">
                 <!-- Zero-typing move buttons populate here -->
             </div>
         </div>
     </div>
 
     <!-- MODAL: TEMPLATES -->
-    <div id="templatesModalOverlay" class="fixed inset-0 bg-black/60 modal-overlay z-50 flex items-end sm:items-center justify-center">
-        <div class="bg-white w-full sm:max-w-xl h-[95vh] sm:h-[85vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+    <div id="templatesModalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm modal-overlay z-50 flex items-end sm:items-center justify-center">
+        <div class="bg-white w-full sm:max-w-xl h-[95vh] sm:h-[85vh] rounded-t-[2rem] sm:rounded-[2rem] flex flex-col shadow-2xl overflow-hidden relative" onclick="event.stopPropagation()">
+            
             <!-- Header -->
-            <div class="px-6 py-6 border-b border-gray-200 flex justify-between items-center bg-white z-10 shrink-0">
-                <h3 class="text-3xl font-black text-gray-900">Email Templates</h3>
-                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-14 h-14 rounded-full flex items-center justify-center active:bg-gray-200">
-                    <i class="fa-solid fa-xmark text-2xl"></i>
+            <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white z-10 shrink-0">
+                <h3 class="text-2xl font-black text-gray-900">Email Templates</h3>
+                <button onclick="closeAllModals()" class="bg-gray-100 text-gray-500 w-10 h-10 rounded-full flex items-center justify-center active:bg-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             
             <!-- Scrollable Form Body -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+            <div class="flex-1 overflow-y-auto p-6 space-y-5 bg-white pb-[100px]">
                 <div>
-                    <label class="block text-base font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Default Sender</label>
-                    <input type="email" id="tmplSender" class="input-massive bg-gray-50 border-none px-6" placeholder="dan@debbieobrien.net">
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Default Sender</label>
+                    <input type="email" id="tmplSender" class="input-sleek" placeholder="dan@debbieobrien.net">
                 </div>
                 <div>
-                    <label class="block text-base font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Select Template</label>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Select Template</label>
                     <div class="relative">
-                        <select id="tmplType" class="input-massive bg-gray-50 border-none px-6 appearance-none cursor-pointer" onchange="loadTemplateForm(this.value)">
+                        <select id="tmplType" class="input-sleek appearance-none cursor-pointer pr-10" onchange="loadTemplateForm(this.value)">
                             <option value="audition">Initial Audition</option>
                             <option value="modification">Time Change (Move)</option>
                             <option value="chase">Chase Confirmation</option>
                         </select>
-                        <i class="fa-solid fa-chevron-down absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 text-xl pointer-events-none"></i>
+                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-base font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Subject</label>
-                    <input type="text" id="tmplSubject" class="input-massive bg-gray-50 border-none px-6">
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Subject</label>
+                    <input type="text" id="tmplSubject" class="input-sleek">
                 </div>
                 <div>
-                    <label class="block text-base font-black text-gray-500 uppercase tracking-widest mb-3 ml-2">Body</label>
-                    <textarea id="tmplBody" rows="10" class="w-full bg-gray-50 rounded-[2rem] p-6 text-xl font-bold text-gray-800 outline-none border-none focus:ring-4 focus:ring-blue-100 resize-none leading-relaxed shadow-inner"></textarea>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Body</label>
+                    <textarea id="tmplBody" rows="10" class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-5 text-[15px] font-semibold text-gray-800 outline-none focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-50 resize-none leading-relaxed transition-all"></textarea>
                 </div>
-                <div class="bg-blue-50 p-6 rounded-[2rem] text-base text-blue-900 font-bold leading-relaxed border border-blue-100">
+                <div class="bg-blue-50 p-5 rounded-2xl text-sm text-blue-900 font-bold leading-relaxed border border-blue-100">
                     Supported Placeholders:<br/>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<First Name>></span>
-                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Second Name>></span>
-                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Role>></span>
-                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Date>></span>
-                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Time>></span>
-                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Venue>></span>
-                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Link>></span>
-                        <span class="bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100 font-black"><<Project>></span>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <span class="bg-white px-2 py-1 rounded-lg shadow-sm border border-blue-100 font-black"><<First Name>></span>
+                        <span class="bg-white px-2 py-1 rounded-lg shadow-sm border border-blue-100 font-black"><<Second Name>></span>
+                        <span class="bg-white px-2 py-1 rounded-lg shadow-sm border border-blue-100 font-black"><<Role>></span>
+                        <span class="bg-white px-2 py-1 rounded-lg shadow-sm border border-blue-100 font-black"><<Date>></span>
+                        <span class="bg-white px-2 py-1 rounded-lg shadow-sm border border-blue-100 font-black"><<Time>></span>
+                        <span class="bg-white px-2 py-1 rounded-lg shadow-sm border border-blue-100 font-black"><<Venue>></span>
+                        <span class="bg-white px-2 py-1 rounded-lg shadow-sm border border-blue-100 font-black"><<Link>></span>
+                        <span class="bg-white px-2 py-1 rounded-lg shadow-sm border border-blue-100 font-black"><<Project>></span>
                     </div>
                 </div>
             </div>
 
-            <!-- Zero Precision Save Button (Sticky to bottom) -->
-            <button id="saveTmplBtn" onclick="saveTemplate()" class="btn-zero-precision shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.15)] z-20">
-                <i class="fa-solid fa-floppy-disk text-4xl"></i> Save Settings
-            </button>
+            <!-- Zero Precision Save Button (Sleek but unmissable fixed to bottom) -->
+            <div class="absolute bottom-0 left-0 right-0 p-5 bg-white/90 backdrop-blur-md border-t border-gray-100 safe-bottom">
+                <button id="saveTmplBtn" onclick="saveTemplate()" class="btn-sleek-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Settings
+                </button>
+            </div>
         </div>
     </div>
 
@@ -287,12 +286,10 @@
         let activeProject = null;
         let auditions = [];
         let templates = [];
-        let uniqueActorsData = []; // Available from links
-        
+        let uniqueActorsData = [];
         let activeAuditionId = null;
         let undoStack = [];
 
-        // Exact Placeholders requested by user
         const BOILERPLATES = {
             audition: { 
                 subject: "<<Project>> - <<First Name>> <<Second Name>> - Audition", 
@@ -339,7 +336,7 @@
             
             err.classList.add('hidden');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-5xl"></i> SIGNING IN...';
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl"></i> Signing in...';
             btn.disabled = true;
 
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -398,9 +395,8 @@
 
         async function loadData() {
             if (!activeProject) return;
-            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-4 pt-16"><i class="fa-solid fa-circle-notch fa-spin text-6xl"></i><p class="text-2xl font-bold">Loading schedule...</p></div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-4 pt-16"><i class="fa-solid fa-circle-notch fa-spin text-4xl"></i><p class="text-lg font-bold">Loading schedule...</p></div>';
             
-            // Pull templates for cross-device sync
             const { data: tData } = await supabaseClient.from('templates').select('*').eq('project_id', activeProject.id);
             templates = tData || [];
 
@@ -414,16 +410,15 @@
             
             updateFilterOptions();
             renderAuditions();
-            prefetchLinks(); // Preload for zero-typing list
+            prefetchLinks();
         }
 
         function refreshData() { loadData(); }
 
         // ============================================================================
-        // FILTERS & UI RENDER (Fat Finger Optimized)
+        // FILTERS & UI RENDER (Fat Finger Optimized + Screenshot Match)
         // ============================================================================
         function updateFilterOptions() {
-            // Date Filter
             const dateSelect = document.getElementById('filterDate');
             const currentVal = dateSelect.value;
             dateSelect.innerHTML = '<option value="ALL">All Dates</option>';
@@ -445,7 +440,6 @@
             });
             if(uniqueDates.includes(currentVal)) dateSelect.value = currentVal;
 
-            // Status Filter (Requirement 7 & 8)
             const statusSelect = document.getElementById('filterStatus');
             const currentStatusVal = statusSelect.value;
             statusSelect.innerHTML = '<option value="ALL">All Active</option>';
@@ -476,18 +470,14 @@
             const sFilter = document.getElementById('filterStatus').value;
             const qSearch = document.getElementById('searchFilter').value.toLowerCase().trim();
 
-            // Apply Date Filter
             if (dFilter !== 'ALL') filteredAuditions = filteredAuditions.filter(a => a.date === dFilter);
             
-            // Apply Status Filter
             if (sFilter !== 'ALL') {
                 filteredAuditions = filteredAuditions.filter(a => a.status === sFilter);
             } else {
-                // Default view hides archived/declined unless directly specified
                 filteredAuditions = filteredAuditions.filter(a => a.status !== 'archived' && a.status !== 'declined');
             }
 
-            // Apply Search Filter (Requirement 15)
             if (qSearch) {
                 filteredAuditions = filteredAuditions.filter(a => {
                     const fullName = `${a.firstName || ''} ${a.lastName || ''}`.toLowerCase();
@@ -497,11 +487,11 @@
 
             if (filteredAuditions.length === 0) {
                 list.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-6 pt-24">
-                        <div class="w-36 h-36 bg-gray-200 rounded-full flex items-center justify-center">
-                            <i class="fa-solid fa-ghost text-7xl text-gray-400"></i>
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400 space-y-5 pt-20">
+                        <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-ghost text-4xl text-gray-400"></i>
                         </div>
-                        <p class="text-3xl font-black">No slots found</p>
+                        <p class="text-xl font-black">No slots found</p>
                     </div>`;
                 return;
             }
@@ -519,12 +509,12 @@
                 } catch(e) {}
 
                 const dateHeader = document.createElement('h2');
-                dateHeader.className = 'text-3xl font-black text-gray-900 mt-12 mb-6 tracking-tight ml-2';
+                dateHeader.className = 'text-[26px] font-black text-slate-900 mt-10 mb-4 tracking-tight px-1';
                 dateHeader.textContent = displayDate;
                 list.appendChild(dateHeader);
 
                 const slotsContainer = document.createElement('div');
-                slotsContainer.className = 'space-y-5';
+                slotsContainer.className = 'space-y-4';
                 
                 const slotsForDate = filteredAuditions.filter(a => a.date === date);
                 slotsForDate.sort((a,b) => {
@@ -537,42 +527,44 @@
                     const el = document.createElement('div');
                     
                     if (slot.status === 'empty') {
-                        // Massive Empty Slot
-                        el.className = 'flex items-center bg-transparent border-[3px] border-dashed border-gray-300 rounded-[2.5rem] p-3 hover:bg-white hover:border-blue-300 transition-colors cursor-pointer group active:scale-[0.98]';
+                        // Sleek Empty Slot
+                        el.className = 'flex bg-transparent border-[3px] border-dashed border-gray-300 rounded-[2rem] p-2.5 items-center cursor-pointer group active:scale-[0.98] transition-transform';
                         el.onclick = () => openZeroTypingFillModal(slot.id);
                         el.innerHTML = `
-                            <div class="w-28 h-28 bg-gray-200/50 rounded-[2rem] flex flex-col justify-center items-center shrink-0 group-hover:bg-blue-50 transition-colors">
-                                <span class="text-2xl font-black text-gray-600 group-hover:text-blue-600">${slot.time}</span>
+                            <div class="w-[4.8rem] h-[4.8rem] bg-gray-200/50 rounded-[1.5rem] flex flex-col justify-center items-center shrink-0 group-hover:bg-blue-50 transition-colors">
+                                <span class="text-[1.15rem] font-bold text-gray-500 group-hover:text-blue-600">${slot.time}</span>
                             </div>
-                            <div class="flex-1 px-6">
-                                <h3 class="text-3xl font-black text-gray-400 group-hover:text-blue-500">Available</h3>
-                                <p class="text-gray-400 font-bold text-xl mt-1">Tap to cast someone</p>
+                            <div class="flex-1 px-4">
+                                <h3 class="text-[1.2rem] font-black text-gray-400 group-hover:text-blue-500 tracking-tight">Available</h3>
+                                <p class="text-gray-400 font-bold text-[13px] mt-0.5 uppercase tracking-wider">Tap to cast</p>
                             </div>
-                            <div class="px-5 text-gray-300 group-hover:text-blue-400">
-                                <i class="fa-solid fa-plus-circle text-5xl"></i>
+                            <div class="px-4 text-gray-300 group-hover:text-blue-400">
+                                <i class="fa-solid fa-plus-circle text-3xl"></i>
                             </div>
                         `;
                     } else {
-                        // Massive Filled Slot
-                        let badgeColor = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                        // Match perfectly with Screenshot styling
+                        let badgeColor = 'bg-gray-100 text-gray-600';
                         const ls = slot.status.toLowerCase();
                         
-                        if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-green-100 text-green-800 border-green-200';
-                        else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-800 border-purple-200';
-                        else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-800 border-red-200';
+                        if (ls === 'confirmed' || ls === 'responded') badgeColor = 'bg-[#dcfce7] text-[#15803d]';
+                        else if (ls === 'pending') badgeColor = 'bg-[#fef3c7] text-[#a16207]';
+                        else if (ls === 'audition not sent' || ls === 'email_clicked') badgeColor = 'bg-purple-100 text-purple-700';
+                        else if (ls === 'declined') badgeColor = 'bg-red-100 text-red-700';
                         
-                        el.className = `flex bg-white rounded-[2.5rem] p-3 shadow-[0_8px_30px_rgb(0,0,0,0.06)] cursor-pointer active:scale-[0.98] transition-transform overflow-hidden ${ls === 'declined' ? 'opacity-60' : ''}`;
+                        el.className = `flex bg-white rounded-[2rem] p-2.5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-gray-100 items-center cursor-pointer active:scale-[0.98] transition-transform ${ls === 'declined' ? 'opacity-60' : ''}`;
                         el.onclick = () => openActionSheet(slot.id);
+                        
                         el.innerHTML = `
-                            <div class="w-28 h-28 bg-blue-50 rounded-[2rem] flex flex-col justify-center items-center shrink-0 border border-blue-100">
-                                <span class="text-2xl font-black text-blue-700">${slot.time}</span>
+                            <div class="w-[4.8rem] h-[4.8rem] bg-[#f0f4ff] rounded-[1.5rem] flex flex-col justify-center items-center shrink-0">
+                                <span class="text-[1.15rem] font-black text-[#1d4ed8]">${slot.time}</span>
                             </div>
-                            <div class="flex-1 px-6 flex flex-col justify-center min-w-0">
-                                <h3 class="font-black text-gray-900 text-3xl truncate">${slot.firstName || ''} ${slot.lastName || ''}</h3>
-                                <p class="text-xl text-gray-500 font-bold truncate mt-1.5">${slot.role || 'Any Role'}</p>
+                            <div class="flex-1 px-4 min-w-0">
+                                <h3 class="font-black text-gray-900 text-[1.2rem] truncate tracking-tight">${slot.firstName || ''} ${slot.lastName || ''}</h3>
+                                <p class="text-[13px] text-gray-400 font-bold uppercase tracking-widest truncate mt-1">${slot.role || 'Any Role'}</p>
                             </div>
-                            <div class="px-4 flex items-center justify-center">
-                                <span class="px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest border ${badgeColor}">
+                            <div class="pr-2 flex items-center justify-center shrink-0">
+                                <span class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest ${badgeColor}">
                                     ${slot.status}
                                 </span>
                             </div>
@@ -585,7 +577,7 @@
         }
 
         // ============================================================================
-        // ZERO TYPING FILL FLOW (Tinder Style)
+        // ZERO TYPING FILL FLOW
         // ============================================================================
         async function prefetchLinks() {
             const { data } = await supabaseClient.from('links').select('*');
@@ -640,21 +632,21 @@
             list.innerHTML = '';
 
             if (actors.length === 0) {
-                list.innerHTML = `<div class="text-center text-gray-400 font-bold text-lg p-10">No unbooked actors found. Type manually below.</div>`;
+                list.innerHTML = `<div class="text-center text-gray-400 font-bold text-[15px] p-8">No unbooked actors found. Type manually below.</div>`;
                 return;
             }
 
             actors.forEach(actor => {
                 const btn = document.createElement('button');
-                btn.className = 'w-full bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 text-left flex justify-between items-center active:bg-blue-50 transition active:scale-[0.98] group';
+                btn.className = 'w-full bg-white rounded-[1.5rem] p-5 shadow-sm border border-gray-100 text-left flex justify-between items-center active:bg-blue-50 transition active:scale-[0.98] group';
                 btn.onclick = () => autoFillSingleActor(actor);
                 btn.innerHTML = `
                     <div>
-                        <h4 class="text-2xl font-black text-gray-900 group-hover:text-blue-700">${actor.fullName}</h4>
-                        <p class="text-lg text-gray-500 font-bold mt-2"><i class="fa-solid fa-user-tie text-gray-400 mr-2"></i>${actor.agent || 'No Agent'} • ${actor.role || 'Any Role'}</p>
+                        <h4 class="text-[19px] font-black text-gray-900 group-hover:text-blue-700">${actor.fullName}</h4>
+                        <p class="text-sm text-gray-500 font-bold mt-1"><i class="fa-solid fa-user-tie text-gray-400 mr-2"></i>${actor.agent || 'No Agent'} • ${actor.role || 'Any Role'}</p>
                     </div>
-                    <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        <i class="fa-solid fa-chevron-right text-2xl"></i>
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-chevron-right text-lg"></i>
                     </div>
                 `;
                 list.appendChild(btn);
@@ -667,12 +659,9 @@
             const oldState = { firstName: oldA.firstName, lastName: oldA.lastName, email: oldA.email, agent: oldA.agent, role: oldA.role, status: oldA.status };
             
             const payload = {
-                firstName: actor.firstName,
-                lastName: actor.lastName,
-                email: actor.email,
-                agent: actor.agent,
-                role: actor.role,
-                status: 'pending' // Fulfills Requirement 1
+                firstName: actor.firstName, lastName: actor.lastName,
+                email: actor.email, agent: actor.agent, role: actor.role,
+                status: 'pending'
             };
 
             pushUndo('fill_slot', { id: activeAuditionId, oldState });
@@ -737,51 +726,59 @@
 
             const content = document.getElementById('actionSheetContent');
             content.innerHTML = `
-                <div class="mb-8 text-center">
-                    <h3 class="text-4xl font-black text-gray-900 tracking-tight">${a.firstName} ${a.lastName}</h3>
-                    <p class="text-gray-500 text-xl font-bold mt-2">${a.date} @ ${a.time} • ${a.role || 'No Role'}</p>
+                <div class="mb-6 px-2 text-center">
+                    <h3 class="text-3xl font-black text-gray-900 tracking-tight">${a.firstName} ${a.lastName}</h3>
+                    <p class="text-gray-500 text-lg font-bold mt-1">${a.date} @ ${a.time} • ${a.role || 'No Role'}</p>
                 </div>
 
-                <div class="bg-white rounded-[2.5rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 mb-5">
-                    <label class="block text-sm font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Quick Status</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button onclick="manuallyUpdateStatus('pending')" class="h-20 text-xl font-black rounded-[1.5rem] bg-yellow-50 text-yellow-700 active:bg-yellow-200 transition">Pending</button>
-                        <button onclick="manuallyUpdateStatus('confirmed')" class="h-20 text-xl font-black rounded-[1.5rem] bg-green-50 text-green-700 active:bg-green-200 transition">Confirmed</button>
-                        <button onclick="manuallyUpdateStatus('Audition Not Sent')" class="h-20 text-xl font-black rounded-[1.5rem] bg-purple-50 text-purple-700 active:bg-purple-200 transition">Not Sent</button>
-                        <button onclick="manuallyUpdateStatus('declined')" class="h-20 text-xl font-black rounded-[1.5rem] bg-red-50 text-red-700 active:bg-red-200 transition">Declined</button>
+                <div class="bg-white rounded-[2rem] p-5 shadow-sm border border-gray-100 mb-4">
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 ml-1">Quick Status</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="manuallyUpdateStatus('pending')" class="h-14 text-base font-black rounded-2xl bg-[#fef3c7] text-[#a16207] active:bg-[#fde68a] transition">Pending</button>
+                        <button onclick="manuallyUpdateStatus('confirmed')" class="h-14 text-base font-black rounded-2xl bg-[#dcfce7] text-[#15803d] active:bg-[#bbf7d0] transition">Confirmed</button>
+                        <button onclick="manuallyUpdateStatus('Audition Not Sent')" class="h-14 text-base font-black rounded-2xl bg-purple-100 text-purple-700 active:bg-purple-200 transition">Not Sent</button>
+                        <button onclick="manuallyUpdateStatus('declined')" class="h-14 text-base font-black rounded-2xl bg-red-100 text-red-700 active:bg-red-200 transition">Declined</button>
                     </div>
                 </div>
                 
-                <div class="space-y-4">
-                    <button onclick="startMoveFlow()" class="w-full flex items-center p-6 bg-blue-600 text-white rounded-[2.5rem] shadow-xl active:scale-[0.98] transition">
-                        <i class="fa-solid fa-calendar-days text-4xl w-16 text-center"></i>
+                <div class="space-y-3">
+                    <button onclick="startMoveFlow()" class="w-full flex items-center p-4 bg-white border border-gray-200 rounded-[2rem] shadow-sm active:bg-gray-50 transition">
+                        <div class="w-14 h-14 rounded-full bg-[#f0f4ff] flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-calendar-days text-2xl text-blue-600"></i>
+                        </div>
                         <div class="text-left flex-1 pl-4">
-                            <p class="font-black text-2xl">Move Audition</p>
-                            <p class="font-bold text-blue-200 text-base mt-1">Select a new slot instantly</p>
+                            <p class="font-black text-xl text-gray-900">Move Audition</p>
+                            <p class="font-bold text-gray-400 text-sm mt-0.5">Select a new slot instantly</p>
                         </div>
                     </button>
 
-                    <button onclick="executeCancelFlow()" class="w-full flex items-center p-6 bg-red-50 text-red-700 rounded-[2.5rem] border-[3px] border-transparent active:border-red-200 active:bg-red-100 transition">
-                        <i class="fa-solid fa-user-xmark text-4xl w-16 text-center text-red-500"></i>
+                    <button onclick="executeCancelFlow()" class="w-full flex items-center p-4 bg-white border border-red-100 rounded-[2rem] shadow-sm active:bg-red-50 transition">
+                        <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-user-xmark text-2xl text-red-500"></i>
+                        </div>
                         <div class="text-left flex-1 pl-4">
-                            <p class="font-black text-2xl">Cancel Audition</p>
-                            <p class="font-bold text-red-500 text-base mt-1">Declines & frees this exact slot</p>
+                            <p class="font-black text-xl text-red-600">Cancel Audition</p>
+                            <p class="font-bold text-red-400 text-sm mt-0.5">Declines & frees this slot</p>
                         </div>
                     </button>
                     
-                    <button onclick="handleResendDetails()" class="w-full flex items-center p-6 bg-white text-gray-800 rounded-[2.5rem] shadow-sm active:bg-gray-100 transition">
-                        <i class="fa-regular fa-paper-plane text-4xl w-16 text-center text-gray-400"></i>
+                    <button onclick="handleResendDetails()" class="w-full flex items-center p-4 bg-white border border-gray-200 rounded-[2rem] shadow-sm active:bg-gray-50 transition">
+                        <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                            <i class="fa-regular fa-paper-plane text-2xl text-gray-500"></i>
+                        </div>
                         <div class="text-left flex-1 pl-4">
-                            <p class="font-black text-2xl">Resend Details</p>
-                            <p class="font-bold text-gray-500 text-base mt-1">Opens default mail template</p>
+                            <p class="font-black text-xl text-gray-900">Resend Details</p>
+                            <p class="font-bold text-gray-400 text-sm mt-0.5">Opens default mail template</p>
                         </div>
                     </button>
 
-                    <button onclick="sendEmail('chase'); closeAllModals();" class="w-full flex items-center p-6 bg-orange-50 text-orange-800 rounded-[2.5rem] shadow-sm active:bg-orange-100 transition">
-                        <i class="fa-regular fa-clock text-4xl w-16 text-center text-orange-500"></i>
+                    <button onclick="sendEmail('chase'); closeAllModals();" class="w-full flex items-center p-4 bg-white border border-orange-100 rounded-[2rem] shadow-sm active:bg-orange-50 transition">
+                        <div class="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                            <i class="fa-regular fa-clock text-2xl text-orange-500"></i>
+                        </div>
                         <div class="text-left flex-1 pl-4">
-                            <p class="font-black text-2xl">Chase Confirmation</p>
-                            <p class="font-bold text-orange-600 text-base mt-1">Send "as this is soon" email</p>
+                            <p class="font-black text-xl text-orange-600">Chase Confirmation</p>
+                            <p class="font-bold text-orange-400 text-sm mt-0.5">Send "as this is soon" email</p>
                         </div>
                     </button>
                 </div>
@@ -833,7 +830,6 @@
         }
 
         async function executeCancelFlow() {
-            // Requirement 2: Move to Declined status -> Free up slot
             if(!activeAuditionId) return;
             const a = auditions.find(x => x.id === activeAuditionId);
             if(!a) return;
@@ -863,7 +859,7 @@
             
             const emptySlots = auditions.filter(x => x.status === 'empty');
             if(emptySlots.length === 0) {
-                list.innerHTML = `<div class="p-12 text-center text-gray-500 font-bold text-2xl">No empty slots available.</div>`;
+                list.innerHTML = `<div class="p-10 text-center text-gray-500 font-bold text-lg">No empty slots available.</div>`;
             } else {
                 emptySlots.sort((a,b) => {
                     const diff = a.date.localeCompare(b.date);
@@ -872,13 +868,13 @@
 
                 emptySlots.forEach(slot => {
                     const btn = document.createElement('button');
-                    btn.className = 'w-full bg-white rounded-[2rem] p-7 shadow-sm mb-4 flex justify-between items-center active:bg-blue-50 active:scale-[0.98] transition border border-gray-100';
+                    btn.className = 'w-full bg-white rounded-[2rem] p-6 shadow-sm mb-3 flex justify-between items-center active:bg-blue-50 active:scale-[0.98] transition border border-gray-100';
                     btn.innerHTML = `
                         <div class="text-left">
-                            <p class="font-black text-gray-900 text-2xl">${slot.date}</p>
-                            <p class="font-bold text-gray-500 text-lg mt-1">Tap to move here</p>
+                            <p class="font-black text-gray-900 text-xl">${slot.date}</p>
+                            <p class="font-bold text-gray-400 text-sm mt-1 uppercase tracking-wider">Tap to move here</p>
                         </div>
-                        <div class="bg-blue-100 text-blue-700 font-black text-2xl px-6 py-4 rounded-[1.5rem]">
+                        <div class="bg-blue-50 text-blue-600 font-black text-xl px-5 py-3 rounded-2xl">
                             ${slot.time}
                         </div>
                     `;
@@ -890,7 +886,6 @@
         }
 
         async function executeMoveFlow(newSlotId) {
-            // Requirement 3: Move to Free Slot -> Email -> Pending
             const oldA = auditions.find(x => x.id === activeAuditionId);
             const newA = auditions.find(x => x.id === newSlotId);
             if(!oldA || !newA) return;
@@ -922,11 +917,11 @@
         }
 
         // ============================================================================
-        // AUTOFILL FROM LINKS (Req 6)
+        // AUTOFILL FROM LINKS
         // ============================================================================
         async function autoFillFromLinks() {
             if(!activeProject) return;
-            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-purple-600 space-y-4 pt-16"><i class="fa-solid fa-wand-magic-sparkles fa-bounce text-6xl"></i><p class="text-2xl font-bold">Auto-filling magic...</p></div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-purple-600 space-y-4 pt-16"><i class="fa-solid fa-wand-magic-sparkles fa-bounce text-5xl"></i><p class="text-xl font-bold">Auto-filling magic...</p></div>';
 
             const { data: linksData } = await supabaseClient.from('links').select('*');
             if (!linksData) { loadData(); return; }
@@ -999,7 +994,7 @@
             document.getElementById('tmplBody').value = tmpl.body;
         }
 
-        // Extremely Strict Try/Catch Delete+Insert to Fix Cross-Device Unique Errors
+        // Strict Try/Catch Delete+Insert to Fix Cross-Device Syncing
         async function saveTemplate() {
             if(!activeProject) {
                 alert("No active project loaded.");
@@ -1011,7 +1006,7 @@
             
             try {
                 // Engage loading UI
-                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-5xl"></i> SAVING...';
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl"></i> Saving...';
                 btn.disabled = true;
                 
                 const senderEmail = document.getElementById('tmplSender').value.trim();
@@ -1021,14 +1016,14 @@
                 const subject = document.getElementById('tmplSubject').value;
                 const body = document.getElementById('tmplBody').value;
 
-                // 1. Delete to bypass exact ID matching & unique constraint schema issues
+                // 1. Delete to bypass exact ID matching cross-device unique issues
                 await supabaseClient
                     .from('templates')
                     .delete()
                     .eq('project_id', activeProject.id)
                     .eq('type', type);
 
-                // 2. Insert fresh template logic for absolute cross-device reliability
+                // 2. Insert fresh template logic for absolute reliability
                 const { error: insertError } = await supabaseClient
                     .from('templates')
                     .insert({ 
@@ -1038,17 +1033,15 @@
                         body: body 
                     });
 
-                if (insertError) {
-                    throw new Error(insertError.message);
-                }
+                if (insertError) throw new Error(insertError.message);
 
-                // Force refresh local template cache globally so app recognizes the new template
+                // Force refresh local template cache globally
                 await loadData();
                 
                 // Success Visuals
-                btn.innerHTML = '<i class="fa-solid fa-check text-5xl"></i> SAVED!';
-                btn.classList.remove('bg-blue-600', 'active:bg-blue-800');
-                btn.classList.add('bg-green-500', 'active:bg-green-600');
+                btn.innerHTML = '<i class="fa-solid fa-check text-2xl"></i> Saved!';
+                btn.classList.remove('bg-blue-600');
+                btn.classList.add('bg-green-500');
                 
                 setTimeout(() => {
                     closeAllModals();
@@ -1061,8 +1054,8 @@
                 // Guaranteed button UI reset
                 setTimeout(() => {
                     btn.innerHTML = originalHTML;
-                    btn.classList.remove('bg-green-500', 'active:bg-green-600');
-                    btn.classList.add('bg-blue-600', 'active:bg-blue-800');
+                    btn.classList.remove('bg-green-500');
+                    btn.classList.add('bg-blue-600');
                     btn.disabled = false;
                 }, 1200);
             }
@@ -1074,7 +1067,6 @@
             
             if(!a || !a.email) return alert("No agent email address found to send to.");
             
-            // Will pull from correctly updated `templates` variable
             let tmpl = templates.find(x => x.type === type) || BOILERPLATES[type];
 
             const rep = (str) => str
@@ -1110,12 +1102,12 @@
         function updateUndoButton() {
             const btn = document.getElementById('undoBtn');
             if (undoStack.length > 0) {
-                btn.classList.remove('opacity-50', 'cursor-not-allowed', 'text-gray-600');
-                btn.classList.add('text-blue-600');
+                btn.classList.remove('opacity-50', 'cursor-not-allowed', 'text-gray-500');
+                btn.classList.add('text-blue-600', 'bg-blue-50');
                 btn.disabled = false;
             } else {
-                btn.classList.add('opacity-50', 'cursor-not-allowed', 'text-gray-600');
-                btn.classList.remove('text-blue-600');
+                btn.classList.add('opacity-50', 'cursor-not-allowed', 'text-gray-500');
+                btn.classList.remove('text-blue-600', 'bg-blue-50');
                 btn.disabled = true;
             }
         }
@@ -1123,7 +1115,7 @@
         async function executeUndo() {
             if (undoStack.length === 0) return;
             const action = undoStack.pop();
-            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-blue-600 space-y-4 pt-16"><i class="fa-solid fa-rotate-left fa-spin-reverse text-7xl"></i><p class="text-2xl font-bold">Reverting action...</p></div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-blue-600 space-y-4 pt-16"><i class="fa-solid fa-rotate-left fa-spin-reverse text-5xl"></i><p class="text-xl font-bold">Reverting action...</p></div>';
 
             try {
                 if (action.type === 'fill_slot') await supabaseClient.from('auditions').update(action.data.oldState).eq('id', action.data.id);
@@ -1158,13 +1150,13 @@
         function handleCSVUpload(event) {
             const file = event.target.files[0];
             if (!file || !activeProject) return;
-            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-blue-600 space-y-4 pt-16"><i class="fa-solid fa-file-import fa-bounce text-7xl"></i><p class="text-2xl font-bold">Importing Data...</p></div>';
+            document.getElementById('auditionsList').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-blue-600 space-y-4 pt-16"><i class="fa-solid fa-file-import fa-bounce text-5xl"></i><p class="text-xl font-bold">Importing Data...</p></div>';
             
             Papa.parse(file, {
                 header: true, skipEmptyLines: true,
                 complete: async function(results) {
                     const { data: currentAuds } = await supabaseClient.from('auditions').select('*').eq('project_id', activeProject.id);
-                    await supabaseClient.from('auditions').delete().eq('project_id', activeProject.id); // Truncate
+                    await supabaseClient.from('auditions').delete().eq('project_id', activeProject.id);
 
                     const inserts = results.data.map(row => {
                         const hasActor = row['First Name'] && row['First Name'].trim() !== '';
