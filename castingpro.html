@@ -44,6 +44,30 @@
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
+    <!-- AUTH OVERLAY -->
+    <div id="authOverlay" class="fixed inset-0 bg-gray-900 z-[100] flex flex-col justify-center items-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm p-8 shadow-2xl">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-black text-gray-900 tracking-tight mb-1">Casting Pro</h2>
+                <p class="text-sm text-gray-500 font-medium">Please sign in to continue</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Email</label>
+                    <input type="email" id="authEmail" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Password</label>
+                    <input type="password" id="authPassword" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition" required>
+                </div>
+                <div id="authError" class="text-red-500 text-xs font-semibold hidden"></div>
+                <button type="submit" id="authBtn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-blue-700 transition flex justify-center items-center gap-2 mt-2">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 px-4 py-4 flex justify-between items-center z-20 sticky top-0 shadow-sm relative">
         <div>
@@ -73,6 +97,10 @@
             <!-- Refresh Button -->
             <button onclick="refreshData()" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md hover:bg-blue-700 transition" title="Refresh">
                 <i class="fa-solid fa-rotate-right"></i>
+            </button>
+            <!-- Logout Button -->
+            <button onclick="handleLogout()" class="bg-red-50 text-red-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-red-100 transition ml-2" title="Sign Out">
+                <i class="fa-solid fa-right-from-bracket"></i>
             </button>
         </div>
     </header>
@@ -246,10 +274,55 @@
             }
         };
 
-        // --- INITIALIZATION ---
+        // --- AUTH & INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadProjects();
+            // Check active session on load
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                document.getElementById('authOverlay').classList.add('hidden');
+                await loadProjects();
+            }
+
+            // Listen for auth changes
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN') {
+                    document.getElementById('authOverlay').classList.add('hidden');
+                    await loadProjects();
+                } else if (event === 'SIGNED_OUT') {
+                    document.getElementById('authOverlay').classList.remove('hidden');
+                    // Clear data visually
+                    projects = [];
+                    auditions = [];
+                    document.getElementById('auditionsList').innerHTML = '';
+                    document.getElementById('projectSelector').innerHTML = '<option value="">Loading Projects...</option>';
+                }
+            });
         });
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const btn = document.getElementById('authBtn');
+            const err = document.getElementById('authError');
+            
+            err.classList.add('hidden');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Signing in...';
+            btn.disabled = true;
+
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            
+            if (error) {
+                err.textContent = error.message;
+                err.classList.remove('hidden');
+                btn.innerHTML = 'Sign In';
+                btn.disabled = false;
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+        }
 
         // ============================================================================
         // CORE DATA LOADERS
