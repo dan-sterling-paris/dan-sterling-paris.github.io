@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OK, BOOMER! – Casting Breakdown</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 11pt;
+      line-height: 1.65;
+      color: #1a1a1a;
+      background: #fff;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 40px 52px 60px;
+    }
+
+    /* ── HEADER ── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      border-bottom: 2px solid #1a1a1a;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    .header-title-block { flex: 1; }
+
+    h1 {
+      font-size: 26pt;
+      font-weight: bold;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13pt;
+      font-weight: normal;
+      color: #555;
+      letter-spacing: 0.01em;
+    }
+
+    .header-meta {
+      font-size: 9pt;
+      color: #666;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+/* ── INTRO ── */
+    .intro {
+      margin-bottom: 20px;
+      padding: 16px 20px;
+      background: #fafafa;
+      border-left: 4px solid #1a1a1a;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .intro p { margin-bottom: 8px; }
+    .intro p:last-child { margin-bottom: 0; }
+
+    /* ── SECTION HEADINGS ── */
+    h2 {
+      font-size: 9pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #555;
+      margin: 28px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    p { margin-bottom: 8px; }
+
+    blockquote {
+      border-left: 3px solid #ccc;
+      margin: 12px 0 12px 0;
+      padding: 6px 16px;
+      font-style: italic;
+      color: #555;
+      font-size: 10.5pt;
+    }
+
+    /* ── NOTICE BOXES ── */
+    .notice {
+      border-radius: 5px;
+      padding: 14px 18px;
+      margin: 14px 0;
+    }
+
+    .notice-title {
+      font-weight: bold;
+      font-size: 9.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 7px;
+    }
+
+    .notice p { margin-bottom: 5px; font-size: 10.5pt; }
+    .notice p:last-child { margin-bottom: 0; }
+
+    .notice.guitar {
+      background: #f4f4f4;
+      border: 1.5px solid #999;
+    }
+
+    .notice.accommodation {
+      background: #f0f4f8;
+      border: 1.5px solid #7a9bbf;
+    }
+
+    .notice.guitar .notice-title { color: #333; }
+    .notice.accommodation .notice-title { color: #2c4a6b; }
+
+    /* ── PRODUCTION TABLE ── */
+    .production-grid {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 5px 14px;
+      margin-top: 8px;
+      font-size: 10.5pt;
+    }
+
+    .production-grid .label {
+      font-weight: bold;
+      color: #444;
+    }
+
+    /* ── ROLES ── */
+    .roles-grid {
+      margin-top: 4px;
+    }
+
+    .role {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      background: #fff;
+    }
+
+    h3 {
+      font-size: 11pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 2px;
+    }
+
+.role-meta {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 2px 8px;
+      font-size: 9pt;
+      margin: 7px 0 9px;
+      color: #444;
+    }
+
+    .role-meta .label { font-weight: bold; color: #333; }
+
+    .role-desc {
+      font-size: 10.5pt;
+      color: #333;
+      margin-bottom: 9px;
+      font-style: italic;
+    }
+
+    .req {
+      border-radius: 3px;
+      padding: 7px 11px;
+      font-size: 9.5pt;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .req.guitar-yes {
+      background: #eef3e8;
+      border-left: 4px solid #4a7c2f;
+      color: #2a4a1a;
+    }
+
+    .req.guitar-no {
+      background: #f5f5f5;
+      border-left: 4px solid #aaa;
+      color: #444;
+    }
+
+    .req.guitar-optional {
+      background: #fdf6e8;
+      border-left: 4px solid #c89a2a;
+      color: #5a4010;
+    }
+
+    .fee-box {
+      font-size: 9pt;
+      color: #555;
+      margin-bottom: 7px;
+    }
+
+    .fee-box strong { font-size: 10pt; color: #1a1a1a; }
+
+    .accom {
+      font-size: 9pt;
+      color: #555;
+      padding: 6px 10px;
+      background: #f0f4f8;
+      border-radius: 3px;
+    }
+
+    .accom strong { color: #2c4a6b; }
+
+    /* ── FOOTER ── */
+    .page-footer {
+      margin-top: 36px;
+      padding-top: 12px;
+      border-top: 1px solid #ddd;
+      font-size: 8.5pt;
+      color: #888;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      body { padding: 18px 28px 36px; font-size: 10pt; }
+      h1 { font-size: 22pt; }
+.role { page-break-inside: avoid; }
+      .notice { page-break-inside: avoid; }
+      .page-footer { position: fixed; bottom: 18px; left: 28px; right: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── PAGE HEADER ── -->
+  <div class="page-header">
+    <div class="header-title-block">
+      <h1>OK, BOOMER! <span class="subtitle">(Workshop)</span></h1>
+      <div class="header-meta">
+        Casting Breakdown &nbsp;&middot;&nbsp; Director: Mike James &nbsp;&middot;&nbsp; Producer: Dan Blumenau &nbsp;&middot;&nbsp; Sterling Paris Ltd<br>
+        Casting: Debbie O'Brien Casting &nbsp;&middot;&nbsp; Submit: <strong><a href="http://linktr.ee/dobcasting" target="_blank">linktr.ee/dobcasting</a></strong>
+      </div>
+    </div>
+    <img src="logo.png" alt="Logo" style="height: 80px; width: auto; object-fit: contain;" />
+  </div>
+
+  <!-- ── INTRO ── -->
+  <div class="intro">
+    <p>Hello all,</p>
+    <p>We are thrilled to be working on this upcoming workshop production of <em>"OK, BOOMER!"</em> — a new play with music that explores the trials of ageing in the modern world through the eyes of a 70-year-old.</p>
+    <p>We are casting by self-tape. Please read the important notes below on guitar requirements and accommodation before submitting.</p>
+    <p>Submit via: <strong><a href="http://linktr.ee/dobcasting" target="_blank">linktr.ee/dobcasting</a></strong> &nbsp;&middot;&nbsp; Deadline: <strong>17 April 2026</strong></p>
+    <p style="margin-top:6px;">Thanks,<br>Dan</p>
+  </div>
+
+  <!-- ── GUITAR NOTICE ── -->
+  <div class="notice guitar">
+    <div class="notice-title">Important: Update on Guitar Requirements</div>
+    <p>The original breakdown indicated that guitar proficiency was essential for every member of the cast. <strong>This has now changed.</strong> Guitar is required for some roles only — please read individual role requirements carefully.</p>
+    <p>In brief: <strong>YOUNG CAMERON, ROGER</strong> and <strong>SUMMER</strong> require strong guitar. <strong>CYNDI</strong> — guitar is an advantage but not essential. <strong>CAMERON</strong> and <strong>BARBARA</strong> — <strong>no guitar required</strong>.</p>
+    <p>Strong vocals remain important across the company.</p>
+  </div>
+
+  <!-- ── ACCOMMODATION NOTICE ── -->
+  <div class="notice accommodation">
+    <div class="notice-title">Accommodation</div>
+    <p>Accommodation in Duns for the full rehearsal and performance week (Monday 4th – Saturday 9th May 2026) is <strong>to be confirmed</strong>. Further details will be provided to successful candidates.</p>
+    <p><strong>If you are based in or near Duns</strong>, please mention this when you submit — it is helpful for us to know.</p>
+  </div>
+
+  <!-- ── PROJECT OVERVIEW ── -->
+  <h2>Project Overview</h2>
+
+  <p><em>"OK, BOOMER!"</em> is a new play with music by Mike James that explores the trials of ageing in the modern world through the eyes of a 70-year-old Scottish man.</p>
+
+  <blockquote>"The tragedy of old age is not that one is old, but that one is young." — Oscar Wilde</blockquote>
+
+  <p>The show serves as a celebration of the guitar and its versatility. Much of the music is played and sung live by the cast, reimagining tracks by artists ranging from David Bowie and Cyndi Lauper to Chappell Roan. Guitar proficiency is a key requirement for several roles — though not all — and is detailed under each character below.</p>
+
+  <p><strong>Performance:</strong> The piece will be presented as a work-in-progress public sharing with an invited audience and industry feedback at the Duns Play Fest.</p>
+
+  <p>DunsPlayFest was established in 2019 as a nine-day celebration of brand-new theatre and dramatic writing, staged in the historic Borders town of Duns. Now in its 6th incarnation, it has grown to over 60 performances, workshops and talks, centred on Duns Volunteer Hall — the Heart For Duns. Featuring around 100 events including play premieres, rehearsed readings, workshops, cabaret acts, community events and parties, DunsPlayFest has gathered a reputation for quality theatre, music and wonderful atmosphere.</p>
+
+  <!-- ── PRODUCTION DETAILS ── -->
+  <h2>Production Details</h2>
+  <div class="production-grid">
+    <span class="label">Rehearsals:</span><span>Monday 4th – Friday 8th May 2026</span>
+    <span class="label">Performance:</span><span>Saturday 9th May 2026 at 2:00 pm</span>
+    <span class="label">Location:</span><span>Duns, United Kingdom</span>
+    <span class="label">Director:</span><span>Mike James</span>
+    <span class="label">Producer:</span><span>Dan Blumenau</span>
+    <span class="label">Production company:</span><span>Sterling Paris Ltd</span>
+    <span class="label">Casting:</span><span>Debbie O'Brien Casting</span>
+    <span class="label">Contract type:</span><span>Non-union – Commercially Financed</span>
+    <span class="label">Self-tape deadline:</span><span><strong>17 April 2026</strong></span>
+    <span class="label">Submissions:</span><span><a href="http://linktr.ee/dobcasting" target="_blank">linktr.ee/dobcasting</a></span>
+  </div>
+
+  <!-- ── ROLES ── -->
+  <h2>Roles (6)</h2>
+
+  <div class="roles-grid">
+
+    <!-- CAMERON -->
+    <div class="role">
+      <h3>CAMERON</h3>
+      <div class="role-meta">
+        <span class="label">Playing age:</span><span>60–75 years</span>
+        <span class="label">Gender:</span><span>Male, Transgender male, Non-Binary</span>
+        <span class="label">Accent:</span><span>Scottish — convincing accent essential</span>
+        <span class="label">Appearance:</span><span>Any</span>
+      </div>
+      <p class="role-desc">Retired, grouchy, but with a hidden spark. He struggles to navigate a changing world and his own ageing process.</p>
+      <div class="req guitar-no">
+        <strong>Requirements:</strong> Strong vocal ability. <strong>Guitar is NOT required for this role.</strong>
+      </div>
+      <div class="fee-box"><strong>Fee: £600</strong> &nbsp; £535.38 basic + £64.62 holiday pay</div>
+      <div class="accom"><strong>Accommodation:</strong> To be confirmed. Based in or near Duns? Please mention when submitting.</div>
+    </div>
+
+    <!-- YOUNG CAMERON -->
+    <div class="role">
+      <h3>YOUNG CAMERON</h3>
+      <div class="role-meta">
+        <span class="label">Playing age:</span><span>28–40 (playing age ~30)</span>
+        <span class="label">Gender:</span><span>Male, Transgender male, Non-Binary</span>
+        <span class="label">Accent:</span><span>Scottish — convincing accent essential</span>
+        <span class="label">Appearance:</span><span>Any</span>
+      </div>
+      <p class="role-desc">A teacher; a younger, far more optimistic version of the older Cameron. Doubles as ensemble.</p>
+      <div class="req guitar-yes">
+        <strong>Requirements:</strong> Strong actor-musician. <strong>Guitar proficiency essential</strong> (acoustic or semi-acoustic). Strong vocals.
+      </div>
+      <div class="fee-box"><strong>Fee: £600</strong> &nbsp; £535.38 basic + £64.62 holiday pay</div>
+      <div class="accom"><strong>Accommodation:</strong> To be confirmed. Based in or near Duns? Please mention when submitting.</div>
+    </div>
+
+    <!-- CYNDI -->
+    <div class="role">
+      <h3>CYNDI</h3>
+      <div class="role-meta">
+        <span class="label">Playing age:</span><span>28–40 (playing age ~33)</span>
+        <span class="label">Gender:</span><span>Female, Transgender female, Non-Binary</span>
+        <span class="label">Accent:</span><span>Scottish — ideally convincing accent</span>
+        <span class="label">Appearance:</span><span>Any</span>
+      </div>
+      <p class="role-desc">Cameron's daughter. Bubbly, energetic, bordering on annoying. She loves her father but struggles to connect with him. Doubles as ensemble.</p>
+      <div class="req guitar-optional">
+        <strong>Requirements:</strong> Strong vocals. <strong>Guitar an advantage but not essential.</strong>
+      </div>
+      <div class="fee-box"><strong>Fee: £600</strong> &nbsp; £535.38 basic + £64.62 holiday pay</div>
+      <div class="accom"><strong>Accommodation:</strong> To be confirmed. Based in or near Duns? Please mention when submitting.</div>
+    </div>
+
+    <!-- ROGER -->
+    <div class="role">
+      <h3>ROGER</h3>
+      <div class="role-meta">
+        <span class="label">Playing age:</span><span>35–45 (playing age ~38)</span>
+        <span class="label">Gender:</span><span>Male, Transgender male, Non-Binary</span>
+        <span class="label">Accent:</span><span>Scottish accent not essential</span>
+        <span class="label">Appearance:</span><span>Any</span>
+      </div>
+      <p class="role-desc">Cyndi's husband. Friendly, long-suffering, trying to keep the peace. Doubles as ensemble.</p>
+      <div class="req guitar-yes">
+        <strong>Requirements:</strong> Strong actor-musician. <strong>Guitar proficiency essential</strong> (acoustic or semi-acoustic). Strong vocals.
+      </div>
+      <div class="fee-box"><strong>Fee: £600</strong> &nbsp; £535.38 basic + £64.62 holiday pay</div>
+      <div class="accom"><strong>Accommodation:</strong> To be confirmed. Based in or near Duns? Please mention when submitting.</div>
+    </div>
+
+    <!-- BARBARA -->
+    <div class="role">
+      <h3>BARBARA</h3>
+      <div class="role-meta">
+        <span class="label">Playing age:</span><span>50–70 (playing age ~63)</span>
+        <span class="label">Gender:</span><span>Female, Transgender female, Non-Binary</span>
+        <span class="label">Accent:</span><span>Scottish accent not essential</span>
+        <span class="label">Appearance:</span><span>Any</span>
+      </div>
+      <p class="role-desc">Cameron's ex-wife. Generation X. Suspicious of anyone younger than 62 and carries a cynical edge. Doubles as ensemble.</p>
+      <div class="req guitar-no">
+        <strong>Requirements:</strong> Strong actor with excellent vocal ability. <strong>Guitar is NOT required for this role.</strong>
+      </div>
+      <div class="fee-box"><strong>Fee: £600</strong> &nbsp; £535.38 basic + £64.62 holiday pay</div>
+      <div class="accom"><strong>Accommodation:</strong> To be confirmed. Based in or near Duns? Please mention when submitting.</div>
+    </div>
+
+    <!-- SUMMER -->
+    <div class="role">
+      <h3>SUMMER</h3>
+      <div class="role-meta">
+        <span class="label">Playing age:</span><span>Any (playing age ~22)</span>
+        <span class="label">Gender:</span><span>Female, Transgender female, Non-Binary</span>
+        <span class="label">Accent:</span><span>Any</span>
+        <span class="label">Appearance:</span><span>Any</span>
+      </div>
+      <p class="role-desc">Starbucks barista. Brightly dyed hair, tattooed, pierced. Embodies the Gen Z attitude that baffles Cameron. Doubles as ensemble. This is a strong acting role first and foremost.</p>
+      <div class="req guitar-yes">
+        <strong>Requirements:</strong> Strong actor-musician. <strong>Guitar proficiency essential</strong> (acoustic or semi-acoustic). Strong vocals.
+      </div>
+      <div class="fee-box"><strong>Fee: £600</strong> &nbsp; £535.38 basic + £64.62 holiday pay</div>
+      <div class="accom"><strong>Accommodation:</strong> To be confirmed. Based in or near Duns? Please mention when submitting.</div>
+    </div>
+
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <div class="page-footer">
+    <span>OK, BOOMER! (Workshop) &nbsp;&middot;&nbsp; Sterling Paris Ltd &nbsp;&middot;&nbsp; Casting: Debbie O'Brien Casting</span>
+    <span>Self-tape deadline: <strong>17 April 2026</strong> &nbsp;&middot;&nbsp; <a href="http://linktr.ee/dobcasting" target="_blank">linktr.ee/dobcasting</a></span>
+  </div>
+
+</body>
+</html>
