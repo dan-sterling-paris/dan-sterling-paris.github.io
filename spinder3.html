@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LinkTinder</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* Swipe Animations */
+        .card-transition {
+            transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+        }
+
+        .swipe-left { transform: translateX(-150%) rotate(-15deg) !important; opacity: 0; }
+        .swipe-right { transform: translateX(150%) rotate(15deg) !important; opacity: 0; }
+        .swipe-up { transform: translateY(-150%) !important; opacity: 0; }
+
+        /* Action Buttons Hover & Active States */
+        .action-btn { transition: transform 0.1s, background-color 0.2s; }
+        .action-btn:active { transform: scale(0.9); }
+
+        /* Hide scrollbar for the main view but allow it in iframe/history */
+        body {
+            overflow: hidden;
+            overscroll-behavior-y: contain;
+        }
+
+        /* Stamp overlay for animations */
+        .stamp {
+            position: absolute;
+            padding: 0.5rem 1rem;
+            border: 4px solid;
+            border-radius: 10px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .stamp-score {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+        }
+
+        .show-stamp { opacity: 1 !important; }
+    </style>
+</head>
+<body class="bg-gray-100 h-[100dvh] w-screen text-gray-800 font-sans overflow-hidden">
+
+    <!-- HOME VIEW -->
+    <div id="home-view" class="h-full w-full flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+        <i class="fa-solid fa-fire text-pink-500 text-6xl mb-6 shadow-sm rounded-full bg-white p-4"></i>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">CV Tinder</h1>
+        <p class="text-gray-500 mb-8">Categorise candidates quickly and efficiently.</p>
+
+        <div class="w-full flex flex-col gap-3">
+
+            <!-- Role Selection Filter -->
+            <div class="relative w-full text-left mb-1">
+                <label class="block text-sm font-semibold text-gray-500 mb-1 px-1">Filter by Role</label>
+                <div class="relative">
+                    <select id="role-select" class="w-full bg-white text-gray-700 font-bold py-4 px-4 pr-10 rounded-xl border border-gray-200 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-pink-500 cursor-pointer transition-all">
+                        <option value="all">Loading roles...</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <button onclick="showView('swipe')" class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold py-4 px-6 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-layer-group"></i> Start Categorising
+            </button>
+
+            <button onclick="showView('submissions')" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-folder-open text-pink-500"></i> All Submissions
+            </button>
+
+            <button id="csv-btn" onclick="openExportModal()" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2">
+                <i class="fa-solid fa-file-csv text-green-500"></i> Export to CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN SWIPE VIEW -->
+    <div id="swipe-view" class="hidden h-full w-full flex flex-col relative bg-gray-100">
+
+        <!-- Header area wrapper for fixed positioning -->
+        <div class="w-full flex flex-col shrink-0 z-20">
+            <!-- Main Header bar -->
+            <div class="w-full h-14 flex items-center justify-center bg-white border-b border-gray-200 shadow-sm relative">
+                <div class="w-full max-w-5xl flex items-center justify-between px-4 relative">
+
+                    <!-- Back Button -->
+                    <button onclick="showView('home')" class="text-gray-400 hover:text-gray-600 p-2 -ml-2 rounded-full z-10">
+                        <i class="fa-solid fa-house"></i>
+                    </button>
+
+                    <!-- Centered Logo -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="flex items-center gap-2 text-pink-500 font-bold text-xl">
+                            <i class="fa-solid fa-fire"></i> LinkTinder
+                        </div>
+                    </div>
+
+                    <!-- Progress Pill -->
+                    <div id="progress-indicator" class="text-xs font-bold text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-full border border-gray-200 z-10 shadow-inner whitespace-nowrap min-w-[70px] text-center">
+                        - / -
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sleek Progress Bar Track -->
+            <div class="w-full h-1 bg-gray-200">
+                <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-pink-500 to-orange-400 transition-all duration-300 rounded-r-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Card Container -->
+        <div class="flex-1 w-full relative flex items-center justify-center min-h-0 overflow-hidden">
+
+            <!-- Loading State -->
+            <div id="loading-state" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 hidden z-10 bg-gray-100">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-pink-500 mb-4"></i>
+                <h2 class="text-xl font-bold text-gray-800">Preparing candidates...</h2>
+                <p class="text-gray-500 mt-2">Loading your application stack.</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 hidden z-10 bg-gray-100">
+                <div class="w-24 h-24 bg-white shadow-sm border border-gray-200 rounded-full flex items-center justify-center mb-4 text-green-500">
+                    <i class="fa-solid fa-check-double text-4xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">You're all caught up!</h2>
+                <p class="text-gray-500 mt-2">No more candidates found pending a decision for the selected role.</p>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="showView('home')" class="text-gray-600 font-semibold py-2 px-6 border border-gray-300 bg-white shadow-sm rounded-xl hover:bg-gray-50 transition-colors">
+                        Go Home
+                    </button>
+                    <button onclick="startSwipeSession()" class="text-white bg-pink-500 font-semibold py-2 px-6 shadow-sm rounded-xl hover:bg-pink-600 transition-colors">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- The Swipable Card -->
+            <div id="tinder-card" class="absolute inset-0 bg-white flex flex-col card-transition z-20 hidden">
+
+                <!-- Card Header -->
+                <div class="bg-white border-b border-gray-200 px-4 py-2 shrink-0 flex flex-col items-center text-center relative z-20">
+                    <h2 id="card-name" class="text-lg font-bold text-gray-800 leading-tight">Loading Name...</h2>
+                    <span id="card-role" class="text-sm font-medium text-gray-500 mt-0.5">Loading Role...</span>
+
+                    <a id="open-external-btn" href="#" target="_blank" class="absolute right-3 top-2 text-gray-400 hover:text-gray-600 p-2">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                </div>
+
+                <!-- Iframe Container -->
+                <div class="flex-1 relative bg-white w-full h-full">
+                    <div id="iframe-loading" class="absolute inset-0 flex items-center justify-center flex-col gap-3 z-0 bg-gray-50">
+                        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
+                        <span class="text-sm text-gray-500 font-medium tracking-wide">Loading CV...</span>
+                    </div>
+                    <iframe id="website-frame" class="absolute inset-0 w-full h-full border-0 z-10 bg-white" style="touch-action: pan-y; overflow-x: hidden;"></iframe>
+                </div>
+
+                <!-- Score Stamp -->
+                <div id="stamp-score" class="stamp stamp-score"></div>
+            </div>
+        </div>
+
+        <!-- Controls: 1–10 score buttons -->
+        <div class="w-full bg-white border-t border-gray-200 shrink-0 z-30 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            <div class="grid grid-cols-5 gap-1.5 w-full px-3">
+                <button onclick="makeDecision('1')"  class="action-btn h-10 rounded-xl bg-red-500   shadow-md flex items-center justify-center text-white font-black text-base hover:bg-red-600   focus:outline-none transition-colors">1</button>
+                <button onclick="makeDecision('2')"  class="action-btn h-10 rounded-xl bg-red-400   shadow-md flex items-center justify-center text-white font-black text-base hover:bg-red-500   focus:outline-none transition-colors">2</button>
+                <button onclick="makeDecision('3')"  class="action-btn h-10 rounded-xl bg-red-300   shadow-md flex items-center justify-center text-white font-black text-base hover:bg-red-400   focus:outline-none transition-colors">3</button>
+                <button onclick="makeDecision('4')"  class="action-btn h-10 rounded-xl bg-amber-400  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-amber-500  focus:outline-none transition-colors">4</button>
+                <button onclick="makeDecision('5')"  class="action-btn h-10 rounded-xl bg-amber-500  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-amber-600  focus:outline-none transition-colors">5</button>
+                <button onclick="makeDecision('6')"  class="action-btn h-10 rounded-xl bg-amber-500  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-amber-600  focus:outline-none transition-colors">6</button>
+                <button onclick="makeDecision('7')"  class="action-btn h-10 rounded-xl bg-green-300  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-green-400  focus:outline-none transition-colors">7</button>
+                <button onclick="makeDecision('8')"  class="action-btn h-10 rounded-xl bg-green-400  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-green-500  focus:outline-none transition-colors">8</button>
+                <button onclick="makeDecision('9')"  class="action-btn h-10 rounded-xl bg-green-500  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-green-600  focus:outline-none transition-colors">9</button>
+                <button onclick="makeDecision('10')" class="action-btn h-10 rounded-xl bg-green-600  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-green-700  focus:outline-none transition-colors">10</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALL SUBMISSIONS VIEW -->
+    <div id="submissions-view" class="hidden h-full w-full flex flex-col mx-auto max-w-md bg-gray-50 relative">
+        <div class="bg-white shadow-sm p-4 flex items-center gap-4 shrink-0 z-10 border-b border-gray-200">
+            <button onclick="showView('home')" class="text-gray-500 hover:text-gray-800 p-2 -ml-2 rounded-full">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1 class="text-xl font-bold text-gray-800 flex-1">All Submissions</h1>
+        </div>
+
+        <div class="p-4 shrink-0 bg-white shadow-sm z-0 space-y-3">
+
+            <!-- Filters Section -->
+            <div class="flex gap-2">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" id="submissions-search" placeholder="Search name or role..."
+                           class="w-full pl-9 pr-2 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all text-sm"
+                           oninput="filterSubmissionsUI()">
+                </div>
+
+                <select id="submissions-role-filter" class="w-1/2 bg-gray-100 border border-transparent rounded-lg px-2 py-2 text-sm text-gray-700 focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-all cursor-pointer" onchange="filterSubmissionsUI()">
+                    <option value="all">All Roles</option>
+                    <!-- Populated via JS -->
+                </select>
+            </div>
+
+            <!-- Decision Filters -->
+            <div class="flex gap-2 flex-wrap mt-1">
+                <button onclick="setFilter('all', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-pink-500 text-white font-medium transition-colors">All</button>
+                <button onclick="setFilter('pending', this)" class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Pending</button>
+                <button onclick="setFilter('1-3', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">1–3</button>
+                <button onclick="setFilter('4-6', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">4–6</button>
+                <button onclick="setFilter('7-10', this)"    class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">7–10</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 relative">
+            <div id="submissions-loading" class="flex justify-center py-8 hidden">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
+            </div>
+            <div id="submissions-list" class="space-y-4 pb-8">
+                <!-- Submission cards injected here via JS -->
+            </div>
+            <div id="submissions-empty" class="text-center py-12 hidden">
+                <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-folder-open text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-gray-800 font-semibold text-lg">No records found</h3>
+                <p class="text-gray-500 text-sm mt-1">Try adjusting your filters or search query.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Role Pop Up Modal -->
+    <div id="multi-role-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-pink-500"></i> Additional Roles
+            </h2>
+            <p class="text-sm text-gray-600" id="multi-role-desc">This candidate applied for other roles. You can categorise them now:</p>
+
+            <div id="multi-role-list" class="flex flex-col gap-3 max-h-[40vh] overflow-y-auto pr-1">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="flex gap-3 mt-2 pt-4 border-t border-gray-100">
+                <button onclick="skipMultiRoles()" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-bold transition-colors">Skip</button>
+                <button id="save-multi-roles-btn" onclick="saveMultiRoles()" class="flex-[2] py-2.5 px-4 bg-pink-500 text-white rounded-xl hover:bg-pink-600 font-bold transition-colors shadow-sm">Save & Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-csv text-green-500"></i> Export Settings
+            </h2>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">File Name</label>
+                <div class="relative">
+                    <input type="text" id="export-filename" class="w-full pl-3 pr-12 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">.csv</span>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Filter Records</label>
+                <select id="export-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
+                    <option value="all">All Records</option>
+                    <option value="pending">Pending</option>
+                    <option value="1-3">1–3 (Low)</option>
+                    <option value="4-6">4–6 (Mid)</option>
+                    <option value="7-10">7–10 (High)</option>
+                </select>
+            </div>
+
+            <div class="flex gap-3 mt-4 pt-4 border-t border-gray-100">
+                <button onclick="closeExportModal()" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-bold transition-colors">Cancel</button>
+                <button id="execute-export-btn" onclick="executeCSVExport()" class="flex-1 py-2.5 px-4 bg-green-500 text-white rounded-xl hover:bg-green-600 font-bold flex items-center justify-center gap-2 transition-colors shadow-sm">
+                    <i class="fa-solid fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-300 -translate-y-24 z-50 flex items-center gap-3">
+        <i class="fa-solid fa-circle-info text-pink-400"></i>
+        <span id="toast-msg" class="text-sm font-medium">Message</span>
+    </div>
+
+    <script>
+        // --- HARDCODED SUPABASE CONFIGURATION ---
+        const appConfig = {
+            url: 'https://oaltkxblacpjjecpauya.supabase.co',
+            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbHRreGJsYWNwamplY3BhdXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTc2ODQsImV4cCI6MjA4NDQ3MzY4NH0.zDfKgAKfWjXMQsOP5ZpD_nl6yhZS1O4H794HqSRDLVo',
+            table: 'links',
+            urlCol: 'url',
+            nameCol: 'name',
+            roleCol: 'role',
+            decisionCol: 'decision'
+        };
+
+        // App State
+        let supabaseClient = null;
+        let isProcessing = false;
+
+        // Swiping & Person State
+        let swipeQueue = [];
+        let currentPerson = null;
+        let activeApplication = null;
+        let pendingOtherApplications = [];
+        let currentTotalCount = 0;
+        let currentCategorisedCount = 0;
+
+        // Submissions State
+        let allPeopleData = [];
+        let currentFilter = 'all';
+
+        // Initialize App
+        function init() {
+            setupSupabase(appConfig.url, appConfig.key);
+            if (supabaseClient) {
+                loadRolesForFilter();
+            }
+        }
+
+        function setupSupabase(url, key) {
+            try {
+                supabaseClient = supabase.createClient(url, key);
+            } catch (error) {
+                showToast("Failed to initialize Supabase. Check credentials.");
+            }
+        }
+
+        // --- DATA FETCHING & GROUPING ---
+
+        function groupApplicationsByPerson(rawData) {
+            const map = new Map();
+            rawData.forEach(item => {
+                const key = item[appConfig.urlCol] || item.id;
+                const itemUpdatedTime = new Date(item.updated_at || 0).getTime();
+
+                if (!map.has(key)) {
+                    map.set(key, {
+                        name: item[appConfig.nameCol],
+                        url: item[appConfig.urlCol],
+                        idFallback: item.id,
+                        applications: [],
+                        latestUpdate: itemUpdatedTime
+                    });
+                } else {
+                    const existing = map.get(key);
+                    if (itemUpdatedTime > existing.latestUpdate) {
+                        existing.latestUpdate = itemUpdatedTime;
+                    }
+                }
+                map.get(key).applications.push(item);
+            });
+
+            const grouped = Array.from(map.values());
+            grouped.sort((a, b) => b.latestUpdate - a.latestUpdate);
+            grouped.forEach(person => {
+                person.applications.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+            });
+
+            return grouped;
+        }
+
+        async function fetchAllRecords() {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select('*')
+                    .range(from, from + step - 1);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    allData = allData.concat(data);
+                    from += step;
+                    fetchMore = data.length === step;
+                } else {
+                    fetchMore = false;
+                }
+            }
+            return allData;
+        }
+
+        async function fetchAllRoles() {
+            let allRoles = new Set();
+            let from = 0;
+            const step = 1000;
+            let fetchMore = true;
+
+            while (fetchMore) {
+                const { data, error } = await supabaseClient
+                    .from(appConfig.table)
+                    .select(appConfig.roleCol)
+                    .range(from, from + step - 1);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    data.forEach(item => {
+                        const r = item[appConfig.roleCol];
+                        if (r && r.trim() !== '') allRoles.add(r.trim());
+                    });
+                    from += step;
+                    fetchMore = data.length === step;
+                } else {
+                    fetchMore = false;
+                }
+            }
+            return Array.from(allRoles).sort();
+        }
+
+        async function loadRolesForFilter() {
+            const homeSelect = document.getElementById('role-select');
+            const submissionsSelect = document.getElementById('submissions-role-filter');
+
+            try {
+                const roles = await fetchAllRoles();
+
+                let optionsHtml = '<option value="all">All Roles</option>';
+                roles.forEach(role => {
+                    optionsHtml += `<option value="${role}">${role}</option>`;
+                });
+
+                homeSelect.innerHTML = optionsHtml;
+                submissionsSelect.innerHTML = optionsHtml;
+            } catch (error) {
+                console.error("Failed to load roles:", error);
+            }
+        }
+
+
+        // --- NAVIGATION LOGIC ---
+        function showView(viewName) {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('swipe-view').classList.add('hidden');
+            document.getElementById('submissions-view').classList.add('hidden');
+
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+
+            if (viewName === 'swipe') {
+                startSwipeSession();
+            } else if (viewName === 'submissions') {
+                loadSubmissions();
+            }
+        }
+
+
+        // --- SWIPE & PROGRESS LOGIC ---
+
+        async function startSwipeSession() {
+            if (!supabaseClient) return;
+
+            document.getElementById('tinder-card').classList.add('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('progress-indicator').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
+
+            try {
+                const rawData = await fetchAllRecords();
+                const uniquePeople = groupApplicationsByPerson(rawData);
+
+                const selectedRole = document.getElementById('role-select').value;
+
+                let targetPeople = uniquePeople;
+                if (selectedRole !== 'all') {
+                    targetPeople = uniquePeople.filter(p => p.applications.some(a => a[appConfig.roleCol] === selectedRole));
+                }
+
+                currentTotalCount = targetPeople.length;
+
+                swipeQueue = targetPeople.filter(p => {
+                    if (selectedRole !== 'all') {
+                        return p.applications.some(a => a[appConfig.roleCol] === selectedRole && !a[appConfig.decisionCol]);
+                    }
+                    return p.applications.some(a => !a[appConfig.decisionCol]);
+                });
+
+                for (let i = swipeQueue.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [swipeQueue[i], swipeQueue[j]] = [swipeQueue[j], swipeQueue[i]];
+                }
+
+                currentCategorisedCount = currentTotalCount - swipeQueue.length;
+                renderProgress();
+
+                popNextSwipeCard();
+
+            } catch (error) {
+                console.error("Session init error:", error);
+                showToast("Failed to prepare stack");
+                showEmptyState();
+            }
+        }
+
+        function renderProgress() {
+            const progressEl = document.getElementById('progress-indicator');
+            const progressBar = document.getElementById('progress-bar-fill');
+
+            const percentage = currentTotalCount === 0 ? 0 : Math.round((currentCategorisedCount / currentTotalCount) * 100);
+
+            if (progressEl) {
+                progressEl.textContent = `${currentCategorisedCount} / ${currentTotalCount} (${percentage}%)`;
+            }
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+            }
+        }
+
+        function popNextSwipeCard() {
+            if (swipeQueue.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            currentPerson = swipeQueue.pop();
+            const selectedRole = document.getElementById('role-select').value;
+
+            if (selectedRole !== 'all') {
+                activeApplication = currentPerson.applications.find(a => a[appConfig.roleCol] === selectedRole && !a[appConfig.decisionCol]);
+            } else {
+                activeApplication = currentPerson.applications.find(a => !a[appConfig.decisionCol]);
+            }
+
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('tinder-card').classList.remove('hidden');
+
+            const iframe = document.getElementById('website-frame');
+            const iframeLoading = document.getElementById('iframe-loading');
+
+            document.getElementById('card-name').textContent = currentPerson.name || "Unknown Candidate";
+            document.getElementById('card-role').textContent = activeApplication[appConfig.roleCol] || "No role specified";
+            document.getElementById('open-external-btn').href = currentPerson.url;
+
+            iframe.style.opacity = '0';
+            iframeLoading.style.display = 'flex';
+
+            iframe.onload = () => { iframe.style.opacity = '1'; iframeLoading.style.display = 'none'; };
+            iframe.onerror = () => { iframeLoading.style.display = 'none'; };
+
+            iframe.src = currentPerson.url;
+
+            setTimeout(() => {
+                iframe.style.opacity = '1';
+                iframeLoading.style.display = 'none';
+            }, 1500);
+        }
+
+        async function makeDecision(score) {
+            if (isProcessing || !currentPerson || !activeApplication) return;
+            isProcessing = true;
+
+            const tinderCard = document.getElementById('tinder-card');
+            const stampEl = document.getElementById('stamp-score');
+
+            // Set stamp text and colour based on score range
+            const n = parseInt(score);
+            stampEl.textContent = score;
+            if (n <= 3) {
+                stampEl.style.color = '#ef4444';
+                stampEl.style.borderColor = '#ef4444';
+            } else if (n <= 6) {
+                stampEl.style.color = '#f59e0b';
+                stampEl.style.borderColor = '#f59e0b';
+            } else {
+                stampEl.style.color = '#22c55e';
+                stampEl.style.borderColor = '#22c55e';
+            }
+
+            tinderCard.classList.remove('card-transition');
+            void tinderCard.offsetWidth; // Reflow
+            tinderCard.classList.add('card-transition');
+
+            stampEl.classList.add('show-stamp');
+
+            // Swipe direction: low scores left, mid scores up, high scores right
+            if (n <= 3) tinderCard.classList.add('swipe-left');
+            else if (n <= 6) tinderCard.classList.add('swipe-up');
+            else tinderCard.classList.add('swipe-right');
+
+            const updateData = { updated_at: new Date().toISOString() };
+            updateData[appConfig.decisionCol] = score;
+
+            activeApplication[appConfig.decisionCol] = score;
+
+            await supabaseClient.from(appConfig.table).update(updateData).eq('id', activeApplication.id);
+
+            setTimeout(() => {
+                tinderCard.classList.add('hidden');
+                tinderCard.classList.remove('swipe-left', 'swipe-right', 'swipe-up');
+                stampEl.classList.remove('show-stamp');
+
+                pendingOtherApplications = currentPerson.applications.filter(a => a.id !== activeApplication.id);
+
+                if (pendingOtherApplications.length > 0) {
+                    showMultiRoleModal();
+                } else {
+                    finishPersonAndNext();
+                }
+            }, 400);
+        }
+
+        function scoreSelectOptions(currentVal) {
+            let html = '<option value="pending"' + (currentVal === 'pending' || !currentVal ? ' selected' : '') + '>Pending</option>';
+            for (let i = 1; i <= 10; i++) {
+                html += `<option value="${i}"${currentVal == i ? ' selected' : ''}>${i}</option>`;
+            }
+            return html;
+        }
+
+        function scoreSelectStyle(val) {
+            const n = parseInt(val);
+            if (isNaN(n)) return 'bg-white border-gray-300 text-gray-600 font-medium';
+            if (n <= 3) return 'bg-red-50 border-red-200 text-red-700 font-bold';
+            if (n <= 6) return 'bg-amber-50 border-amber-200 text-amber-700 font-bold';
+            return 'bg-green-50 border-green-200 text-green-700 font-bold';
+        }
+
+        function showMultiRoleModal() {
+            const listEl = document.getElementById('multi-role-list');
+            listEl.innerHTML = '';
+
+            pendingOtherApplications.forEach(app => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100";
+
+                const roleName = document.createElement('span');
+                roleName.className = "font-bold text-gray-700 truncate pr-2";
+                roleName.textContent = app[appConfig.roleCol] || 'No Role';
+
+                const select = document.createElement('select');
+                select.className = `text-sm border rounded-lg px-2 py-2 outline-none cursor-pointer w-28 text-center shadow-sm ${scoreSelectStyle(app[appConfig.decisionCol])}`;
+                select.setAttribute('data-app-id', app.id);
+                select.innerHTML = scoreSelectOptions(app[appConfig.decisionCol]);
+
+                select.onchange = (e) => {
+                    select.className = `text-sm border rounded-lg px-2 py-2 outline-none cursor-pointer w-28 text-center shadow-sm ${scoreSelectStyle(e.target.value)}`;
+                };
+
+                row.appendChild(roleName);
+                row.appendChild(select);
+                listEl.appendChild(row);
+            });
+
+            document.getElementById('multi-role-modal').classList.remove('hidden');
+        }
+
+        async function saveMultiRoles() {
+            const btn = document.getElementById('save-multi-roles-btn');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            const selects = document.querySelectorAll('#multi-role-list select');
+            const updates = [];
+
+            selects.forEach(select => {
+                const appId = select.getAttribute('data-app-id');
+                const val = select.value === 'pending' ? null : select.value;
+
+                const app = pendingOtherApplications.find(a => a.id == appId);
+                if (app) app[appConfig.decisionCol] = val;
+
+                const updateData = { updated_at: new Date().toISOString() };
+                updateData[appConfig.decisionCol] = val;
+
+                updates.push(supabaseClient.from(appConfig.table).update(updateData).eq('id', appId));
+            });
+
+            await Promise.all(updates);
+
+            btn.innerHTML = 'Save & Next';
+            btn.disabled = false;
+            document.getElementById('multi-role-modal').classList.add('hidden');
+
+            finishPersonAndNext();
+        }
+
+        function skipMultiRoles() {
+            document.getElementById('multi-role-modal').classList.add('hidden');
+            finishPersonAndNext();
+        }
+
+        function finishPersonAndNext() {
+            currentCategorisedCount++;
+            renderProgress();
+            isProcessing = false;
+            popNextSwipeCard();
+        }
+
+
+        // --- ALL SUBMISSIONS LOGIC ---
+
+        async function loadSubmissions() {
+            if (!supabaseClient) return;
+
+            document.getElementById('submissions-loading').classList.remove('hidden');
+            document.getElementById('submissions-list').innerHTML = '';
+            document.getElementById('submissions-empty').classList.add('hidden');
+
+            try {
+                const rawData = await fetchAllRecords();
+                allPeopleData = groupApplicationsByPerson(rawData);
+                filterSubmissionsUI();
+            } catch (error) {
+                showToast("Failed to fetch submissions");
+                console.error(error);
+            } finally {
+                document.getElementById('submissions-loading').classList.add('hidden');
+            }
+        }
+
+        function setFilter(filterType, btnElement) {
+            currentFilter = filterType;
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-pink-500', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            btnElement.classList.remove('bg-gray-100', 'text-gray-600');
+            btnElement.classList.add('bg-pink-500', 'text-white');
+
+            filterSubmissionsUI();
+        }
+
+        function matchesScoreRange(decisionVal, range) {
+            const n = parseInt(decisionVal);
+            if (isNaN(n)) return false;
+            if (range === '1-3')  return n >= 1  && n <= 3;
+            if (range === '4-6')  return n >= 4  && n <= 6;
+            if (range === '7-10') return n >= 7  && n <= 10;
+            return false;
+        }
+
+        function filterSubmissionsUI() {
+            const query = document.getElementById('submissions-search').value.toLowerCase();
+            const roleFilterVal = document.getElementById('submissions-role-filter').value;
+            const listContainer = document.getElementById('submissions-list');
+
+            listContainer.innerHTML = '';
+
+            const filtered = allPeopleData.filter(person => {
+                const nameStr = (person.name || '').toLowerCase();
+
+                let hasRole = true;
+                if (roleFilterVal !== 'all') {
+                    hasRole = person.applications.some(a => a[appConfig.roleCol] === roleFilterVal);
+                }
+
+                let matchesDecision = true;
+                if (currentFilter !== 'all') {
+                    if (currentFilter === 'pending') {
+                        matchesDecision = person.applications.some(a => !a[appConfig.decisionCol]);
+                    } else {
+                        matchesDecision = person.applications.some(a => matchesScoreRange(a[appConfig.decisionCol], currentFilter));
+                    }
+                }
+
+                const matchesSearch = nameStr.includes(query) || person.applications.some(a => (a[appConfig.roleCol] || '').toLowerCase().includes(query));
+
+                return hasRole && matchesDecision && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('submissions-empty').classList.remove('hidden');
+            } else {
+                document.getElementById('submissions-empty').classList.add('hidden');
+                filtered.forEach(person => {
+                    listContainer.appendChild(createSubmissionCard(person));
+                });
+            }
+        }
+
+        function createSubmissionCard(person) {
+            const card = document.createElement('div');
+            card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3 transition-all hover:shadow-md";
+
+            const header = document.createElement('div');
+            header.className = "flex justify-between items-center border-b border-gray-100 pb-2";
+            header.innerHTML = `
+                <h3 class="font-bold text-gray-800 truncate pr-2 text-lg">${person.name || 'Unknown'}</h3>
+                <a href="${person.url}" target="_blank" class="text-gray-400 hover:text-pink-500 p-2 shrink-0 bg-gray-50 rounded-full transition-colors">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+            `;
+            card.appendChild(header);
+
+            const rolesContainer = document.createElement('div');
+            rolesContainer.className = "flex flex-col gap-2";
+
+            person.applications.forEach(app => {
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center bg-gray-50 p-2.5 rounded-lg border border-gray-100";
+
+                const roleName = document.createElement('span');
+                roleName.className = "text-sm font-bold text-gray-600 truncate mr-2";
+                roleName.textContent = app[appConfig.roleCol] || 'No Role';
+
+                const select = document.createElement('select');
+
+                const updateSelectStyle = (val) => {
+                    select.className = `text-sm border rounded-lg px-2 py-1 outline-none cursor-pointer shadow-sm transition-colors w-24 text-center ${scoreSelectStyle(val)}`;
+                };
+
+                const currentDec = app[appConfig.decisionCol] || 'pending';
+                select.innerHTML = scoreSelectOptions(currentDec);
+                updateSelectStyle(currentDec);
+
+                select.onchange = (e) => {
+                    const val = e.target.value;
+                    updateSelectStyle(val);
+                    updateSubmissionDecision(app, val === 'pending' ? null : val);
+                };
+
+                row.appendChild(roleName);
+                row.appendChild(select);
+                rolesContainer.appendChild(row);
+            });
+
+            card.appendChild(rolesContainer);
+            return card;
+        }
+
+        async function updateSubmissionDecision(app, newDecision) {
+            const updateData = { updated_at: new Date().toISOString() };
+            updateData[appConfig.decisionCol] = newDecision;
+
+            const { error } = await supabaseClient
+                .from(appConfig.table)
+                .update(updateData)
+                .eq('id', app.id);
+
+            if (error) {
+                showToast("Failed to update decision.");
+                loadSubmissions();
+            } else {
+                app[appConfig.decisionCol] = newDecision;
+                showToast("Decision updated");
+                app.updated_at = updateData.updated_at;
+            }
+        }
+
+
+        // --- CSV EXPORT LOGIC ---
+        function openExportModal() {
+            const dateStr = new Date().toISOString().split('T')[0];
+            document.getElementById('export-filename').value = `LinkTinder_Export_${dateStr}`;
+            document.getElementById('export-modal').classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+        }
+
+        async function executeCSVExport() {
+            if (!supabaseClient) {
+                showToast("Database not initialized");
+                return;
+            }
+
+            const btn = document.getElementById('execute-export-btn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Exporting...';
+            btn.disabled = true;
+
+            try {
+                let data = await fetchAllRecords();
+
+                let filename = document.getElementById('export-filename').value.trim() || 'LinkTinder_Export';
+                if (!filename.toLowerCase().endsWith('.csv')) filename += '.csv';
+
+                const filterVal = document.getElementById('export-filter').value;
+
+                if (filterVal !== 'all') {
+                    data = data.filter(item => {
+                        if (filterVal === 'pending') return !item[appConfig.decisionCol];
+                        return matchesScoreRange(item[appConfig.decisionCol], filterVal);
+                    });
+                }
+
+                if (data.length === 0) {
+                    showToast("No records match the selected filter.");
+                    return;
+                }
+
+                let csvContent = "\uFEFFName,Role,Link,Score\n";
+
+                data.forEach(row => {
+                    const name     = `"${(row[appConfig.nameCol]     || '').replace(/"/g, '""')}"`;
+                    const role     = `"${(row[appConfig.roleCol]     || '').replace(/"/g, '""')}"`;
+                    const link     = `"${(row[appConfig.urlCol]      || '').replace(/"/g, '""')}"`;
+                    const decision = `"${(row[appConfig.decisionCol] || 'Pending').replace(/"/g, '""')}"`;
+
+                    csvContent += `${name},${role},${link},${decision}\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showToast("CSV Downloaded Successfully");
+                closeExportModal();
+
+            } catch (error) {
+                console.error("Export Error:", error);
+                showToast("Failed to generate CSV export");
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        // --- UTILS ---
+        function showEmptyState() {
+            document.getElementById('tinder-card').classList.add('hidden');
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+            currentPerson = null;
+        }
+
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+
+            toast.classList.remove('-translate-y-24');
+            toast.classList.add('translate-y-0');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0');
+                toast.classList.add('-translate-y-24');
+            }, 3000);
+        }
+
+        // Boot
+        init();
+
+    </script>
+</body>
+</html>
