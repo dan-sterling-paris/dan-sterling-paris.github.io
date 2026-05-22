@@ -78,6 +78,16 @@
                 </div>
             </div>
 
+            <!-- Sample Size -->
+            <div class="relative w-full text-left mb-1">
+                <label class="block text-sm font-semibold text-gray-500 mb-1 px-1">Sample Size</label>
+                <div class="flex gap-2">
+                    <button id="sample-all-btn" onclick="setSampleMode('all')" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm border transition-colors bg-pink-500 text-white border-pink-500">All</button>
+                    <button id="sample-custom-btn" onclick="setSampleMode('custom')" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">Random</button>
+                    <input type="number" id="sample-size-input" min="1" value="100" class="w-24 py-3 px-3 rounded-xl border border-gray-200 text-center font-bold text-gray-700 outline-none focus:ring-2 focus:ring-pink-500 hidden" placeholder="100">
+                </div>
+            </div>
+
             <button onclick="showView('swipe')" class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold py-4 px-6 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2">
                 <i class="fa-solid fa-layer-group"></i> Start Categorising
             </button>
@@ -285,14 +295,21 @@
             </div>
 
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Filter Records</label>
-                <select id="export-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
-                    <option value="all">All Records</option>
-                    <option value="pending">Pending</option>
-                    <option value="1-3">1–3 (Low)</option>
-                    <option value="4-6">4–6 (Mid)</option>
-                    <option value="7-10">7–10 (High)</option>
-                </select>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Filter by Decision</label>
+                <div id="export-filter-chips" class="flex flex-wrap gap-2 mt-1">
+                    <button type="button" onclick="toggleExportChip(this, 'all')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-green-500 text-white border border-green-500 transition-colors">All</button>
+                    <button type="button" onclick="toggleExportChip(this, 'pending')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">Pending</button>
+                    <button type="button" onclick="toggleExportChip(this, '1')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">1</button>
+                    <button type="button" onclick="toggleExportChip(this, '2')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">2</button>
+                    <button type="button" onclick="toggleExportChip(this, '3')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">3</button>
+                    <button type="button" onclick="toggleExportChip(this, '4')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">4</button>
+                    <button type="button" onclick="toggleExportChip(this, '5')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">5</button>
+                    <button type="button" onclick="toggleExportChip(this, '6')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">6</button>
+                    <button type="button" onclick="toggleExportChip(this, '7')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">7</button>
+                    <button type="button" onclick="toggleExportChip(this, '8')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">8</button>
+                    <button type="button" onclick="toggleExportChip(this, '9')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">9</button>
+                    <button type="button" onclick="toggleExportChip(this, '10')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">10</button>
+                </div>
             </div>
 
             <div class="flex gap-3 mt-4 pt-4 border-t border-gray-100">
@@ -325,6 +342,29 @@
         // App State
         let supabaseClient = null;
         let isProcessing = false;
+        let sampleMode = 'all';
+
+        function setSampleMode(mode) {
+            sampleMode = mode;
+            const allBtn = document.getElementById('sample-all-btn');
+            const customBtn = document.getElementById('sample-custom-btn');
+            const input = document.getElementById('sample-size-input');
+
+            if (mode === 'all') {
+                allBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                allBtn.classList.add('bg-pink-500', 'text-white', 'border-pink-500');
+                customBtn.classList.remove('bg-pink-500', 'text-white', 'border-pink-500');
+                customBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+                input.classList.add('hidden');
+            } else {
+                customBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                customBtn.classList.add('bg-pink-500', 'text-white', 'border-pink-500');
+                allBtn.classList.remove('bg-pink-500', 'text-white', 'border-pink-500');
+                allBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+                input.classList.remove('hidden');
+                input.focus();
+            }
+        }
 
         // Swiping & Person State
         let swipeQueue = [];
@@ -510,6 +550,12 @@
                 for (let i = swipeQueue.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [swipeQueue[i], swipeQueue[j]] = [swipeQueue[j], swipeQueue[i]];
+                }
+
+                if (sampleMode === 'custom') {
+                    const limit = parseInt(document.getElementById('sample-size-input').value) || 100;
+                    swipeQueue = swipeQueue.slice(0, limit);
+                    currentTotalCount = swipeQueue.length;
                 }
 
                 currentCategorisedCount = currentTotalCount - swipeQueue.length;
@@ -876,11 +922,54 @@
         function openExportModal() {
             const dateStr = new Date().toISOString().split('T')[0];
             document.getElementById('export-filename').value = `LinkTinder_Export_${dateStr}`;
+            selectedExportFilters = new Set(['all']);
+            document.querySelectorAll('.export-chip').forEach(chip => {
+                const chipVal = chip.getAttribute('onclick').match(/'([^']+)'\)$/)[1];
+                chip.classList.remove('bg-green-500', 'text-white', 'border-green-500', 'bg-gray-100', 'text-gray-600', 'border-gray-200');
+                if (chipVal === 'all') {
+                    chip.classList.add('bg-green-500', 'text-white', 'border-green-500');
+                } else {
+                    chip.classList.add('bg-gray-100', 'text-gray-600', 'border-gray-200');
+                }
+            });
             document.getElementById('export-modal').classList.remove('hidden');
         }
 
         function closeExportModal() {
             document.getElementById('export-modal').classList.add('hidden');
+        }
+
+        let selectedExportFilters = new Set(['all']);
+
+        function toggleExportChip(btn, value) {
+            const allChip = document.querySelector('.export-chip');
+
+            if (value === 'all') {
+                selectedExportFilters.clear();
+                selectedExportFilters.add('all');
+            } else {
+                selectedExportFilters.delete('all');
+                if (selectedExportFilters.has(value)) {
+                    selectedExportFilters.delete(value);
+                } else {
+                    selectedExportFilters.add(value);
+                }
+                if (selectedExportFilters.size === 0) {
+                    selectedExportFilters.add('all');
+                }
+            }
+
+            document.querySelectorAll('.export-chip').forEach(chip => {
+                chip.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+                chip.classList.add('bg-gray-100', 'text-gray-600', 'border-gray-200');
+            });
+            document.querySelectorAll('.export-chip').forEach(chip => {
+                const chipVal = chip.getAttribute('onclick').match(/'([^']+)'\)$/)[1];
+                if (selectedExportFilters.has(chipVal)) {
+                    chip.classList.remove('bg-gray-100', 'text-gray-600', 'border-gray-200');
+                    chip.classList.add('bg-green-500', 'text-white', 'border-green-500');
+                }
+            });
         }
 
         async function executeCSVExport() {
@@ -900,12 +989,12 @@
                 let filename = document.getElementById('export-filename').value.trim() || 'LinkTinder_Export';
                 if (!filename.toLowerCase().endsWith('.csv')) filename += '.csv';
 
-                const filterVal = document.getElementById('export-filter').value;
-
-                if (filterVal !== 'all') {
+                if (!selectedExportFilters.has('all')) {
                     data = data.filter(item => {
-                        if (filterVal === 'pending') return !item[appConfig.decisionCol];
-                        return matchesScoreRange(item[appConfig.decisionCol], filterVal);
+                        const dec = item[appConfig.decisionCol];
+                        if (selectedExportFilters.has('pending') && !dec) return true;
+                        if (dec && selectedExportFilters.has(String(dec))) return true;
+                        return false;
                     });
                 }
 
@@ -914,15 +1003,24 @@
                     return;
                 }
 
-                let csvContent = "\uFEFFName,Role,Link,Score\n";
+                let csvContent = "\uFEFFFirst Name,Second Name,Agent,Email,Role,Decision,Link\n";
 
                 data.forEach(row => {
-                    const name     = `"${(row[appConfig.nameCol]     || '').replace(/"/g, '""')}"`;
-                    const role     = `"${(row[appConfig.roleCol]     || '').replace(/"/g, '""')}"`;
-                    const link     = `"${(row[appConfig.urlCol]      || '').replace(/"/g, '""')}"`;
-                    const decision = `"${(row[appConfig.decisionCol] || 'Pending').replace(/"/g, '""')}"`;
+                    const fullName = (row[appConfig.nameCol] || '').trim();
+                    const spaceIdx = fullName.indexOf(' ');
+                    const toProper = s => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+                    const first = spaceIdx > -1 ? fullName.substring(0, spaceIdx) : fullName;
+                    const second = spaceIdx > -1 ? fullName.substring(spaceIdx + 1) : '';
 
-                    csvContent += `${name},${role},${link},${decision}\n`;
+                    const firstName  = `"${toProper(first).replace(/"/g, '""')}"`;
+                    const secondName = `"${toProper(second).replace(/"/g, '""')}"`;
+                    const agent      = `"${(row['agents']       || '').replace(/"/g, '""')}"`;
+                    const email      = `"${(row['agents_email'] || '').replace(/"/g, '""')}"`;
+                    const role       = `"${(row[appConfig.roleCol] || '').replace(/"/g, '""')}"`;
+                    const decision   = `"${(row[appConfig.decisionCol] || 'Pending').replace(/"/g, '""')}"`;
+                    const link       = `"${(row[appConfig.urlCol] || '').replace(/"/g, '""')}"`;
+
+                    csvContent += `${firstName},${secondName},${agent},${email},${role},${decision},${link}\n`;
                 });
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
