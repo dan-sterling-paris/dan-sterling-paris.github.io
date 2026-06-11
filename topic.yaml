@@ -19,9 +19,9 @@ themes:
   - "What's On Tomorrow"
 
 # Model to use for generation. Summaries (map step) use a faster variant.
-# Available: claude-opus-4-8, claude-sonnet-4-6, claude-haiku-4-5-20251001
-roundup_model: "claude-opus-4-8"
-summary_model: "claude-sonnet-4-6"
+# Available: gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash
+roundup_model: "gemini-2.5-pro"
+summary_model: "gemini-2.5-flash"
 
 # Editorial guidance passed verbatim into the AI prompt.
 editorial_tone: |

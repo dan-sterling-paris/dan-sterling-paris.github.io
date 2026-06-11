@@ -4,7 +4,7 @@ generate_post.py — daily football news blog generator.
 
 For each channel in channels.yaml, fetches the YouTube RSS feed, finds videos
 published in the last 24 hours, retrieves transcripts (with title+description
-fallback), then calls the Anthropic API to write a single cohesive roundup in
+fallback), then calls the Gemini API to write a single cohesive roundup in
 Markdown, grouped by the themes in topic.yaml.
 
 If combined transcript content exceeds SYNTHESIS_CHAR_LIMIT it runs a
@@ -34,7 +34,8 @@ import urllib.request
 import urllib.error
 
 import yaml
-import anthropic
+from google import genai
+from google.genai import types as genai_types
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -216,10 +217,10 @@ def video_content_block(video: dict) -> str:
 # AI generation
 # ---------------------------------------------------------------------------
 
-def summarise_video(client: anthropic.Anthropic, video: dict, topic_cfg: dict) -> str:
+def summarise_video(client: genai.Client, video: dict, topic_cfg: dict) -> str:
     """Map step: produce a concise summary of a single video."""
     content = video_content_block(video)
-    model = topic_cfg.get("summary_model", "claude-sonnet-4-6")
+    model = topic_cfg.get("summary_model", "gemini-2.5-flash")
 
     prompt = textwrap.dedent(f"""
         You are summarising a YouTube video for a daily {topic_cfg['topic']} roundup.
@@ -235,22 +236,22 @@ def summarise_video(client: anthropic.Anthropic, video: dict, topic_cfg: dict) -
         {content}
     """).strip()
 
-    resp = client.messages.create(
+    resp = client.models.generate_content(
         model=model,
-        max_tokens=600,
-        messages=[{"role": "user", "content": prompt}],
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(max_output_tokens=600),
     )
-    return resp.content[0].text.strip()
+    return resp.text.strip()
 
 
 def generate_roundup(
-    client: anthropic.Anthropic,
+    client: genai.Client,
     videos: list[dict],
     topic_cfg: dict,
     date_str: str,
 ) -> str:
     """Reduce step: write the full daily roundup from video summaries / raw content."""
-    model = topic_cfg.get("roundup_model", "claude-opus-4-8")
+    model = topic_cfg.get("roundup_model", "gemini-2.5-pro")
     themes = topic_cfg.get("themes", [])
     tone = topic_cfg.get("editorial_tone", "").strip()
 
@@ -305,12 +306,12 @@ def generate_roundup(
         no date header (those go in the frontmatter).
     """).strip()
 
-    resp = client.messages.create(
+    resp = client.models.generate_content(
         model=model,
-        max_tokens=4096,
-        messages=[{"role": "user", "content": prompt}],
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(max_output_tokens=4096),
     )
-    return resp.content[0].text.strip()
+    return resp.text.strip()
 
 # ---------------------------------------------------------------------------
 # Post output
@@ -414,13 +415,13 @@ def main() -> None:
         if i < len(all_videos) - 1:
             time.sleep(TRANSCRIPT_DELAY)
 
-    # ── 3. Initialise Anthropic client ───────────────────────────────────────
+    # ── 3. Initialise Gemini client ──────────────────────────────────────────
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        log.error("ANTHROPIC_API_KEY environment variable is not set.")
+        log.error("GEMINI_API_KEY environment variable is not set.")
         sys.exit(1)
-    client = anthropic.Anthropic(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 
     # ── 4. Map: per-video summaries if content is very large ─────────────────
 
