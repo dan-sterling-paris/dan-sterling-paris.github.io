@@ -1,0 +1,202 @@
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+body, h1, h2, h3, h4, p, ul, ol, li, blockquote, figure { margin: 0; padding: 0; }
+
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg:        #f9f9f7;
+  --surface:   #ffffff;
+  --text:      #1a1a18;
+  --muted:     #6b6b60;
+  --accent:    #1d6f3c;   /* deep green — football pitch */
+  --accent-lt: #e8f5ee;
+  --border:    #e0e0d8;
+  --link:      #1a5c8e;
+  --link-vst:  #5c1a6e;
+
+  --font-body: "Georgia", "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Courier New", monospace;
+
+  --max-w: 42rem;         /* ~672px — comfortable reading column */
+  --gap:   1.75rem;
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+html { font-size: 18px; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+.site-header {
+  background: var(--text);
+  color: var(--bg);
+  padding: 1.25rem 1.5rem;
+}
+.site-header__inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.site-header__title {
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: inherit;
+  text-decoration: none;
+}
+.site-header__title:hover { text-decoration: underline; }
+.site-header__desc {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: #b0b0a0;
+  font-weight: 400;
+}
+
+main {
+  max-width: var(--max-w);
+  margin: 2.5rem auto;
+  padding: 0 1.5rem;
+}
+
+.site-footer {
+  max-width: var(--max-w);
+  margin: 3rem auto 2rem;
+  padding: 1.25rem 1.5rem 0;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ── Post list (homepage) ───────────────────────────────────────────────── */
+.post-list { list-style: none; }
+.post-list__item {
+  padding: var(--gap) 0;
+  border-bottom: 1px solid var(--border);
+}
+.post-list__item:first-child { padding-top: 0; }
+
+.post-list__date {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+.post-list__title {
+  font-family: var(--font-ui);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+.post-list__title a {
+  color: var(--text);
+  text-decoration: none;
+}
+.post-list__title a:hover { text-decoration: underline; color: var(--accent); }
+.post-list__desc {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.empty-state {
+  font-family: var(--font-ui);
+  color: var(--muted);
+  font-size: 1rem;
+  padding: 2rem 0;
+}
+
+/* ── Individual post ────────────────────────────────────────────────────── */
+.post-header { margin-bottom: 2rem; }
+
+.post-header__date {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.post-header__title {
+  font-family: var(--font-ui);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.post-body { font-size: 1rem; }
+
+.post-body p { margin-bottom: 1.25rem; }
+
+.post-body h2 {
+  font-family: var(--font-ui);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 2rem 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--accent);
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.post-body h3 {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.post-body a { color: var(--link); }
+.post-body a:visited { color: var(--link-vst); }
+.post-body a:hover { text-decoration: none; }
+
+.post-body ul, .post-body ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.post-body li { margin-bottom: 0.35rem; }
+
+.post-body blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.25rem 1rem;
+  margin: 1.5rem 0;
+  background: var(--accent-lt);
+  border-radius: 0 4px 4px 0;
+}
+.post-body blockquote p { margin-bottom: 0; }
+
+.post-body strong { font-weight: 700; }
+.post-body em { font-style: italic; }
+
+.post-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+.back-link {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: none;
+  margin-bottom: 1.75rem;
+}
+.back-link:hover { color: var(--text); text-decoration: underline; }
+.back-link::before { content: "← "; }

@@ -1,0 +1,40 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const posts = (await getCollection("posts"))
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+const base = import.meta.env.BASE_URL; // "/football/"
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr + "T12:00:00Z").toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+---
+
+<BaseLayout>
+  {posts.length === 0 ? (
+    <p class="empty-state">
+      The first daily roundup will appear here when the tournament begins.
+      Check back after the 2026 FIFA World Cup kicks off.
+    </p>
+  ) : (
+    <ul class="post-list">
+      {posts.map((post) => (
+        <li class="post-list__item">
+          <div class="post-list__date">{formatDate(post.data.date)}</div>
+          <h2 class="post-list__title">
+            <a href={`${base}posts/${post.slug}/`}>{post.data.title}</a>
+          </h2>
+          {post.data.description && (
+            <p class="post-list__desc">{post.data.description}</p>
+          )}
+        </li>
+      ))}
+    </ul>
+  )}
+</BaseLayout>
