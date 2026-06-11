@@ -16,6 +16,7 @@ interface Props {
 
 const { post } = Astro.props;
 const { Content } = await post.render();
+const base = import.meta.env.BASE_URL; // "/football/"
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + "T12:00:00Z").toLocaleDateString("en-GB", {
@@ -30,9 +31,9 @@ function formatDate(dateStr: string): string {
 <BaseLayout
   title={post.data.title}
   description={post.data.description}
-  canonicalUrl={`https://sterlingparis.com/posts/${post.slug}`}
+  canonicalUrl={`https://sterlingparis.com/football/posts/${post.slug}/`}
 >
-  <a href="/" class="back-link">Back to all roundups</a>
+  <a href={base} class="back-link">Back to all roundups</a>
 
   <header class="post-header">
     <div class="post-header__date">{formatDate(post.data.date)}</div>
