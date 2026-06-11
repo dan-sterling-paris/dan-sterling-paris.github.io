@@ -1,0 +1,32 @@
+# YouTube channels to monitor for daily roundups.
+#
+# Format:
+#   - name: Human-readable name (used in post credits)
+#     channel_id: YouTube channel ID (the UCxxxxxxx... part of the URL)
+#
+# Channel IDs were researched 2026-06-11.
+# YouTube RSS feeds return 403 from some IPs, so live-verification
+# must be done from a standard runner (e.g. GitHub Actions).
+# To verify: https://www.youtube.com/feeds/videos.xml?channel_id=<id>
+#
+# To retarget the blog at a different sport, swap these channels out
+# and update topic.yaml — no code changes needed.
+
+channels:
+  - name: FIFA
+    channel_id: UCpcTrCXblq78GZrTUTLWeBw
+
+  - name: BBC Sport
+    channel_id: UCW6-BQWFA70Dyyc7ZpZ9Xlg
+
+  - name: ITV Sport
+    channel_id: UCBzDz6beXDfMtfxQdEutD_w
+
+  - name: talkSPORT
+    channel_id: UCWw6scNyopJ0yjMu1SyOEyw
+
+  - name: Sky Sports Football
+    channel_id: UCZ7wY7MRDSygp63HIEfdQZA
+
+  - name: Tifo Football
+    channel_id: UCGYYNGmyhZ_kwBF_lqqXdAQ

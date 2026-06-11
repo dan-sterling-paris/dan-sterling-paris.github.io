@@ -1,0 +1,53 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalUrl?: string;
+}
+
+// Site identity — keep in sync with topic.yaml
+const SITE_TITLE = "World Cup 2026 Daily Briefing";
+const SITE_DESC  = "A sharp daily roundup of the 2026 FIFA World Cup — match results, team news, talking points.";
+
+const {
+  title = SITE_TITLE,
+  description = SITE_DESC,
+  canonicalUrl,
+} = Astro.props;
+
+const pageTitle = title === SITE_TITLE ? title : `${title} | ${SITE_TITLE}`;
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a href="/" class="site-header__title">{SITE_TITLE}</a>
+        <span class="site-header__desc">{SITE_DESC}</span>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      Generated daily from YouTube transcripts &amp; AI synthesis.
+      Not affiliated with FIFA or any broadcaster.
+    </footer>
+  </body>
+</html>

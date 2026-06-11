@@ -1,0 +1,45 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts");
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+interface Props {
+  post: CollectionEntry<"posts">;
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr + "T12:00:00Z").toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    weekday: "long",
+  });
+}
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  canonicalUrl={`https://sterlingparis.com/posts/${post.slug}`}
+>
+  <a href="/" class="back-link">Back to all roundups</a>
+
+  <header class="post-header">
+    <div class="post-header__date">{formatDate(post.data.date)}</div>
+    <h1 class="post-header__title">{post.data.title}</h1>
+  </header>
+
+  <article class="post-body">
+    <Content />
+  </article>
+</BaseLayout>

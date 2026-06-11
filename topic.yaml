@@ -1,0 +1,35 @@
+# Topic configuration — edit this to retarget the blog at a new sport.
+# All settings here feed directly into the AI prompt and the site layout;
+# changing this file is the only thing needed to pivot to a different niche.
+
+topic: "2026 FIFA World Cup"
+blog_title: "World Cup 2026 Daily Briefing"
+blog_description: >
+  A sharp daily roundup of everything happening at the 2026 FIFA World Cup —
+  match results, team news, talking points, and what's on tomorrow.
+  Compiled each morning from the best football YouTube channels.
+blog_url: "https://sterlingparis.com"
+
+# Sections to organise each daily roundup into (rendered as ## headings, in order).
+# Omit a theme from the day's post if there's nothing to say — the AI decides.
+themes:
+  - "Match Results & Highlights"
+  - "Team News & Injuries"
+  - "Talking Points & Controversy"
+  - "What's On Tomorrow"
+
+# Model to use for generation. Summaries (map step) use a faster variant.
+# Available: claude-opus-4-8, claude-sonnet-4-6, claude-haiku-4-5-20251001
+roundup_model: "claude-opus-4-8"
+summary_model: "claude-sonnet-4-6"
+
+# Editorial guidance passed verbatim into the AI prompt.
+editorial_tone: |
+  Write like a sharp, dry journalist who actually watches the football — opinionated
+  where there's something to say, factual and precise everywhere else. British English
+  throughout. No press-release prose. No filler phrases like "it's worth noting" or
+  "in conclusion". Get to the point. If something's embarrassing for a team or a player,
+  say so plainly. Credit each source channel by name inline and naturally
+  (e.g. "BBC Sport report that…", "Tifo Football's breakdown shows…") rather than
+  in a separate citations section at the end. Link source videos using Markdown inline
+  links within the relevant sentence, not in a bibliography.
