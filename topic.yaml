@@ -20,8 +20,8 @@ themes:
 
 # Model to use for generation. Summaries (map step) use a faster variant.
 # Available: gemini-2.5-pro, gemini-2.5-flash, gemini-2.0-flash
-roundup_model: "gemini-2.5-pro"
-summary_model: "gemini-2.5-flash"
+roundup_model: "gemini-2.0-flash"
+summary_model: "gemini-2.0-flash"
 
 # Editorial guidance passed verbatim into the AI prompt.
 editorial_tone: |
