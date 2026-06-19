@@ -307,6 +307,7 @@
         const ELO_K = 32;
         const ELO_START = 1500;
         const MIN_COMPARISONS_FOR_RELEGATION = 3;
+        const HARD_PRIORITY_THRESHOLD = 5;
 
         let supabaseClient = null;
         let selectedScores = new Set([8, 9, 10]);
@@ -789,15 +790,26 @@
             const candidates = activePool;
             if (candidates.length < 2) return null;
 
-            const maxComp = Math.max(...candidates.map(c => c.comparisons));
-            const weights = candidates.map(c => (maxComp - c.comparisons + 1));
-            const totalWeight = weights.reduce((a, b) => a + b, 0);
+            // Hard priority: always pick the least-compared candidate first
+            // if anyone is below the threshold
+            const underCompared = candidates
+                .filter(c => c.comparisons < HARD_PRIORITY_THRESHOLD)
+                .sort((a, b) => a.comparisons - b.comparisons);
 
-            let r = Math.random() * totalWeight;
-            let candidateA = candidates[0];
-            for (let i = 0; i < candidates.length; i++) {
-                r -= weights[i];
-                if (r <= 0) { candidateA = candidates[i]; break; }
+            let candidateA;
+            if (underCompared.length > 0) {
+                candidateA = underCompared[0];
+            } else {
+                const maxComp = Math.max(...candidates.map(c => c.comparisons));
+                const weights = candidates.map(c => (maxComp - c.comparisons + 1));
+                const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+                let r = Math.random() * totalWeight;
+                candidateA = candidates[0];
+                for (let i = 0; i < candidates.length; i++) {
+                    r -= weights[i];
+                    if (r <= 0) { candidateA = candidates[i]; break; }
+                }
             }
 
             let available = candidates.filter(c =>
@@ -810,6 +822,7 @@
 
             if (available.length === 0) return null;
 
+            const maxComp = Math.max(...candidates.map(c => c.comparisons));
             const scores = available.map(c => {
                 const eloDist = Math.abs(c.elo - candidateA.elo);
                 return 1 / (eloDist + 50) + (maxComp - c.comparisons + 1) / (maxComp + 1);
