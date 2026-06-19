@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Showdown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { overscroll-behavior-y: contain; }
+        .pick-btn { transition: transform 0.1s, box-shadow 0.15s; }
+        .pick-btn:active { transform: scale(0.96); }
+        .pick-flash { animation: flash 0.3s ease-out; }
+        @keyframes flash {
+            0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+            100% { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+        }
+        .cv-frame {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            border-radius: 0.75rem;
+            position: relative;
+            background: #f9fafb;
+        }
+        .cv-frame iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px;
+            height: 2000px;
+            transform-origin: top left;
+            border: 0;
+        }
+        .elo-mover { animation: eloFlash 0.6s ease-out; }
+        @keyframes eloFlash {
+            0% { background-color: rgb(254 243 199); }
+            100% { background-color: transparent; }
+        }
+        #leaderboard-panel {
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            overflow: hidden;
+        }
+        #leaderboard-panel.collapsed { max-height: 0; opacity: 0; }
+        #leaderboard-panel.expanded { max-height: 60vh; opacity: 1; }
+        .session-card:active { transform: scale(0.98); }
+        .cutoff-line { border-bottom: 2px dashed #f59e0b; }
+    </style>
+</head>
+<body class="bg-gray-100 h-[100dvh] w-screen text-gray-800 font-sans">
+
+    <!-- HOME VIEW -->
+    <div id="home-view" class="h-full w-full flex flex-col items-center p-6 text-center max-w-md mx-auto overflow-y-auto">
+        <div class="flex-1 flex flex-col items-center justify-center w-full">
+            <i class="fa-solid fa-scale-balanced text-pink-500 text-6xl mb-6 shadow-sm rounded-full bg-white p-4"></i>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Showdown</h1>
+            <p class="text-gray-500 mb-8">Elo-ranked pairwise comparison with auto-relegation.</p>
+
+            <!-- Saved Sessions -->
+            <div id="saved-sessions" class="w-full mb-4 hidden">
+                <label class="block text-sm font-semibold text-gray-500 mb-2 px-1 text-left">Resume Session</label>
+                <div id="saved-sessions-list" class="flex flex-col gap-2"></div>
+            </div>
+
+            <div class="w-full flex flex-col gap-3">
+                <!-- Role Filter -->
+                <div class="relative w-full text-left mb-1">
+                    <label class="block text-sm font-semibold text-gray-500 mb-1 px-1">Filter by Role</label>
+                    <div class="relative">
+                        <select id="role-select" class="w-full bg-white text-gray-700 font-bold py-4 px-4 pr-10 rounded-xl border border-gray-200 shadow-sm appearance-none outline-none focus:ring-2 focus:ring-pink-500 cursor-pointer transition-all">
+                            <option value="all">Loading roles...</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Score Selection -->
+                <div class="relative w-full text-left mb-1">
+                    <label class="block text-sm font-semibold text-gray-500 mb-1 px-1">Include Scores</label>
+                    <div class="flex gap-1.5 flex-wrap">
+                        <button onclick="toggleAllSubmissions()" id="score-all" class="score-chip py-2.5 px-4 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">All</button>
+                        <button onclick="toggleScore(1)" id="score-1" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">1</button>
+                        <button onclick="toggleScore(2)" id="score-2" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">2</button>
+                        <button onclick="toggleScore(3)" id="score-3" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">3</button>
+                        <button onclick="toggleScore(4)" id="score-4" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">4</button>
+                        <button onclick="toggleScore(5)" id="score-5" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">5</button>
+                        <button onclick="toggleScore(6)" id="score-6" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">6</button>
+                        <button onclick="toggleScore(7)" id="score-7" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">7</button>
+                        <button onclick="toggleScore(8)" id="score-8" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-pink-500 text-white border-pink-500">8</button>
+                        <button onclick="toggleScore(9)" id="score-9" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-pink-500 text-white border-pink-500">9</button>
+                        <button onclick="toggleScore(10)" id="score-10" class="score-chip py-2.5 px-3 rounded-xl font-bold text-sm border transition-colors bg-pink-500 text-white border-pink-500">10</button>
+                    </div>
+                </div>
+
+                <!-- Top X input -->
+                <div class="relative w-full text-left mb-1">
+                    <label class="block text-sm font-semibold text-gray-500 mb-1 px-1">Find top</label>
+                    <div class="flex items-center gap-2">
+                        <button onclick="adjustTopX(-5)" class="w-10 h-10 rounded-xl bg-white border border-gray-200 text-gray-500 font-bold text-lg hover:bg-gray-50 transition-colors shrink-0">-</button>
+                        <input type="number" id="top-x-input" value="10" min="1" class="flex-1 bg-white text-center text-gray-700 font-bold py-2.5 px-4 rounded-xl border border-gray-200 shadow-sm outline-none focus:ring-2 focus:ring-pink-500 text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" oninput="refreshPreview()">
+                        <button onclick="adjustTopX(5)" class="w-10 h-10 rounded-xl bg-white border border-gray-200 text-gray-500 font-bold text-lg hover:bg-gray-50 transition-colors shrink-0">+</button>
+                        <span class="text-sm font-semibold text-gray-500 shrink-0">candidates</span>
+                    </div>
+                </div>
+
+                <!-- Stats card -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-left">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Qualifying candidates</span>
+                        <span id="candidate-count" class="text-lg font-bold text-pink-500">--</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-sm text-gray-500">Active pool</span>
+                        <span id="active-pool-size" class="text-lg font-bold text-gray-700">--</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-sm text-gray-500">Bench</span>
+                        <span id="bench-size" class="text-lg font-bold text-gray-400">--</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-1 pt-2 border-t border-gray-100">
+                        <span class="text-sm text-gray-500">Estimated comparisons</span>
+                        <span id="comparison-estimate" class="text-lg font-bold text-gray-700">--</span>
+                    </div>
+                </div>
+
+                <button onclick="startShowdown()" id="start-btn" class="w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white font-bold py-4 px-6 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                    <i class="fa-solid fa-scale-balanced"></i> New Showdown
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPARE VIEW -->
+    <div id="compare-view" class="hidden h-full w-full flex flex-col bg-gray-100">
+
+        <!-- Progress bar at top -->
+        <div class="shrink-0">
+            <div class="w-full h-1.5 bg-gray-200">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-pink-500 to-orange-400 transition-all duration-300 rounded-r-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Top bar -->
+        <div class="shrink-0 flex items-center justify-between px-3 py-2 gap-2">
+            <button onclick="confirmQuit()" class="text-gray-300 hover:text-gray-500 p-2 rounded-full shrink-0">
+                <i class="fa-solid fa-house text-lg"></i>
+            </button>
+            <button onclick="toggleLeaderboard()" id="leaderboard-toggle" class="text-gray-400 hover:text-gray-600 bg-white px-2.5 py-1.5 rounded-full border border-gray-200 shadow-sm text-xs font-bold flex items-center gap-1 shrink-0">
+                <i class="fa-solid fa-ranking-star"></i> <span class="hidden sm:inline">Board</span>
+            </button>
+
+            <!-- Pool stats -->
+            <div id="pool-stats" class="flex items-center gap-1.5 text-xs font-bold flex-1 justify-center min-w-0">
+                <span class="text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200"><span id="stat-active">0</span> active</span>
+                <span class="text-blue-600 bg-blue-50 px-2 py-1 rounded-full border border-blue-200"><span id="stat-bench">0</span> bench</span>
+                <span class="text-gray-500 bg-gray-100 px-2 py-1 rounded-full border border-gray-200"><span id="stat-relegated">0</span> out</span>
+            </div>
+
+            <button onclick="finishShowdown()" id="done-btn" class="text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm transition-all bg-white text-gray-400 border-gray-200 hover:bg-green-50 hover:text-green-600 hover:border-green-300 shrink-0">
+                <i class="fa-solid fa-check mr-1"></i>Done
+            </button>
+        </div>
+
+        <!-- Leaderboard panel (collapsible) -->
+        <div id="leaderboard-panel" class="shrink-0 collapsed relative z-20">
+            <div class="mx-4 mb-2 bg-white rounded-xl border border-gray-200 shadow-lg max-h-[40vh] overflow-y-auto">
+                <div id="leaderboard-list" class="divide-y divide-gray-100 text-sm"></div>
+                <div id="leaderboard-relegated" class="border-t border-gray-200"></div>
+            </div>
+        </div>
+
+        <!-- Main matchup area (fills remaining space) -->
+        <div class="flex-1 min-h-0 flex gap-3 lg:gap-6 px-4 pb-2">
+            <!-- Candidate A -->
+            <div class="flex-1 flex flex-col min-w-0">
+                <div class="cv-frame shadow-md border border-gray-200">
+                    <iframe id="headshot-a"></iframe>
+                </div>
+                <div class="mt-2 text-center shrink-0">
+                    <a id="link-a" href="#" target="_blank" class="group">
+                        <h2 id="name-a" class="text-sm lg:text-lg font-black text-gray-800 group-hover:text-pink-500 transition-colors leading-tight truncate">Candidate A</h2>
+                        <div class="flex items-center justify-center gap-1.5 mt-0.5">
+                            <span id="score-a" class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">10</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-300 group-hover:text-pink-400"></i>
+                        </div>
+                    </a>
+                    <button onclick="rejectCandidate('a')" class="mt-1 text-xs text-gray-300 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50" title="Remove from pool">
+                        <i class="fa-solid fa-ban mr-0.5"></i>Reject
+                    </button>
+                </div>
+            </div>
+
+            <!-- VS -->
+            <div class="text-gray-300 font-black text-lg tracking-widest shrink-0 flex items-center">VS</div>
+
+            <!-- Candidate B -->
+            <div class="flex-1 flex flex-col min-w-0">
+                <div class="cv-frame shadow-md border border-gray-200">
+                    <iframe id="headshot-b"></iframe>
+                </div>
+                <div class="mt-2 text-center shrink-0">
+                    <a id="link-b" href="#" target="_blank" class="group">
+                        <h2 id="name-b" class="text-sm lg:text-lg font-black text-gray-800 group-hover:text-orange-500 transition-colors leading-tight truncate">Candidate B</h2>
+                        <div class="flex items-center justify-center gap-1.5 mt-0.5">
+                            <span id="score-b" class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">10</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-300 group-hover:text-orange-400"></i>
+                        </div>
+                    </a>
+                    <button onclick="rejectCandidate('b')" class="mt-1 text-xs text-gray-300 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50" title="Remove from pool">
+                        <i class="fa-solid fa-ban mr-0.5"></i>Reject
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pick buttons pinned to bottom -->
+        <div class="shrink-0 p-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+            <div class="flex gap-3 max-w-lg mx-auto">
+                <button onclick="pickWinner('a')" id="pick-btn-a" class="pick-btn flex-1 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-pink-400 text-white font-bold text-base shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> <span id="pick-label-a">A</span>
+                </button>
+                <button onclick="pickWinner('b')" id="pick-btn-b" class="pick-btn flex-1 py-3 rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold text-base shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2">
+                    <span id="pick-label-b">B</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+            <div class="text-center mt-1">
+                <span class="text-xs text-gray-400">Click name to view CV &middot; <kbd class="px-1 py-0.5 bg-white rounded text-gray-500 font-mono border border-gray-200 text-xs">&larr;</kbd> / <kbd class="px-1 py-0.5 bg-white rounded text-gray-500 font-mono border border-gray-200 text-xs">&rarr;</kbd> to pick</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULTS VIEW -->
+    <div id="results-view" class="hidden h-full w-full flex flex-col mx-auto max-w-lg bg-gray-50 relative">
+        <div class="bg-white shadow-sm p-4 flex items-center gap-4 shrink-0 z-10 border-b border-gray-200">
+            <button onclick="showView('home')" class="text-gray-500 hover:text-gray-800 p-2 -ml-2 rounded-full">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1 class="text-xl font-bold text-gray-800 flex-1"><i class="fa-solid fa-trophy text-amber-400 mr-2"></i>Final Ranking</h1>
+            <button onclick="exportRanking()" class="text-gray-500 hover:text-gray-800 p-2 rounded-full bg-gray-50 border border-gray-200" title="Export ranking">
+                <i class="fa-solid fa-file-csv text-green-500"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4">
+            <div id="results-summary" class="text-xs text-gray-400 text-center mb-3"></div>
+            <div id="results-list" class="space-y-2"></div>
+            <div id="relegated-section" class="mt-6">
+                <button onclick="toggleRelegatedResults()" id="relegated-toggle" class="w-full text-left text-sm font-bold text-gray-400 flex items-center gap-2 mb-2 hover:text-gray-600 transition-colors">
+                    <i id="relegated-chevron" class="fa-solid fa-chevron-right text-xs transition-transform"></i>
+                    <span id="relegated-header">Relegated (0)</span>
+                </button>
+                <div id="relegated-list" class="space-y-2 hidden"></div>
+            </div>
+            <div class="pb-8"></div>
+        </div>
+    </div>
+
+    <!-- Quit Modal -->
+    <div id="quit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i>Quit Showdown?</h2>
+            <p class="text-sm text-gray-600">Progress is saved. You can resume from the home screen.</p>
+            <div class="flex gap-3 mt-2 pt-4 border-t border-gray-100">
+                <button onclick="document.getElementById('quit-modal').classList.add('hidden')" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-bold transition-colors">Keep Going</button>
+                <button onclick="quitToHome()" class="flex-1 py-2.5 px-4 bg-gray-700 text-white rounded-xl hover:bg-gray-800 font-bold transition-colors shadow-sm">Save &amp; Quit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Session Modal -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-trash text-red-500 mr-2"></i>Delete Session?</h2>
+            <p class="text-sm text-gray-600">This cannot be undone.</p>
+            <div class="flex gap-3 mt-2 pt-4 border-t border-gray-100">
+                <button onclick="document.getElementById('delete-modal').classList.add('hidden')" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-bold transition-colors">Cancel</button>
+                <button onclick="confirmDeleteSession()" class="flex-1 py-2.5 px-4 bg-red-500 text-white rounded-xl hover:bg-red-600 font-bold transition-colors shadow-sm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-2xl transition-all duration-300 -translate-y-24 z-50 flex items-center gap-3">
+        <i class="fa-solid fa-circle-info text-pink-400"></i>
+        <span id="toast-msg" class="text-sm font-medium">Message</span>
+    </div>
+
+    <script>
+        const appConfig = {
+            url: 'https://oaltkxblacpjjecpauya.supabase.co',
+            key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbHRreGJsYWNwamplY3BhdXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTc2ODQsImV4cCI6MjA4NDQ3MzY4NH0.zDfKgAKfWjXMQsOP5ZpD_nl6yhZS1O4H794HqSRDLVo',
+            table: 'links',
+            sessionsTable: 'showdown_sessions',
+            urlCol: 'url',
+            nameCol: 'name',
+            firstNameCol: 'first_name',
+            lastNameCol: 'last_name',
+            roleCol: 'role',
+            decisionCol: 'decision',
+            agentCol: 'agents',
+            agentEmailCol: 'agents_email'
+        };
+
+        const ELO_K = 32;
+        const ELO_START = 1500;
+        const MIN_COMPARISONS_FOR_RELEGATION = 3;
+
+        let supabaseClient = null;
+        let selectedScores = new Set([8, 9, 10]);
+        let allSubmissions = false;
+        let qualifyingCandidates = [];
+        let activePool = [];
+        let bench = [];
+        let relegated = [];
+        let topX = 10;
+        let totalCandidateCount = 0;
+        let isPickLocked = false;
+        let comparisonCount = 0;
+        let currentA = null;
+        let currentB = null;
+        let matchupHistory = new Set();
+        let leaderboardOpen = false;
+        let currentSessionId = null;
+        let pendingDeleteId = null;
+        let relegatedResultsOpen = false;
+
+        // --- UTILS ---
+        function displayName(item) {
+            const first = (item[appConfig.firstNameCol] || '').trim();
+            const last = (item[appConfig.lastNameCol] || '').trim();
+            if (first || last) return [first, last].filter(Boolean).join(' ');
+            return (item[appConfig.nameCol] || 'Unknown').trim();
+        }
+
+        function toProperCase(s) {
+            return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.classList.remove('-translate-y-24');
+            toast.classList.add('translate-y-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0');
+                toast.classList.add('-translate-y-24');
+            }, 3000);
+        }
+
+        function showView(viewName) {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('compare-view').classList.add('hidden');
+            document.getElementById('results-view').classList.add('hidden');
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+            if (viewName === 'compare') resizeIframes();
+            if (viewName === 'home') loadSavedSessions();
+        }
+
+        function matchupKey(a, b) {
+            const ids = [a.id, b.id].sort();
+            return `${ids[0]}-${ids[1]}`;
+        }
+
+        function calcActivePoolSize(total, targetX) {
+            if (total <= 30) return total;
+            return Math.min(total, Math.max(targetX + 15, targetX * 2));
+        }
+
+        function adjustTopX(delta) {
+            const input = document.getElementById('top-x-input');
+            const newVal = Math.max(1, parseInt(input.value || 10) + delta);
+            input.value = newVal;
+            refreshPreview();
+        }
+
+        // --- IFRAME SCALING ---
+        function resizeIframes() {
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.cv-frame').forEach(frame => {
+                    const w = frame.clientWidth;
+                    if (w > 0) {
+                        const scale = w / 800;
+                        const iframe = frame.querySelector('iframe');
+                        if (iframe) iframe.style.transform = `scale(${scale})`;
+                    }
+                });
+            });
+        }
+        window.addEventListener('resize', () => {
+            if (!document.getElementById('compare-view').classList.contains('hidden')) resizeIframes();
+        });
+
+        // --- DATA ---
+        async function fetchAllRecords() {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            let fetchMore = true;
+            while (fetchMore) {
+                const { data, error } = await supabaseClient.from(appConfig.table).select('*').range(from, from + step - 1);
+                if (error) throw error;
+                if (data && data.length > 0) { allData = allData.concat(data); from += step; fetchMore = data.length === step; }
+                else fetchMore = false;
+            }
+            return allData;
+        }
+
+        async function fetchAllRoles() {
+            let allRoles = new Set();
+            let from = 0;
+            const step = 1000;
+            let fetchMore = true;
+            while (fetchMore) {
+                const { data, error } = await supabaseClient.from(appConfig.table).select(appConfig.roleCol).range(from, from + step - 1);
+                if (error) throw error;
+                if (data && data.length > 0) { data.forEach(item => { const r = item[appConfig.roleCol]; if (r && r.trim() !== '') allRoles.add(r.trim()); }); from += step; fetchMore = data.length === step; }
+                else fetchMore = false;
+            }
+            return Array.from(allRoles).sort();
+        }
+
+        // --- SESSION PERSISTENCE ---
+        function serialiseCandidate(c) {
+            return {
+                id: c.id, url: c.url, name: c.name, role: c.role,
+                score: c.score, firstName: c.firstName, lastName: c.lastName,
+                agent: c.agent, agentEmail: c.agentEmail,
+                elo: c.elo, comparisons: c.comparisons,
+                opponents: Array.from(c.opponents || [])
+            };
+        }
+
+        function deserialiseCandidate(c) {
+            return { ...c, opponents: new Set(c.opponents || []) };
+        }
+
+        function serialiseState() {
+            return {
+                activePool: activePool.map(serialiseCandidate),
+                bench: bench.map(serialiseCandidate),
+                relegated: relegated.map(serialiseCandidate),
+                topX: topX,
+                totalCandidateCount: totalCandidateCount,
+                matchupHistory: Array.from(matchupHistory),
+                comparisonCount: comparisonCount
+            };
+        }
+
+        function restoreState(state) {
+            activePool = (state.activePool || []).map(deserialiseCandidate);
+            bench = (state.bench || []).map(deserialiseCandidate);
+            relegated = (state.relegated || []).map(deserialiseCandidate);
+            topX = state.topX || 10;
+            totalCandidateCount = state.totalCandidateCount || (activePool.length + bench.length + relegated.length);
+            matchupHistory = new Set(state.matchupHistory || []);
+            comparisonCount = state.comparisonCount || 0;
+        }
+
+        async function saveSession() {
+            if (!currentSessionId) return;
+            const state = serialiseState();
+            const { error } = await supabaseClient
+                .from(appConfig.sessionsTable)
+                .update({
+                    state: state,
+                    comparison_count: comparisonCount,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', currentSessionId);
+            if (error) console.error('Save failed:', error);
+        }
+
+        async function createSession() {
+            const role = document.getElementById('role-select').value;
+            const scores = Array.from(selectedScores);
+            const roleName = role === 'all' ? 'All Roles' : role;
+            const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            const sessionName = `Top ${topX} ${roleName} (${dateStr})`;
+
+            const { data, error } = await supabaseClient
+                .from(appConfig.sessionsTable)
+                .insert({
+                    session_name: sessionName,
+                    role_filter: role,
+                    selected_scores: scores,
+                    state: serialiseState(),
+                    comparison_count: 0
+                })
+                .select('id')
+                .single();
+
+            if (error) { showToast('Failed to create session'); console.error(error); return null; }
+            return data.id;
+        }
+
+        async function loadSavedSessions() {
+            const container = document.getElementById('saved-sessions');
+            const list = document.getElementById('saved-sessions-list');
+
+            const { data, error } = await supabaseClient
+                .from(appConfig.sessionsTable)
+                .select('id, session_name, comparison_count, created_at, updated_at, state')
+                .order('updated_at', { ascending: false });
+
+            if (error || !data || data.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            list.innerHTML = data.map(s => {
+                const st = s.state || {};
+                const activeCount = st.activePool ? st.activePool.length : '?';
+                const benchCount = st.bench ? st.bench.length : '?';
+                const relegatedCount = st.relegated ? st.relegated.length : 0;
+                const sTopX = st.topX || '?';
+                const updatedDate = new Date(s.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                return `<div class="session-card flex items-center gap-3 bg-white rounded-xl border border-gray-200 shadow-sm p-3 transition-transform cursor-pointer hover:border-pink-300" onclick="resumeSession('${s.id}')">
+                    <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-play text-pink-500 text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0 text-left">
+                        <h3 class="font-bold text-gray-800 text-sm truncate">${s.session_name}</h3>
+                        <p class="text-xs text-gray-400">${s.comparison_count} comparisons &middot; ${activeCount} active &middot; ${benchCount} bench &middot; ${relegatedCount} out &middot; ${updatedDate}</p>
+                    </div>
+                    <button onclick="event.stopPropagation(); askDeleteSession('${s.id}')" class="text-gray-300 hover:text-red-500 p-2 rounded-full transition-colors shrink-0">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        async function resumeSession(sessionId) {
+            const { data, error } = await supabaseClient
+                .from(appConfig.sessionsTable)
+                .select('*')
+                .eq('id', sessionId)
+                .single();
+
+            if (error || !data) { showToast('Failed to load session'); return; }
+
+            currentSessionId = sessionId;
+            restoreState(data.state);
+            leaderboardOpen = false;
+            document.getElementById('leaderboard-panel').classList.remove('expanded');
+            document.getElementById('leaderboard-panel').classList.add('collapsed');
+
+            showView('compare');
+            updatePoolStats();
+            updateProgress();
+            nextMatchup();
+            showToast(`Resumed: ${data.session_name}`);
+        }
+
+        function askDeleteSession(sessionId) {
+            pendingDeleteId = sessionId;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        async function confirmDeleteSession() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            if (!pendingDeleteId) return;
+            const { error } = await supabaseClient
+                .from(appConfig.sessionsTable)
+                .delete()
+                .eq('id', pendingDeleteId);
+            pendingDeleteId = null;
+            if (error) { showToast('Failed to delete'); return; }
+            showToast('Session deleted');
+            loadSavedSessions();
+        }
+
+        // --- INIT ---
+        async function init() {
+            try { supabaseClient = supabase.createClient(appConfig.url, appConfig.key); }
+            catch (error) { showToast("Failed to initialise Supabase."); return; }
+
+            const roles = await fetchAllRoles();
+            const select = document.getElementById('role-select');
+            let html = '<option value="all">All Roles</option>';
+            roles.forEach(r => { html += `<option value="${r}">${r}</option>`; });
+            select.innerHTML = html;
+            select.addEventListener('change', refreshPreview);
+            refreshPreview();
+            loadSavedSessions();
+        }
+
+        function toggleAllSubmissions() {
+            allSubmissions = !allSubmissions;
+            renderScoreChips();
+            refreshPreview();
+        }
+
+        function toggleScore(score) {
+            allSubmissions = false;
+            if (selectedScores.has(score)) selectedScores.delete(score);
+            else selectedScores.add(score);
+            renderScoreChips();
+            refreshPreview();
+        }
+
+        function renderScoreChips() {
+            const allBtn = document.getElementById('score-all');
+            if (allSubmissions) {
+                allBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                allBtn.classList.add('bg-pink-500', 'text-white', 'border-pink-500');
+            } else {
+                allBtn.classList.remove('bg-pink-500', 'text-white', 'border-pink-500');
+                allBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+            }
+            for (let s = 1; s <= 10; s++) {
+                const btn = document.getElementById(`score-${s}`);
+                if (!allSubmissions && selectedScores.has(s)) {
+                    btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                    btn.classList.add('bg-pink-500', 'text-white', 'border-pink-500');
+                } else {
+                    btn.classList.remove('bg-pink-500', 'text-white', 'border-pink-500');
+                    btn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+                }
+            }
+        }
+
+        async function refreshPreview() {
+            const countEl = document.getElementById('candidate-count');
+            const activeEl = document.getElementById('active-pool-size');
+            const benchEl = document.getElementById('bench-size');
+            const estEl = document.getElementById('comparison-estimate');
+            const startBtn = document.getElementById('start-btn');
+            countEl.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-sm"></i>';
+            activeEl.textContent = '--';
+            benchEl.textContent = '--';
+            estEl.textContent = '--';
+            startBtn.disabled = true;
+
+            try {
+                const rawData = await fetchAllRecords();
+                const selectedRole = document.getElementById('role-select').value;
+
+                const byUrl = new Map();
+                rawData.forEach(item => {
+                    const dec = parseInt(item[appConfig.decisionCol]);
+                    if (!allSubmissions && (isNaN(dec) || !selectedScores.has(dec))) return;
+                    if (selectedRole !== 'all' && item[appConfig.roleCol] !== selectedRole) return;
+                    const key = item[appConfig.urlCol] || item.id;
+                    const scoreVal = isNaN(dec) ? 0 : dec;
+                    if (!byUrl.has(key) || scoreVal > byUrl.get(key).score) {
+                        byUrl.set(key, {
+                            id: item.id,
+                            name: toProperCase(displayName(item)),
+                            url: item[appConfig.urlCol],
+                            role: item[appConfig.roleCol],
+                            score: scoreVal,
+                            firstName: item[appConfig.firstNameCol],
+                            lastName: item[appConfig.lastNameCol],
+                            agent: item[appConfig.agentCol],
+                            agentEmail: item[appConfig.agentEmailCol]
+                        });
+                    }
+                });
+
+                qualifyingCandidates = Array.from(byUrl.values());
+                qualifyingCandidates.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+
+                const n = qualifyingCandidates.length;
+                const tx = Math.max(1, Math.min(parseInt(document.getElementById('top-x-input').value) || 10, n));
+                const poolSize = calcActivePoolSize(n, tx);
+                const benchSize = Math.max(0, n - poolSize);
+                const est = (tx * 8) + (benchSize * 5);
+
+                countEl.textContent = n;
+                activeEl.textContent = poolSize;
+                benchEl.textContent = benchSize;
+                estEl.textContent = n > 1 ? `~${est}` : '0';
+                startBtn.disabled = n < 2;
+            } catch (error) {
+                console.error(error);
+                countEl.textContent = '?';
+                showToast("Failed to load candidates");
+            }
+        }
+
+        // --- ELO ENGINE ---
+        function eloExpected(ratingA, ratingB) {
+            return 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+        }
+
+        function eloUpdate(winner, loser) {
+            const expectedW = eloExpected(winner.elo, loser.elo);
+            const expectedL = eloExpected(loser.elo, winner.elo);
+            winner.elo += ELO_K * (1 - expectedW);
+            loser.elo += ELO_K * (0 - expectedL);
+            winner.comparisons++;
+            loser.comparisons++;
+            winner.opponents.add(loser.id);
+            loser.opponents.add(winner.id);
+        }
+
+        // --- POOL MANAGEMENT ---
+        function initPools(candidates, targetX) {
+            topX = targetX;
+            totalCandidateCount = candidates.length;
+
+            // Shuffle candidates
+            const shuffled = [...candidates];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            // Initialise Elo
+            shuffled.forEach(c => {
+                c.elo = ELO_START;
+                c.comparisons = 0;
+                c.opponents = new Set();
+            });
+
+            // Split into active and bench
+            const poolSize = calcActivePoolSize(shuffled.length, targetX);
+            activePool = shuffled.slice(0, poolSize);
+            bench = shuffled.slice(poolSize);
+            relegated = [];
+            matchupHistory = new Set();
+            comparisonCount = 0;
+        }
+
+        function checkRelegation() {
+            if (activePool.length <= topX) return;
+
+            const sorted = [...activePool].sort((a, b) => b.elo - a.elo);
+            const cutoffIdx = Math.min(topX - 1, sorted.length - 1);
+            const cutoffElo = sorted[cutoffIdx].elo;
+
+            // Check from bottom up, relegate at most 1
+            for (let i = sorted.length - 1; i >= topX; i--) {
+                const c = sorted[i];
+                if (c.comparisons < MIN_COMPARISONS_FOR_RELEGATION) continue;
+
+                const se = 200 / Math.sqrt(c.comparisons);
+                const upperBound = c.elo + 1.5 * se;
+
+                if (upperBound < cutoffElo) {
+                    relegateCandidate(c);
+                    return;
+                }
+            }
+        }
+
+        function relegateCandidate(candidate) {
+            activePool = activePool.filter(c => c !== candidate);
+            relegated.push(candidate);
+
+            showToast(`Relegated: ${candidate.name} (${Math.round(candidate.elo)}) | ${bench.length} on bench`);
+
+            if (bench.length > 0) {
+                promoteFromBench();
+            }
+
+            updatePoolStats();
+        }
+
+        function rejectCandidate(side) {
+            if (isPickLocked) return;
+            isPickLocked = true;
+            const candidate = side === 'a' ? currentA : currentB;
+            if (!candidate) return;
+
+            relegateCandidate(candidate);
+            saveSession();
+
+            setTimeout(() => nextMatchup(), 200);
+        }
+
+        function promoteFromBench() {
+            if (bench.length === 0) return;
+            const newCandidate = bench.shift();
+            newCandidate.elo = ELO_START;
+            newCandidate.comparisons = 0;
+            newCandidate.opponents = new Set();
+            activePool.push(newCandidate);
+        }
+
+        // --- SMART MATCHUP SELECTION ---
+        function selectMatchup() {
+            const candidates = activePool;
+            if (candidates.length < 2) return null;
+
+            const maxComp = Math.max(...candidates.map(c => c.comparisons));
+            const weights = candidates.map(c => (maxComp - c.comparisons + 1));
+            const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+            let r = Math.random() * totalWeight;
+            let candidateA = candidates[0];
+            for (let i = 0; i < candidates.length; i++) {
+                r -= weights[i];
+                if (r <= 0) { candidateA = candidates[i]; break; }
+            }
+
+            let available = candidates.filter(c =>
+                c !== candidateA && !matchupHistory.has(matchupKey(candidateA, c))
+            );
+
+            if (available.length === 0) {
+                available = candidates.filter(c => c !== candidateA);
+            }
+
+            if (available.length === 0) return null;
+
+            const scores = available.map(c => {
+                const eloDist = Math.abs(c.elo - candidateA.elo);
+                return 1 / (eloDist + 50) + (maxComp - c.comparisons + 1) / (maxComp + 1);
+            });
+            const totalScore = scores.reduce((a, b) => a + b, 0);
+
+            let r2 = Math.random() * totalScore;
+            let candidateB = available[0];
+            for (let i = 0; i < available.length; i++) {
+                r2 -= scores[i];
+                if (r2 <= 0) { candidateB = available[i]; break; }
+            }
+
+            return [candidateA, candidateB];
+        }
+
+        // --- LEADERBOARD ---
+        function toggleLeaderboard() {
+            const panel = document.getElementById('leaderboard-panel');
+            leaderboardOpen = !leaderboardOpen;
+            if (leaderboardOpen) {
+                panel.classList.remove('collapsed');
+                panel.classList.add('expanded');
+                renderLeaderboard();
+            } else {
+                panel.classList.remove('expanded');
+                panel.classList.add('collapsed');
+            }
+        }
+
+        function renderLeaderboard(movedIds) {
+            if (!leaderboardOpen) return;
+            const sorted = [...activePool].sort((a, b) => b.elo - a.elo);
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = sorted.map((c, i) => {
+                const isMoved = movedIds && movedIds.has(c.id);
+                const lowConf = c.comparisons < 3;
+                const isCutoff = i === topX - 1 && activePool.length > topX;
+                return `<div class="flex items-center gap-2 px-3 py-2 ${isMoved ? 'elo-mover' : ''} ${isCutoff ? 'cutoff-line' : ''}">
+                    <span class="w-6 text-right text-xs font-bold ${i < topX ? 'text-pink-500' : 'text-gray-300'}">${i + 1}</span>
+                    <span class="flex-1 text-sm font-medium ${i < topX ? 'text-gray-700' : 'text-gray-400'} truncate">${c.name}</span>
+                    <span class="text-xs font-mono text-gray-500">${Math.round(c.elo)}</span>
+                    <span class="text-xs text-gray-300 w-8 text-right">${c.comparisons}x</span>
+                    ${lowConf ? '<i class="fa-solid fa-circle-question text-amber-300 text-xs" title="Low confidence (fewer than 3 comparisons)"></i>' : ''}
+                </div>`;
+            }).join('');
+
+            // Relegated section
+            const relSection = document.getElementById('leaderboard-relegated');
+            if (relegated.length > 0) {
+                relSection.innerHTML = `<div class="px-3 py-1.5 text-xs font-bold text-gray-400 bg-gray-50">${relegated.length} relegated</div>` +
+                    relegated.slice(-5).reverse().map(c =>
+                        `<div class="flex items-center gap-2 px-3 py-1.5 opacity-50">
+                            <span class="w-6 text-right text-xs text-gray-300"><i class="fa-solid fa-arrow-down text-xs"></i></span>
+                            <span class="flex-1 text-xs text-gray-400 truncate">${c.name}</span>
+                            <span class="text-xs font-mono text-gray-300">${Math.round(c.elo)}</span>
+                        </div>`
+                    ).join('');
+            } else {
+                relSection.innerHTML = '';
+            }
+        }
+
+        // --- POOL STATS ---
+        function updatePoolStats() {
+            document.getElementById('stat-active').textContent = activePool.length;
+            document.getElementById('stat-bench').textContent = bench.length;
+            document.getElementById('stat-relegated').textContent = relegated.length;
+        }
+
+        // --- COMPARE FLOW ---
+        function showMatchup(a, b) {
+            currentA = a;
+            currentB = b;
+
+            document.getElementById('name-a').textContent = a.name;
+            document.getElementById('score-a').textContent = a.score;
+            document.getElementById('link-a').href = a.url || '#';
+            document.getElementById('headshot-a').src = a.url || '';
+
+            document.getElementById('name-b').textContent = b.name;
+            document.getElementById('score-b').textContent = b.score;
+            document.getElementById('link-b').href = b.url || '#';
+            document.getElementById('headshot-b').src = b.url || '';
+
+            const firstA = (a.firstName || '').trim();
+            const firstB = (b.firstName || '').trim();
+            document.getElementById('pick-label-a').textContent = firstA || a.name;
+            document.getElementById('pick-label-b').textContent = firstB || b.name;
+
+            isPickLocked = false;
+            resizeIframes();
+        }
+
+        function updateProgress() {
+            const processed = totalCandidateCount - bench.length;
+            const pct = totalCandidateCount > 0 ? Math.min(100, Math.round((processed / totalCandidateCount) * 100)) : 0;
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+
+            // Green done button once bench is empty
+            const doneBtn = document.getElementById('done-btn');
+            if (bench.length === 0) {
+                doneBtn.classList.remove('bg-white', 'text-gray-400', 'border-gray-200');
+                doneBtn.classList.add('bg-green-500', 'text-white', 'border-green-500');
+            } else {
+                doneBtn.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+                doneBtn.classList.add('bg-white', 'text-gray-400', 'border-gray-200');
+            }
+        }
+
+        // --- SHOWDOWN FLOW ---
+        async function startShowdown() {
+            if (qualifyingCandidates.length < 2) return;
+
+            topX = Math.max(1, Math.min(parseInt(document.getElementById('top-x-input').value) || 10, qualifyingCandidates.length));
+            initPools(qualifyingCandidates, topX);
+
+            currentSessionId = await createSession();
+            if (!currentSessionId) return;
+
+            leaderboardOpen = false;
+            document.getElementById('leaderboard-panel').classList.remove('expanded');
+            document.getElementById('leaderboard-panel').classList.add('collapsed');
+
+            showView('compare');
+            updatePoolStats();
+            updateProgress();
+            nextMatchup();
+        }
+
+        function nextMatchup() {
+            const pair = selectMatchup();
+            if (!pair) {
+                finishShowdown();
+                return;
+            }
+            showMatchup(pair[0], pair[1]);
+        }
+
+        function pickWinner(side) {
+            if (isPickLocked || !currentA || !currentB) return;
+            isPickLocked = true;
+
+            const btn = document.getElementById(side === 'a' ? 'pick-btn-a' : 'pick-btn-b');
+            btn.classList.add('pick-flash');
+            setTimeout(() => btn.classList.remove('pick-flash'), 300);
+
+            const winner = side === 'a' ? currentA : currentB;
+            const loser = side === 'a' ? currentB : currentA;
+
+            eloUpdate(winner, loser);
+            matchupHistory.add(matchupKey(currentA, currentB));
+            comparisonCount++;
+
+            checkRelegation();
+            updatePoolStats();
+            updateProgress();
+            renderLeaderboard(new Set([winner.id, loser.id]));
+
+            saveSession();
+
+            setTimeout(() => nextMatchup(), 200);
+        }
+
+        function finishShowdown() {
+            saveSession();
+            const ranked = [...activePool].sort((a, b) => b.elo - a.elo);
+            const topCandidates = ranked.slice(0, topX);
+            const rest = ranked.slice(topX);
+            showResults(topCandidates, [...rest, ...relegated]);
+        }
+
+        // --- QUIT ---
+        function confirmQuit() {
+            document.getElementById('quit-modal').classList.remove('hidden');
+        }
+
+        function quitToHome() {
+            document.getElementById('quit-modal').classList.add('hidden');
+            saveSession();
+            currentA = null;
+            currentB = null;
+            currentSessionId = null;
+            showView('home');
+            refreshPreview();
+        }
+
+        // --- RESULTS ---
+        function showResults(topCandidates, relegatedCandidates) {
+            const list = document.getElementById('results-list');
+            const summary = document.getElementById('results-summary');
+            const relList = document.getElementById('relegated-list');
+            const relHeader = document.getElementById('relegated-header');
+            list.innerHTML = '';
+            relList.innerHTML = '';
+            relegatedResultsOpen = false;
+            document.getElementById('relegated-chevron').style.transform = '';
+            relList.classList.add('hidden');
+
+            const totalSeen = activePool.length + relegated.length;
+            summary.textContent = `Top ${topX} from ${totalSeen} candidates (${bench.length} unseen) | ${comparisonCount} comparisons`;
+
+            topCandidates.forEach((candidate, index) => {
+                const rank = index + 1;
+                list.appendChild(createResultRow(candidate, rank, false));
+            });
+
+            relHeader.textContent = `Relegated (${relegatedCandidates.length})`;
+
+            const relSorted = [...relegatedCandidates].sort((a, b) => b.elo - a.elo);
+            relSorted.forEach((candidate, index) => {
+                relList.appendChild(createResultRow(candidate, index + topX + 1, true));
+            });
+
+            window._topResults = topCandidates;
+            window._relegatedResults = relSorted;
+            showView('results');
+        }
+
+        function createResultRow(candidate, rank, isRelegated) {
+            let medalIcon = '';
+            let medalBg = 'bg-gray-100';
+            let medalText = 'text-gray-600';
+
+            if (!isRelegated) {
+                if (rank === 1) { medalIcon = '<i class="fa-solid fa-trophy text-amber-500"></i>'; medalBg = 'bg-amber-50'; }
+                else if (rank === 2) { medalIcon = '<i class="fa-solid fa-medal text-gray-400"></i>'; medalBg = 'bg-gray-50'; }
+                else if (rank === 3) { medalIcon = '<i class="fa-solid fa-medal text-amber-700"></i>'; medalBg = 'bg-orange-50'; }
+            }
+
+            const lowConf = candidate.comparisons < 3;
+
+            const row = document.createElement('div');
+            row.className = `flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 shadow-sm ${isRelegated ? 'opacity-60' : ''}`;
+            row.innerHTML = `
+                <div class="w-10 h-10 rounded-full ${isRelegated ? 'bg-gray-100' : medalBg} flex items-center justify-center shrink-0">
+                    ${isRelegated ? `<span class="text-gray-400 font-bold text-xs">${rank}</span>` : (medalIcon || `<span class="${medalText} font-bold text-sm">${rank}</span>`)}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-bold ${isRelegated ? 'text-gray-500' : 'text-gray-800'} truncate">${candidate.name}</h3>
+                        ${lowConf ? '<i class="fa-solid fa-circle-question text-amber-300 text-xs" title="Low confidence"></i>' : ''}
+                    </div>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-xs text-gray-500 truncate">${candidate.role || 'No role'}</span>
+                        <span class="text-xs font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">Spinder: ${candidate.score}</span>
+                        <span class="text-xs font-mono px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600">Elo: ${Math.round(candidate.elo)}</span>
+                        <span class="text-xs text-gray-400">${candidate.comparisons}x</span>
+                    </div>
+                </div>
+                <a href="${candidate.url || '#'}" target="_blank" class="text-gray-400 hover:text-pink-500 p-2 shrink-0 rounded-full transition-colors">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+                </a>
+            `;
+            return row;
+        }
+
+        function toggleRelegatedResults() {
+            relegatedResultsOpen = !relegatedResultsOpen;
+            const list = document.getElementById('relegated-list');
+            const chevron = document.getElementById('relegated-chevron');
+            if (relegatedResultsOpen) {
+                list.classList.remove('hidden');
+                chevron.style.transform = 'rotate(90deg)';
+            } else {
+                list.classList.add('hidden');
+                chevron.style.transform = '';
+            }
+        }
+
+        async function exportRanking() {
+            const top = window._topResults;
+            const rel = window._relegatedResults;
+            if ((!top || top.length === 0) && (!rel || rel.length === 0)) { showToast("No results to export"); return; }
+
+            // Fetch fresh data so agent/email are available even for resumed sessions
+            const allRecords = await fetchAllRecords();
+            const lookup = new Map();
+            allRecords.forEach(r => lookup.set(r.id, r));
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            const esc = s => `"${(s || '').replace(/"/g, '""')}"`;
+
+            let csv = "\uFEFFRank,First Name,Surname,Agent,Email,Role,Spinder Score,Elo Rating,Comparisons,Status,Link\n";
+            const all = [...(top || []).map((c, i) => ({ ...c, rank: i + 1, status: `Top ${topX}` })),
+                         ...(rel || []).map((c, i) => ({ ...c, rank: i + topX + 1, status: 'Relegated' }))];
+            all.forEach(c => {
+                const rec = lookup.get(c.id) || {};
+                csv += `${c.rank},${esc(toProperCase(c.firstName || ''))},${esc(toProperCase(c.lastName || ''))},${esc(rec[appConfig.agentCol] || c.agent || '')},${esc(rec[appConfig.agentEmailCol] || c.agentEmail || '')},${esc(c.role)},${c.score},${Math.round(c.elo)},${c.comparisons},${esc(c.status)},${esc(c.url)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Showdown_Top${topX}_${dateStr}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Ranking exported");
+        }
+
+        // --- KEYBOARD ---
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('compare-view').classList.contains('hidden')) return;
+            if (e.key === 'ArrowLeft') { e.preventDefault(); pickWinner('a'); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); pickWinner('b'); }
+        });
+
+        // Boot
+        init();
+    </script>
+</body>
+</html>
