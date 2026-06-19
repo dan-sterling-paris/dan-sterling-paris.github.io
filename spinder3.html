@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LinkTinder</title>
+    <title>Spinder</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -61,8 +61,8 @@
 
     <!-- HOME VIEW -->
     <div id="home-view" class="h-full w-full flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
-        <i class="fa-solid fa-fire text-pink-500 text-6xl mb-6 shadow-sm rounded-full bg-white p-4"></i>
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">CV Tinder</h1>
+        <i class="fa-solid fa-users-gear text-pink-500 text-6xl mb-6 shadow-sm rounded-full bg-white p-4"></i>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Spinder</h1>
         <p class="text-gray-500 mb-8">Categorise candidates quickly and efficiently.</p>
 
         <div class="w-full flex flex-col gap-3">
@@ -99,6 +99,10 @@
             <button id="csv-btn" onclick="openExportModal()" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2 mt-2">
                 <i class="fa-solid fa-file-csv text-green-500"></i> Export to CSV
             </button>
+
+            <button onclick="openUploadModal()" class="w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-arrow-up text-blue-500"></i> Upload CSV
+            </button>
         </div>
     </div>
 
@@ -119,7 +123,7 @@
                     <!-- Centered Logo -->
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div class="flex items-center gap-2 text-pink-500 font-bold text-xl">
-                            <i class="fa-solid fa-fire"></i> LinkTinder
+                            <i class="fa-solid fa-users-gear"></i> Spinder
                         </div>
                     </div>
 
@@ -164,7 +168,7 @@
             </div>
 
             <!-- The Swipable Card -->
-            <div id="tinder-card" class="absolute inset-0 bg-white flex flex-col card-transition z-20 hidden">
+            <div id="swipe-card" class="absolute inset-0 bg-white flex flex-col card-transition z-20 hidden">
 
                 <!-- Card Header -->
                 <div class="bg-white border-b border-gray-200 px-4 py-2 shrink-0 flex flex-col items-center text-center relative z-20">
@@ -312,10 +316,75 @@
                 </div>
             </div>
 
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Filter by Date</label>
+                <div class="flex flex-wrap gap-2 mt-1">
+                    <button type="button" onclick="toggleDateChip('all')" id="date-chip-all" class="date-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-green-500 text-white border border-green-500 transition-colors">All time</button>
+                    <button type="button" onclick="toggleDateChip('last-export')" id="date-chip-last-export" class="date-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">Since last export</button>
+                    <button type="button" onclick="toggleDateChip('custom')" id="date-chip-custom" class="date-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">Since...</button>
+                </div>
+                <div id="custom-date-picker" class="hidden mt-2">
+                    <input type="datetime-local" id="export-since-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                </div>
+            </div>
+
             <div class="flex gap-3 mt-4 pt-4 border-t border-gray-100">
                 <button onclick="closeExportModal()" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-bold transition-colors">Cancel</button>
                 <button id="execute-export-btn" onclick="executeCSVExport()" class="flex-1 py-2.5 px-4 bg-green-500 text-white rounded-xl hover:bg-green-600 font-bold flex items-center justify-center gap-2 transition-colors shadow-sm">
                     <i class="fa-solid fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-arrow-up text-blue-500"></i> Upload CSV
+            </h2>
+
+            <!-- Role name input -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Role name *</label>
+                <input type="text" id="upload-role-input" placeholder="e.g. Lead Actor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" oninput="validateUploadForm()">
+            </div>
+
+            <!-- File selection -->
+            <div id="upload-drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                 onclick="document.getElementById('upload-file-input').click()">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-2"></i>
+                <p class="text-sm font-semibold text-gray-600">Drop a CSV file here or click to browse</p>
+                <p id="upload-file-name" class="text-xs text-gray-400 mt-1"></p>
+                <input type="file" id="upload-file-input" accept=".csv" class="hidden" onchange="handleFileSelect(this.files[0])">
+            </div>
+
+            <!-- Column mapping (hidden until file parsed) -->
+            <div id="upload-mapping-section" class="hidden flex flex-col gap-3">
+                <label class="block text-sm font-semibold text-gray-700">Map CSV columns</label>
+                <div class="grid grid-cols-2 gap-2 text-sm" id="upload-mapping-grid"></div>
+
+                <!-- Preview -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Preview (first 3 rows)</label>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table id="upload-preview-table" class="w-full text-xs text-left"></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress (hidden until uploading) -->
+            <div id="upload-progress-section" class="hidden flex flex-col gap-2">
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="upload-progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-300 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="upload-progress-text" class="text-xs text-gray-500 text-center">0 / 0 rows</p>
+            </div>
+
+            <div class="flex gap-3 mt-2 pt-4 border-t border-gray-100">
+                <button onclick="closeUploadModal()" class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-bold transition-colors">Cancel</button>
+                <button id="execute-upload-btn" onclick="executeCSVUpload()" disabled class="flex-1 py-2.5 px-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 font-bold flex items-center justify-center gap-2 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-upload"></i> Upload
                 </button>
             </div>
         </div>
@@ -335,9 +404,22 @@
             table: 'links',
             urlCol: 'url',
             nameCol: 'name',
+            firstNameCol: 'first_name',
+            lastNameCol: 'last_name',
             roleCol: 'role',
             decisionCol: 'decision'
         };
+
+        function displayName(item) {
+            const first = (item[appConfig.firstNameCol] || '').trim();
+            const last = (item[appConfig.lastNameCol] || '').trim();
+            if (first || last) return [first, last].filter(Boolean).join(' ');
+            return (item[appConfig.nameCol] || 'Unknown').trim();
+        }
+
+        function toProperCase(s) {
+            return s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        }
 
         // App State
         let supabaseClient = null;
@@ -404,7 +486,7 @@
 
                 if (!map.has(key)) {
                     map.set(key, {
-                        name: item[appConfig.nameCol],
+                        name: toProperCase(displayName(item)),
                         url: item[appConfig.urlCol],
                         idFallback: item.id,
                         applications: [],
@@ -522,7 +604,7 @@
         async function startSwipeSession() {
             if (!supabaseClient) return;
 
-            document.getElementById('tinder-card').classList.add('hidden');
+            document.getElementById('swipe-card').classList.add('hidden');
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('loading-state').classList.remove('hidden');
             document.getElementById('progress-indicator').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
@@ -601,7 +683,7 @@
 
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('tinder-card').classList.remove('hidden');
+            document.getElementById('swipe-card').classList.remove('hidden');
 
             const iframe = document.getElementById('website-frame');
             const iframeLoading = document.getElementById('iframe-loading');
@@ -628,7 +710,7 @@
             if (isProcessing || !currentPerson || !activeApplication) return;
             isProcessing = true;
 
-            const tinderCard = document.getElementById('tinder-card');
+            const swipeCard = document.getElementById('swipe-card');
             const stampEl = document.getElementById('stamp-score');
 
             // Set stamp text and colour based on score range
@@ -645,16 +727,16 @@
                 stampEl.style.borderColor = '#22c55e';
             }
 
-            tinderCard.classList.remove('card-transition');
-            void tinderCard.offsetWidth; // Reflow
-            tinderCard.classList.add('card-transition');
+            swipeCard.classList.remove('card-transition');
+            void swipeCard.offsetWidth; // Reflow
+            swipeCard.classList.add('card-transition');
 
             stampEl.classList.add('show-stamp');
 
             // Swipe direction: low scores left, mid scores up, high scores right
-            if (n <= 3) tinderCard.classList.add('swipe-left');
-            else if (n <= 6) tinderCard.classList.add('swipe-up');
-            else tinderCard.classList.add('swipe-right');
+            if (n <= 3) swipeCard.classList.add('swipe-left');
+            else if (n <= 6) swipeCard.classList.add('swipe-up');
+            else swipeCard.classList.add('swipe-right');
 
             const updateData = { updated_at: new Date().toISOString() };
             updateData[appConfig.decisionCol] = score;
@@ -664,8 +746,8 @@
             await supabaseClient.from(appConfig.table).update(updateData).eq('id', activeApplication.id);
 
             setTimeout(() => {
-                tinderCard.classList.add('hidden');
-                tinderCard.classList.remove('swipe-left', 'swipe-right', 'swipe-up');
+                swipeCard.classList.add('hidden');
+                swipeCard.classList.remove('swipe-left', 'swipe-right', 'swipe-up');
                 stampEl.classList.remove('show-stamp');
 
                 pendingOtherApplications = currentPerson.applications.filter(a => a.id !== activeApplication.id);
@@ -919,9 +1001,9 @@
 
 
         // --- CSV EXPORT LOGIC ---
-        function openExportModal() {
+        async function openExportModal() {
             const dateStr = new Date().toISOString().split('T')[0];
-            document.getElementById('export-filename').value = `LinkTinder_Export_${dateStr}`;
+            document.getElementById('export-filename').value = `Spinder_Export_${dateStr}`;
             selectedExportFilters = new Set(['all']);
             document.querySelectorAll('.export-chip').forEach(chip => {
                 const chipVal = chip.getAttribute('onclick').match(/'([^']+)'\)$/)[1];
@@ -932,6 +1014,38 @@
                     chip.classList.add('bg-gray-100', 'text-gray-600', 'border-gray-200');
                 }
             });
+
+            // Reset date filter state
+            selectedDateFilter = 'all';
+            lastExportTimestamp = null;
+            toggleDateChip('all');
+
+            // Fetch last export timestamp from Supabase
+            const lastExportChip = document.getElementById('date-chip-last-export');
+            lastExportChip.textContent = 'Since last export';
+            lastExportChip.disabled = false;
+            lastExportChip.classList.remove('opacity-40', 'cursor-not-allowed');
+            try {
+                const { data } = await supabaseClient.from('exports').select('exported_at').order('exported_at', { ascending: false }).limit(1);
+                if (data && data.length > 0) {
+                    lastExportTimestamp = data[0].exported_at;
+                    const label = new Date(lastExportTimestamp).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    lastExportChip.textContent = `Since last export (${label})`;
+                } else {
+                    lastExportChip.disabled = true;
+                    lastExportChip.classList.add('opacity-40', 'cursor-not-allowed');
+                }
+            } catch (e) {
+                lastExportChip.disabled = true;
+                lastExportChip.classList.add('opacity-40', 'cursor-not-allowed');
+            }
+
+            // Pre-fill the custom date picker
+            const defaultSince = lastExportTimestamp
+                ? new Date(lastExportTimestamp).toISOString().slice(0, 16)
+                : new Date(Date.now() - 86400000).toISOString().slice(0, 16);
+            document.getElementById('export-since-date').value = defaultSince;
+
             document.getElementById('export-modal').classList.remove('hidden');
         }
 
@@ -940,6 +1054,8 @@
         }
 
         let selectedExportFilters = new Set(['all']);
+        let selectedDateFilter = 'all';
+        let lastExportTimestamp = null;
 
         function toggleExportChip(btn, value) {
             const allChip = document.querySelector('.export-chip');
@@ -972,6 +1088,20 @@
             });
         }
 
+        function toggleDateChip(value) {
+            selectedDateFilter = value;
+            document.querySelectorAll('.date-chip').forEach(chip => {
+                chip.classList.remove('bg-green-500', 'text-white', 'border-green-500');
+                chip.classList.add('bg-gray-100', 'text-gray-600', 'border-gray-200');
+            });
+            const activeChip = document.getElementById(`date-chip-${value}`);
+            if (activeChip) {
+                activeChip.classList.remove('bg-gray-100', 'text-gray-600', 'border-gray-200');
+                activeChip.classList.add('bg-green-500', 'text-white', 'border-green-500');
+            }
+            document.getElementById('custom-date-picker').classList.toggle('hidden', value !== 'custom');
+        }
+
         async function executeCSVExport() {
             if (!supabaseClient) {
                 showToast("Database not initialized");
@@ -986,7 +1116,7 @@
             try {
                 let data = await fetchAllRecords();
 
-                let filename = document.getElementById('export-filename').value.trim() || 'LinkTinder_Export';
+                let filename = document.getElementById('export-filename').value.trim() || 'Spinder_Export';
                 if (!filename.toLowerCase().endsWith('.csv')) filename += '.csv';
 
                 if (!selectedExportFilters.has('all')) {
@@ -998,27 +1128,51 @@
                     });
                 }
 
+                // Apply date filter
+                let sinceDate = null;
+                if (selectedDateFilter === 'last-export' && lastExportTimestamp) {
+                    sinceDate = new Date(lastExportTimestamp);
+                } else if (selectedDateFilter === 'custom') {
+                    const val = document.getElementById('export-since-date').value;
+                    if (val) sinceDate = new Date(val);
+                }
+                if (sinceDate) {
+                    data = data.filter(item => new Date(item['updated_at']) >= sinceDate);
+                }
+
                 if (data.length === 0) {
                     showToast("No records match the selected filter.");
                     return;
                 }
 
+                data.sort((a, b) => {
+                    const decA = a[appConfig.decisionCol];
+                    const decB = b[appConfig.decisionCol];
+                    const numA = decA ? parseInt(decA, 10) : 0;
+                    const numB = decB ? parseInt(decB, 10) : 0;
+                    if (numB !== numA) return numB - numA;
+
+                    const surnameA = (a[appConfig.lastNameCol] || '').toLowerCase();
+                    const surnameB = (b[appConfig.lastNameCol] || '').toLowerCase();
+                    if (surnameA !== surnameB) return surnameA < surnameB ? -1 : 1;
+
+                    const firstA = (a[appConfig.firstNameCol] || '').toLowerCase();
+                    const firstB = (b[appConfig.firstNameCol] || '').toLowerCase();
+                    return firstA < firstB ? -1 : firstA > firstB ? 1 : 0;
+                });
+
                 let csvContent = "\uFEFFFirst Name,Second Name,Agent,Email,Role,Decision,Link\n";
 
                 data.forEach(row => {
-                    const fullName = (row[appConfig.nameCol] || '').trim();
-                    const spaceIdx = fullName.indexOf(' ');
-                    const toProper = s => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-                    const first = spaceIdx > -1 ? fullName.substring(0, spaceIdx) : fullName;
-                    const second = spaceIdx > -1 ? fullName.substring(spaceIdx + 1) : '';
+                    const esc = s => `"${(s || '').replace(/"/g, '""')}"`;
 
-                    const firstName  = `"${toProper(first).replace(/"/g, '""')}"`;
-                    const secondName = `"${toProper(second).replace(/"/g, '""')}"`;
-                    const agent      = `"${(row['agents']       || '').replace(/"/g, '""')}"`;
-                    const email      = `"${(row['agents_email'] || '').replace(/"/g, '""')}"`;
-                    const role       = `"${(row[appConfig.roleCol] || '').replace(/"/g, '""')}"`;
-                    const decision   = `"${(row[appConfig.decisionCol] || 'Pending').replace(/"/g, '""')}"`;
-                    const link       = `"${(row[appConfig.urlCol] || '').replace(/"/g, '""')}"`;
+                    const firstName  = esc(toProperCase(row[appConfig.firstNameCol] || ''));
+                    const secondName = esc(toProperCase(row[appConfig.lastNameCol] || ''));
+                    const agent      = esc(row['agents']);
+                    const email      = esc(row['agents_email']);
+                    const role       = esc(row[appConfig.roleCol]);
+                    const decision   = esc(row[appConfig.decisionCol] || 'Pending');
+                    const link       = esc(row[appConfig.urlCol]);
 
                     csvContent += `${firstName},${secondName},${agent},${email},${role},${decision},${link}\n`;
                 });
@@ -1037,6 +1191,7 @@
 
                 showToast("CSV Downloaded Successfully");
                 closeExportModal();
+                await supabaseClient.from('exports').insert({});
 
             } catch (error) {
                 console.error("Export Error:", error);
@@ -1049,7 +1204,7 @@
 
         // --- UTILS ---
         function showEmptyState() {
-            document.getElementById('tinder-card').classList.add('hidden');
+            document.getElementById('swipe-card').classList.add('hidden');
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('empty-state').classList.remove('hidden');
             currentPerson = null;
@@ -1069,6 +1224,301 @@
                 toast.classList.add('-translate-y-24');
             }, 3000);
         }
+
+        // --- CSV UPLOAD LOGIC ---
+        let uploadedCSVData = null;
+
+        const COLUMN_ALIASES = {
+            first_name:   ['name', 'first name', 'first', 'forename', 'given name'],
+            last_name:    ['surname', 'last name', 'last', 'second name', 'family name'],
+            url:          ['link', 'url', 'cv', 'cv link', 'cv url', 'linkedin', 'profile'],
+            agents:       ['agent', 'agents', 'agency', 'recruiter', 'source'],
+            agents_email: ['agent_email', 'agent email', 'agents_email', 'agency email', 'recruiter email', 'email']
+        };
+
+        const UPLOAD_TARGETS = ['first_name', 'last_name', 'url', 'agents', 'agents_email'];
+        const UPLOAD_LABELS = { first_name: 'First Name *', last_name: 'Surname', url: 'Profile Link', agents: 'Agent', agents_email: 'Agent Email' };
+        const PREVIEW_LABELS = { first_name: 'First', last_name: 'Surname', url: 'Link', agents: 'Agent', agents_email: 'Email' };
+
+        function openUploadModal() {
+            uploadedCSVData = null;
+            document.getElementById('upload-file-input').value = '';
+            document.getElementById('upload-file-name').textContent = '';
+            document.getElementById('upload-role-input').value = '';
+            document.getElementById('upload-mapping-section').classList.add('hidden');
+            document.getElementById('upload-progress-section').classList.add('hidden');
+            document.getElementById('upload-mapping-grid').innerHTML = '';
+            document.getElementById('upload-preview-table').innerHTML = '';
+            document.getElementById('execute-upload-btn').disabled = true;
+            document.getElementById('upload-progress-bar').style.width = '0%';
+            document.getElementById('upload-drop-zone').classList.remove('border-blue-400', 'bg-blue-50');
+            document.getElementById('upload-modal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        }
+
+        function parseCSV(text) {
+            const lines = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (inQuotes) {
+                    if (ch === '"' && text[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else if (ch === '"') {
+                        inQuotes = false;
+                    } else {
+                        current += ch;
+                    }
+                } else {
+                    if (ch === '"') {
+                        inQuotes = true;
+                    } else if (ch === '\n' || (ch === '\r' && text[i + 1] === '\n')) {
+                        lines.push(current);
+                        current = '';
+                        if (ch === '\r') i++;
+                    } else {
+                        current += ch;
+                    }
+                }
+            }
+            if (current.trim()) lines.push(current);
+
+            function splitRow(line) {
+                const fields = [];
+                let field = '';
+                let q = false;
+                for (let i = 0; i < line.length; i++) {
+                    const c = line[i];
+                    if (q) {
+                        if (c === '"' && line[i + 1] === '"') { field += '"'; i++; }
+                        else if (c === '"') { q = false; }
+                        else { field += c; }
+                    } else {
+                        if (c === '"') { q = true; }
+                        else if (c === ',') { fields.push(field.trim()); field = ''; }
+                        else { field += c; }
+                    }
+                }
+                fields.push(field.trim());
+                return fields;
+            }
+
+            if (lines.length === 0) return { headers: [], rows: [] };
+
+            const headers = splitRow(lines[0]);
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const vals = splitRow(lines[i]);
+                if (vals.every(v => v === '')) continue;
+                const obj = {};
+                headers.forEach((h, idx) => { obj[h] = vals[idx] || ''; });
+                rows.push(obj);
+            }
+            return { headers, rows };
+        }
+
+        function handleFileSelect(file) {
+            if (!file) return;
+            document.getElementById('upload-file-name').textContent = file.name;
+            document.getElementById('upload-drop-zone').classList.add('border-blue-400', 'bg-blue-50');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedCSVData = parseCSV(e.target.result);
+                if (uploadedCSVData.headers.length === 0 || uploadedCSVData.rows.length === 0) {
+                    showToast('CSV appears empty or invalid.');
+                    return;
+                }
+                showColumnMapping();
+            };
+            reader.readAsText(file);
+        }
+
+        function autoDetectColumn(csvHeaders, targetCol) {
+            const aliases = COLUMN_ALIASES[targetCol] || [];
+            for (const alias of aliases) {
+                const match = csvHeaders.find(h => h.toLowerCase().trim() === alias);
+                if (match) return match;
+            }
+            return '';
+        }
+
+        function showColumnMapping() {
+            const grid = document.getElementById('upload-mapping-grid');
+
+            let html = '';
+            UPLOAD_TARGETS.forEach(target => {
+                const detected = autoDetectColumn(uploadedCSVData.headers, target);
+                const options = uploadedCSVData.headers.map(h =>
+                    `<option value="${h}" ${h === detected ? 'selected' : ''}>${h}</option>`
+                ).join('');
+
+                html += `
+                    <label class="text-gray-600 font-medium flex items-center">${UPLOAD_LABELS[target]}</label>
+                    <select id="upload-map-${target}" class="w-full py-1.5 px-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="updatePreview()">
+                        <option value="">-- skip --</option>
+                        ${options}
+                    </select>
+                `;
+            });
+            grid.innerHTML = html;
+
+            updatePreview();
+            document.getElementById('upload-mapping-section').classList.remove('hidden');
+            validateUploadForm();
+        }
+
+        function updatePreview() {
+            const table = document.getElementById('upload-preview-table');
+            const mappings = {};
+            UPLOAD_TARGETS.forEach(t => {
+                const sel = document.getElementById(`upload-map-${t}`);
+                if (sel) mappings[t] = sel.value;
+            });
+
+            let headerHtml = '<thead><tr class="bg-gray-50">';
+            UPLOAD_TARGETS.forEach(t => {
+                if (mappings[t]) headerHtml += `<th class="px-2 py-1 font-semibold text-gray-600">${PREVIEW_LABELS[t]}</th>`;
+            });
+            headerHtml += '</tr></thead>';
+
+            let bodyHtml = '<tbody>';
+            const preview = uploadedCSVData.rows.slice(0, 3);
+            preview.forEach(row => {
+                bodyHtml += '<tr class="border-t border-gray-100">';
+                UPLOAD_TARGETS.forEach(t => {
+                    if (mappings[t]) {
+                        const val = (row[mappings[t]] || '').substring(0, 40);
+                        bodyHtml += `<td class="px-2 py-1 text-gray-700">${val}</td>`;
+                    }
+                });
+                bodyHtml += '</tr>';
+            });
+            bodyHtml += '</tbody>';
+
+            table.innerHTML = headerHtml + bodyHtml;
+            validateUploadForm();
+        }
+
+        function validateUploadForm() {
+            const firstCol = document.getElementById('upload-map-first_name')?.value;
+            const roleName = document.getElementById('upload-role-input')?.value.trim();
+            document.getElementById('execute-upload-btn').disabled = !(firstCol && roleName);
+        }
+
+        async function executeCSVUpload() {
+            if (!supabaseClient || !uploadedCSVData) return;
+
+            const mappings = {};
+            UPLOAD_TARGETS.forEach(t => {
+                const sel = document.getElementById(`upload-map-${t}`);
+                if (sel) mappings[t] = sel.value;
+            });
+
+            const roleName = document.getElementById('upload-role-input').value.trim();
+
+            if (!mappings.first_name || !roleName) {
+                showToast('First Name column and Role name are required.');
+                return;
+            }
+
+            const btn = document.getElementById('execute-upload-btn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Uploading...';
+            btn.disabled = true;
+
+            document.getElementById('upload-progress-section').classList.remove('hidden');
+
+            const rows = uploadedCSVData.rows;
+            const batchSize = 100;
+            let totalInserted = 0;
+
+            try {
+                document.getElementById('upload-progress-text').textContent = 'Clearing existing records...';
+                const { error: deleteError } = await supabaseClient.from(appConfig.table).delete().not('id', 'is', null);
+                if (deleteError) throw deleteError;
+
+                const allRecords = rows.map(row => {
+                    const first = (row[mappings.first_name] || '').trim();
+                    const last = mappings.last_name ? (row[mappings.last_name] || '').trim() : '';
+                    return {
+                        first_name: first,
+                        last_name: last,
+                        name: [first, last].filter(Boolean).join(' '),
+                        role: roleName,
+                        url: mappings.url ? (row[mappings.url] || '') : '',
+                        agents: mappings.agents ? (row[mappings.agents] || '') : '',
+                        agents_email: mappings.agents_email ? (row[mappings.agents_email] || '') : '',
+                        decision: null
+                    };
+                }).filter(r => r.first_name !== '');
+
+                const total = allRecords.length;
+
+                for (let i = 0; i < total; i += batchSize) {
+                    const batch = allRecords.slice(i, i + batchSize);
+
+                    const { error } = await supabaseClient.from(appConfig.table).insert(batch);
+                    if (error) throw error;
+
+                    totalInserted = Math.min(i + batchSize, total);
+                    const pct = Math.round((totalInserted / total) * 100);
+                    document.getElementById('upload-progress-bar').style.width = pct + '%';
+                    document.getElementById('upload-progress-text').textContent = `${totalInserted} / ${total} rows`;
+                }
+
+                const skipped = rows.length - total;
+                const msg = skipped > 0
+                    ? `Uploaded ${total} rows (${skipped} skipped, no name)`
+                    : `Replaced with ${total} new rows`;
+                showToast(msg);
+                closeUploadModal();
+                loadRolesForFilter();
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast('Upload failed: ' + (error.message || 'Unknown error'));
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        // Drag and drop handlers for upload zone
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropZone = document.getElementById('upload-drop-zone');
+            if (!dropZone) return;
+
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropZone.addEventListener(evt, function(e) {
+                    e.preventDefault();
+                    dropZone.classList.add('border-blue-400', 'bg-blue-50');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, function(e) {
+                    e.preventDefault();
+                    if (evt === 'dragleave') dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+                });
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                const file = e.dataTransfer.files[0];
+                if (file && file.name.endsWith('.csv')) {
+                    document.getElementById('upload-file-input').files = e.dataTransfer.files;
+                    handleFileSelect(file);
+                } else {
+                    showToast('Please drop a .csv file');
+                }
+            });
+        });
 
         // Boot
         init();
