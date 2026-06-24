@@ -918,13 +918,13 @@
         }
 
         function updateProgress() {
-            const processed = totalCandidateCount - bench.length;
-            const pct = totalCandidateCount > 0 ? Math.min(100, Math.round((processed / totalCandidateCount) * 100)) : 0;
+            const toRelegate = totalCandidateCount - topX;
+            const pct = toRelegate > 0 ? Math.min(100, Math.round((relegated.length / toRelegate) * 100)) : 100;
             document.getElementById('progress-bar').style.width = `${pct}%`;
 
-            // Green done button once bench is empty
             const doneBtn = document.getElementById('done-btn');
-            if (bench.length === 0) {
+            const isDone = activePool.length <= topX && bench.length === 0;
+            if (isDone) {
                 doneBtn.classList.remove('bg-white', 'text-gray-400', 'border-gray-200');
                 doneBtn.classList.add('bg-green-500', 'text-white', 'border-green-500');
             } else {
