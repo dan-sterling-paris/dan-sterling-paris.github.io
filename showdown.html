@@ -21,16 +21,11 @@
             min-height: 0;
             overflow: hidden;
             border-radius: 0.75rem;
-            position: relative;
             background: #f9fafb;
         }
         .cv-frame iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 800px;
-            height: 2000px;
-            transform-origin: top left;
+            width: 100%;
+            height: 100%;
             border: 0;
         }
         .elo-mover { animation: eloFlash 0.6s ease-out; }
@@ -175,61 +170,40 @@
         </div>
 
         <!-- Main matchup area (fills remaining space) -->
-        <div class="flex-1 min-h-0 flex gap-3 lg:gap-6 px-4 pb-2">
+        <div class="flex-1 min-h-0 flex gap-2 px-2 pb-1">
             <!-- Candidate A -->
             <div class="flex-1 flex flex-col min-w-0">
                 <div class="cv-frame shadow-md border border-gray-200">
                     <iframe id="headshot-a"></iframe>
                 </div>
-                <div class="mt-2 text-center shrink-0">
-                    <a id="link-a" href="#" target="_blank" class="group">
-                        <h2 id="name-a" class="text-sm lg:text-lg font-black text-gray-800 group-hover:text-pink-500 transition-colors leading-tight truncate">Candidate A</h2>
-                        <div class="flex items-center justify-center gap-1.5 mt-0.5">
-                            <span id="score-a" class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">10</span>
-                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-300 group-hover:text-pink-400"></i>
-                        </div>
-                    </a>
-                    <button onclick="rejectCandidate('a')" class="mt-1 text-xs text-gray-300 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50" title="Remove from pool">
-                        <i class="fa-solid fa-ban mr-0.5"></i>Reject
-                    </button>
-                </div>
             </div>
-
-            <!-- VS -->
-            <div class="text-gray-300 font-black text-lg tracking-widest shrink-0 flex items-center">VS</div>
 
             <!-- Candidate B -->
             <div class="flex-1 flex flex-col min-w-0">
                 <div class="cv-frame shadow-md border border-gray-200">
                     <iframe id="headshot-b"></iframe>
                 </div>
-                <div class="mt-2 text-center shrink-0">
-                    <a id="link-b" href="#" target="_blank" class="group">
-                        <h2 id="name-b" class="text-sm lg:text-lg font-black text-gray-800 group-hover:text-orange-500 transition-colors leading-tight truncate">Candidate B</h2>
-                        <div class="flex items-center justify-center gap-1.5 mt-0.5">
-                            <span id="score-b" class="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">10</span>
-                            <i class="fa-solid fa-arrow-up-right-from-square text-xs text-gray-300 group-hover:text-orange-400"></i>
-                        </div>
-                    </a>
-                    <button onclick="rejectCandidate('b')" class="mt-1 text-xs text-gray-300 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50" title="Remove from pool">
-                        <i class="fa-solid fa-ban mr-0.5"></i>Reject
-                    </button>
-                </div>
             </div>
         </div>
 
         <!-- Pick buttons pinned to bottom -->
-        <div class="shrink-0 p-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
-            <div class="flex gap-3 max-w-lg mx-auto">
-                <button onclick="pickWinner('a')" id="pick-btn-a" class="pick-btn flex-1 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-pink-400 text-white font-bold text-base shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2">
+        <div class="shrink-0 px-2 py-1.5 pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
+            <div class="flex gap-2 max-w-2xl mx-auto items-center">
+                <button onclick="rejectCandidate('a')" class="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors shrink-0" title="Reject left">
+                    <i class="fa-solid fa-ban text-sm"></i>
+                </button>
+                <button onclick="pickWinner('a')" id="pick-btn-a" class="pick-btn flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500 to-pink-400 text-white font-bold text-sm shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2">
                     <i class="fa-solid fa-arrow-left"></i> <span id="pick-label-a">A</span>
                 </button>
-                <button onclick="pickWinner('b')" id="pick-btn-b" class="pick-btn flex-1 py-3 rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold text-base shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2">
+                <button onclick="pickWinner('b')" id="pick-btn-b" class="pick-btn flex-1 py-2.5 rounded-2xl bg-gradient-to-r from-orange-400 to-orange-500 text-white font-bold text-sm shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2">
                     <span id="pick-label-b">B</span> <i class="fa-solid fa-arrow-right"></i>
                 </button>
+                <button onclick="rejectCandidate('b')" class="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors shrink-0" title="Reject right">
+                    <i class="fa-solid fa-ban text-sm"></i>
+                </button>
             </div>
-            <div class="text-center mt-1">
-                <span class="text-xs text-gray-400">Click name to view CV &middot; <kbd class="px-1 py-0.5 bg-white rounded text-gray-500 font-mono border border-gray-200 text-xs">&larr;</kbd> / <kbd class="px-1 py-0.5 bg-white rounded text-gray-500 font-mono border border-gray-200 text-xs">&rarr;</kbd> to pick</span>
+            <div class="text-center mt-0.5">
+                <span class="text-xs text-gray-400"><kbd class="px-1 py-0.5 bg-white rounded text-gray-500 font-mono border border-gray-200 text-xs">&larr;</kbd> / <kbd class="px-1 py-0.5 bg-white rounded text-gray-500 font-mono border border-gray-200 text-xs">&rarr;</kbd> to pick</span>
             </div>
         </div>
     </div>
@@ -360,7 +334,6 @@
             document.getElementById('compare-view').classList.add('hidden');
             document.getElementById('results-view').classList.add('hidden');
             document.getElementById(`${viewName}-view`).classList.remove('hidden');
-            if (viewName === 'compare') resizeIframes();
             if (viewName === 'home') loadSavedSessions();
         }
 
@@ -381,22 +354,6 @@
             refreshPreview();
         }
 
-        // --- IFRAME SCALING ---
-        function resizeIframes() {
-            requestAnimationFrame(() => {
-                document.querySelectorAll('.cv-frame').forEach(frame => {
-                    const w = frame.clientWidth;
-                    if (w > 0) {
-                        const scale = w / 800;
-                        const iframe = frame.querySelector('iframe');
-                        if (iframe) iframe.style.transform = `scale(${scale})`;
-                    }
-                });
-            });
-        }
-        window.addEventListener('resize', () => {
-            if (!document.getElementById('compare-view').classList.contains('hidden')) resizeIframes();
-        });
 
         // --- DATA ---
         async function fetchAllRecords() {
@@ -903,14 +860,7 @@
             currentA = a;
             currentB = b;
 
-            document.getElementById('name-a').textContent = a.name;
-            document.getElementById('score-a').textContent = a.score;
-            document.getElementById('link-a').href = a.url || '#';
             document.getElementById('headshot-a').src = a.url || '';
-
-            document.getElementById('name-b').textContent = b.name;
-            document.getElementById('score-b').textContent = b.score;
-            document.getElementById('link-b').href = b.url || '#';
             document.getElementById('headshot-b').src = b.url || '';
 
             const firstA = (a.firstName || '').trim();
@@ -919,7 +869,6 @@
             document.getElementById('pick-label-b').textContent = firstB || b.name;
 
             isPickLocked = false;
-            resizeIframes();
         }
 
         function updateProgress() {
