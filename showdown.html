@@ -327,6 +327,7 @@
         let currentSessionId = null;
         let pendingDeleteId = null;
         let relegatedResultsOpen = false;
+        let estimatedComparisons = 0;
 
         // --- UTILS ---
         function displayName(item) {
@@ -448,7 +449,8 @@
                 topX: topX,
                 totalCandidateCount: totalCandidateCount,
                 matchupHistory: Array.from(matchupHistory),
-                comparisonCount: comparisonCount
+                comparisonCount: comparisonCount,
+                estimatedComparisons: estimatedComparisons
             };
         }
 
@@ -460,6 +462,7 @@
             totalCandidateCount = state.totalCandidateCount || (activePool.length + bench.length + relegated.length);
             matchupHistory = new Set(state.matchupHistory || []);
             comparisonCount = state.comparisonCount || 0;
+            estimatedComparisons = state.estimatedComparisons || 0;
         }
 
         async function saveSession() {
@@ -727,6 +730,7 @@
             relegated = [];
             matchupHistory = new Set();
             comparisonCount = 0;
+            estimatedComparisons = (targetX * 8) + (bench.length * 5);
         }
 
         function checkRelegation() {
@@ -918,12 +922,11 @@
         }
 
         function updateProgress() {
-            const toRelegate = totalCandidateCount - topX;
-            const pct = toRelegate > 0 ? Math.min(100, Math.round((relegated.length / toRelegate) * 100)) : 100;
+            const pct = estimatedComparisons > 0 ? Math.min(100, Math.round((comparisonCount / estimatedComparisons) * 100)) : 0;
             document.getElementById('progress-bar').style.width = `${pct}%`;
 
             const doneBtn = document.getElementById('done-btn');
-            const isDone = activePool.length <= topX && bench.length === 0;
+            const isDone = comparisonCount >= estimatedComparisons && estimatedComparisons > 0;
             if (isDone) {
                 doneBtn.classList.remove('bg-white', 'text-gray-400', 'border-gray-200');
                 doneBtn.classList.add('bg-green-500', 'text-white', 'border-green-500');
