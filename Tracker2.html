@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Battering Ram 🐏</title>
 
     <style>
@@ -10,7 +10,6 @@
         #loading-screen { position: fixed; inset: 0; background: #131F24; display: flex; justify-content: center; align-items: center; z-index: 9999; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-        .touch-manipulation { touch-action: manipulation; }
 
         .prose h1, .prose h2, .prose h3 { font-weight: 800; color: #58CC02; margin-top: 1em; margin-bottom: 0.5em; }
         .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
@@ -20,15 +19,15 @@
         .ai-thinking { animation: pulse-text 2s infinite; }
         @keyframes pulse-text { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
-        /* Rest timer pill glow when urgent */
+        /* Rest timer states */
         .timer-urgent { box-shadow: 0 0 20px rgba(239,68,68,0.5); border-color: #ef4444 !important; }
         .timer-done { box-shadow: 0 0 20px rgba(88,204,2,0.6); border-color: #58CC02 !important; animation: done-pulse 0.5s ease 3; }
         @keyframes done-pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
 
         /* Set done state */
-        .set-row.done { opacity: 0.65; }
+        .set-row.done { opacity: 0.5; }
         .set-row.done .set-number-display { text-decoration: line-through; color: #58CC02; }
-        .set-done-btn.checked { background: #58CC02; border-color: #46a302; }
+        .set-done-btn.checked { background: #58CC02 !important; }
         .set-done-btn.checked i { opacity: 1 !important; color: white; }
 
         /* Elapsed timer */
@@ -70,77 +69,74 @@
 
         input[type=range] { -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%;
+            -webkit-appearance: none; height: 32px; width: 32px; border-radius: 50%;
             background: #58CC02; cursor: pointer; border: 3px solid white;
-            margin-top: -12px; box-shadow: 0 4px 0 #46a302;
+            margin-top: -13px; box-shadow: 0 4px 0 #46a302;
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%; height: 6px; cursor: pointer; background: #37464F; border-radius: 99px;
         }
 
-        body::-webkit-scrollbar { width: 8px; }
+        body::-webkit-scrollbar { width: 6px; }
         body::-webkit-scrollbar-track { background: #131F24; }
         body::-webkit-scrollbar-thumb { background: #37464F; border-radius: 4px; }
 
         .exercise-enter { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         .modal { transition: opacity 0.25s ease; }
         body.modal-active { overflow: hidden; }
 
         select {
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center;
+            background-position: right 0.75rem center;
             background-repeat: no-repeat;
             background-size: 1.5em 1.5em;
             padding-right: 2.5rem;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
         }
 
-        /* Stepper button active state */
+        .step-btn { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
         .step-btn:active { background: #37464F; }
-        .step-btn { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
-<body class="min-h-screen pb-40">
+<body class="min-h-screen pb-28">
 
     <!-- LOADING SCREEN -->
     <div id="loading-screen">
         <div class="text-center">
-            <div class="text-6xl animate-bounce mb-4">🐏</div>
-            <div class="text-ram-primary font-bold">Loading Pasture...</div>
+            <div class="text-7xl animate-bounce mb-4">🐏</div>
+            <div class="text-ram-primary font-bold text-lg">Loading Pasture...</div>
         </div>
     </div>
 
     <!-- LOGIN MODAL -->
-    <div id="loginModal" class="fixed inset-0 z-[60] bg-[#131F24] flex flex-col justify-center items-center p-4">
-        <div class="text-6xl mb-6 animate-bounce">🐏</div>
-        <h1 class="text-3xl font-black text-ram-primary mb-2">Battering Ram</h1>
-        <p class="text-ram-muted font-bold mb-8">Who is grazing today?</p>
-        <div class="grid grid-cols-2 gap-4 w-full max-w-md">
-            <button onclick="login('Rammy')" class="btn-3d bg-ram-card hover:bg-[#2a3d46] border-ram-border text-white p-6 rounded-2xl flex flex-col items-center gap-2">
-                <span class="text-4xl">🐏</span>
+    <div id="loginModal" class="hidden fixed inset-0 z-[60] bg-ram-bg flex flex-col justify-center items-center p-6">
+        <div class="text-7xl mb-4">🐏</div>
+        <h1 class="text-4xl font-black text-ram-primary mb-1">Battering Ram</h1>
+        <p class="text-ram-muted font-bold mb-10 text-lg">Who is grazing today?</p>
+        <div class="grid grid-cols-2 gap-4 w-full max-w-sm mb-6">
+            <button onclick="login('Rammy')" class="btn-3d bg-ram-card border-ram-border text-white p-6 rounded-3xl flex flex-col items-center gap-3 min-h-[130px] touch-manipulation">
+                <span class="text-5xl">🐏</span>
                 <span class="font-extrabold text-xl">Rammy</span>
             </button>
-            <button onclick="login('Lammy')" class="btn-3d bg-ram-card hover:bg-[#2a3d46] border-ram-border text-white p-6 rounded-2xl flex flex-col items-center gap-2">
-                <span class="text-4xl">🐑</span>
+            <button onclick="login('Lammy')" class="btn-3d bg-ram-card border-ram-border text-white p-6 rounded-3xl flex flex-col items-center gap-3 min-h-[130px] touch-manipulation">
+                <span class="text-5xl">🐑</span>
                 <span class="font-extrabold text-xl">Lammy</span>
             </button>
         </div>
-        <div class="mt-8 w-full max-w-md">
-            <input type="text" id="customUser" placeholder="Or type name..." class="w-full bg-ram-bg border-2 border-ram-border rounded-xl p-3 text-center font-bold outline-none focus:border-ram-primary text-white">
-            <button onclick="login(document.getElementById('customUser').value)" class="mt-2 w-full text-ram-muted text-sm font-bold hover:text-white">Enter Guest Name</button>
+        <div class="w-full max-w-sm">
+            <input type="text" id="customUser" placeholder="Or enter a name..." class="w-full bg-ram-card border-2 border-ram-border rounded-2xl p-4 text-center font-bold text-lg outline-none focus:border-ram-primary text-white">
+            <button onclick="login(document.getElementById('customUser').value)" class="mt-3 w-full py-3 text-ram-muted font-bold hover:text-white transition text-base touch-manipulation">→ Login as guest</button>
         </div>
     </div>
 
     <!-- CHART MODAL -->
-    <div id="chartModal" class="modal opacity-0 pointer-events-none fixed inset-0 z-[70] flex items-center justify-center">
+    <div id="chartModal" class="modal opacity-0 pointer-events-none fixed inset-0 z-[70] flex items-center justify-center p-4">
         <div class="modal-overlay absolute w-full h-full bg-black opacity-80" onclick="closeChart()"></div>
-        <div class="modal-container bg-ram-card w-11/12 md:max-w-lg mx-auto rounded-3xl shadow-lg z-50 overflow-hidden border-2 border-ram-border relative p-6">
+        <div class="modal-container bg-ram-card w-full max-w-lg mx-auto rounded-3xl shadow-lg z-50 overflow-hidden border-2 border-ram-border p-6 relative">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-black text-ram-primary truncate pr-4" id="chartTitle">Progress</h3>
-                <button onclick="closeChart()" class="text-ram-muted hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                <button onclick="closeChart()" class="w-12 h-12 flex items-center justify-center text-ram-muted hover:text-white rounded-full hover:bg-ram-border transition touch-manipulation"><i class="fas fa-times text-xl"></i></button>
             </div>
             <div class="h-64 w-full">
                 <canvas id="progressChart"></canvas>
@@ -150,39 +146,39 @@
     </div>
 
     <!-- SUMMARY / FINISH MODAL -->
-    <div id="summaryModal" class="hidden fixed inset-0 z-[90] bg-[#131F24] flex flex-col items-center justify-center p-4">
-        <div class="bg-ram-card w-full max-w-2xl h-[90vh] rounded-3xl border-2 border-ram-border shadow-2xl flex flex-col overflow-hidden relative">
-            <div class="p-6 border-b-2 border-ram-border bg-[#131F24] flex justify-between items-center shrink-0">
+    <div id="summaryModal" class="hidden fixed inset-0 z-[90] bg-ram-bg flex flex-col items-center justify-center p-4">
+        <div class="bg-ram-card w-full max-w-2xl h-[92vh] rounded-3xl border-2 border-ram-border shadow-2xl flex flex-col overflow-hidden">
+            <div class="px-6 py-4 border-b-2 border-ram-border bg-ram-bg flex justify-between items-center flex-shrink-0">
                 <h2 class="text-2xl font-black text-ram-primary">Session Overview</h2>
-                <button onclick="closeSummary()" class="text-ram-muted hover:text-white"><i class="fas fa-times text-2xl"></i></button>
+                <button onclick="closeSummary()" class="w-12 h-12 flex items-center justify-center text-ram-muted hover:text-white rounded-full hover:bg-ram-border transition touch-manipulation"><i class="fas fa-times text-2xl"></i></button>
             </div>
-            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="flex-1 overflow-y-auto p-5 space-y-5">
                 <!-- Stats -->
-                <div class="grid grid-cols-4 gap-3 text-center">
-                    <div class="bg-[#131F24] p-3 rounded-xl border border-ram-border">
-                        <div class="text-[10px] text-ram-muted font-bold uppercase tracking-tighter">XP Gained</div>
-                        <div class="text-xl font-black text-yellow-400" id="summaryXP">0</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div class="bg-ram-bg p-4 rounded-2xl border border-ram-border">
+                        <div class="text-xs text-ram-muted font-bold uppercase tracking-tight mb-1">XP Gained</div>
+                        <div class="text-3xl font-black text-yellow-400" id="summaryXP">0</div>
                     </div>
-                    <div class="bg-[#131F24] p-3 rounded-xl border border-ram-border">
-                        <div class="text-[10px] text-ram-muted font-bold uppercase tracking-tighter">Streak</div>
-                        <div class="text-xl font-black text-orange-500" id="summaryStreak">0</div>
+                    <div class="bg-ram-bg p-4 rounded-2xl border border-ram-border">
+                        <div class="text-xs text-ram-muted font-bold uppercase tracking-tight mb-1">Streak</div>
+                        <div class="text-3xl font-black text-orange-500" id="summaryStreak">0</div>
                     </div>
-                    <div class="bg-[#131F24] p-3 rounded-xl border border-ram-border">
-                        <div class="text-[10px] text-ram-muted font-bold uppercase tracking-tighter">Exercises</div>
-                        <div class="text-xl font-black text-ram-accent" id="summaryCount">0</div>
+                    <div class="bg-ram-bg p-4 rounded-2xl border border-ram-border">
+                        <div class="text-xs text-ram-muted font-bold uppercase tracking-tight mb-1">Exercises</div>
+                        <div class="text-3xl font-black text-ram-accent" id="summaryCount">0</div>
                     </div>
-                    <div class="bg-[#131F24] p-3 rounded-xl border border-ram-border">
-                        <div class="text-[10px] text-ram-muted font-bold uppercase tracking-tighter">Volume</div>
-                        <div class="text-sm font-black text-ram-primary" id="summaryVolume">0kg</div>
+                    <div class="bg-ram-bg p-4 rounded-2xl border border-ram-border">
+                        <div class="text-xs text-ram-muted font-bold uppercase tracking-tight mb-1">Volume</div>
+                        <div class="text-xl font-black text-ram-primary" id="summaryVolume">0kg</div>
                     </div>
                 </div>
                 <!-- AI Section -->
-                <div id="aiSection" class="bg-[#131F24] rounded-2xl border-2 border-ram-border p-4 relative min-h-[150px]">
-                    <div class="flex items-center gap-2 mb-3 border-b border-ram-border/50 pb-2">
+                <div id="aiSection" class="bg-ram-bg rounded-2xl border-2 border-ram-border p-5 relative min-h-[150px]">
+                    <div class="flex items-center gap-2 mb-3 border-b border-ram-border/50 pb-3">
                         <i class="fas fa-user-md text-ram-secondary text-xl"></i>
-                        <span class="font-bold text-lg text-white tracking-tight">PT Progress Audit</span>
+                        <span class="font-black text-lg text-white tracking-tight">PT Progress Audit</span>
                     </div>
-                    <div id="aiLoading" class="hidden absolute inset-0 flex items-center justify-center bg-[#131F24]/90 z-10">
+                    <div id="aiLoading" class="hidden absolute inset-0 flex items-center justify-center bg-ram-bg/90 z-10 rounded-2xl">
                         <div class="text-center">
                             <i class="fas fa-circle-notch fa-spin text-3xl text-ram-secondary mb-2"></i>
                             <p class="text-xs font-bold text-ram-muted animate-pulse">Running historical comparison...</p>
@@ -194,13 +190,13 @@
                 </div>
                 <!-- Raw Log -->
                 <div>
-                    <h3 class="font-bold text-white mb-2 text-sm uppercase tracking-wider opacity-60">Raw Session Log</h3>
-                    <textarea id="summaryText" class="w-full h-32 bg-[#131F24] border-2 border-ram-border rounded-xl p-3 text-xs font-mono text-gray-400 focus:border-ram-primary outline-none resize-none" readonly></textarea>
-                    <button onclick="copySummary()" class="mt-2 text-xs font-bold text-ram-accent hover:text-white"><i class="fas fa-copy mr-1"></i> Copy to Clipboard</button>
+                    <h3 class="font-bold text-white mb-2 text-xs uppercase tracking-wider opacity-60">Raw Session Log</h3>
+                    <textarea id="summaryText" class="w-full h-28 bg-ram-bg border-2 border-ram-border rounded-xl p-3 text-xs font-mono text-gray-400 focus:border-ram-primary outline-none resize-none" readonly></textarea>
+                    <button onclick="copySummary()" class="mt-2 text-xs font-bold text-ram-accent hover:text-white touch-manipulation"><i class="fas fa-copy mr-1"></i> Copy to Clipboard</button>
                 </div>
             </div>
-            <div class="p-4 border-t-2 border-ram-border bg-[#131F24] shrink-0">
-                <button onclick="confirmFinish()" class="w-full btn-3d bg-ram-primary hover:bg-ram-primaryDark text-white font-extrabold py-4 rounded-xl border-ram-primaryDark text-lg uppercase tracking-wide">
+            <div class="p-4 border-t-2 border-ram-border bg-ram-bg flex-shrink-0">
+                <button onclick="confirmFinish()" class="w-full btn-3d bg-ram-primary hover:bg-ram-primaryDark text-white font-extrabold py-5 rounded-2xl border-ram-primaryDark text-xl uppercase tracking-wide touch-manipulation">
                     Commit to Database
                 </button>
             </div>
@@ -208,223 +204,248 @@
     </div>
 
     <!-- IMPORT MODAL -->
-    <div id="importModal" class="hidden fixed inset-0 z-[80] bg-[#131F24] flex flex-col p-4">
+    <div id="importModal" class="hidden fixed inset-0 z-[80] bg-ram-bg flex flex-col p-4">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-black text-ram-primary">Import Log</h2>
-            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="text-ram-muted hover:text-white"><i class="fas fa-times text-2xl"></i></button>
+            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="w-12 h-12 flex items-center justify-center text-ram-muted hover:text-white rounded-full hover:bg-ram-border transition touch-manipulation"><i class="fas fa-times text-2xl"></i></button>
         </div>
         <div class="flex-1 mb-4">
-            <textarea id="importText" class="w-full h-full bg-ram-card border-2 border-ram-border rounded-xl p-4 text-xs font-mono text-white focus:border-ram-primary outline-none resize-none" placeholder="Paste logs here..."></textarea>
+            <textarea id="importText" class="w-full h-full bg-ram-card border-2 border-ram-border rounded-2xl p-4 text-xs font-mono text-white focus:border-ram-primary outline-none resize-none" placeholder="Paste logs here..."></textarea>
         </div>
-        <button onclick="processImport()" class="btn-3d bg-ram-primary text-white font-bold py-4 rounded-xl border-ram-primaryDark w-full">PROCESS & IMPORT</button>
+        <button onclick="processImport()" class="btn-3d bg-ram-primary text-white font-extrabold py-5 rounded-2xl border-ram-primaryDark w-full text-xl uppercase tracking-wide touch-manipulation">PROCESS &amp; IMPORT</button>
     </div>
 
     <!-- REST TIMER PILL -->
-    <div id="restTimerPill" class="hidden fixed top-[62px] left-1/2 -translate-x-1/2 z-50 bg-ram-card border-2 border-ram-border rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl transition-all duration-300">
-        <i id="timerIcon" class="fas fa-hourglass-half text-ram-accent text-sm"></i>
-        <span id="timerDisplay" class="font-black text-white text-xl tabular-nums w-12 text-center">1:30</span>
-        <div class="flex gap-1 border-l border-ram-border pl-3">
-            <button onclick="setTimerDuration(60)" class="timer-dur-btn text-[10px] font-black px-2 py-1 rounded-lg bg-[#131F24] text-ram-muted hover:text-white transition touch-manipulation">60s</button>
-            <button onclick="setTimerDuration(90)" class="timer-dur-btn text-[10px] font-black px-2 py-1 rounded-lg bg-[#131F24] text-ram-primary hover:text-white transition touch-manipulation">90s</button>
-            <button onclick="setTimerDuration(120)" class="timer-dur-btn text-[10px] font-black px-2 py-1 rounded-lg bg-[#131F24] text-ram-muted hover:text-white transition touch-manipulation">2m</button>
-            <button onclick="setTimerDuration(180)" class="timer-dur-btn text-[10px] font-black px-2 py-1 rounded-lg bg-[#131F24] text-ram-muted hover:text-white transition touch-manipulation">3m</button>
+    <div id="restTimerPill" class="hidden fixed top-[62px] left-1/2 -translate-x-1/2 z-50 bg-ram-card border-2 border-ram-border rounded-2xl shadow-2xl transition-all duration-300 max-w-[calc(100vw-2rem)] overflow-hidden">
+        <div class="flex items-center gap-3 px-4 py-3">
+            <i id="timerIcon" class="fas fa-hourglass-half text-ram-accent text-sm flex-shrink-0"></i>
+            <span id="timerDisplay" class="font-black text-white text-3xl tabular-nums w-16 text-center flex-shrink-0">1:30</span>
+            <div class="flex gap-1.5 border-l border-ram-border pl-3">
+                <button onclick="setTimerDuration(60)" class="timer-dur-btn text-xs font-black px-3 py-2.5 rounded-xl bg-ram-bg text-ram-muted hover:text-white transition touch-manipulation min-w-[44px]">60s</button>
+                <button onclick="setTimerDuration(90)" class="timer-dur-btn text-xs font-black px-3 py-2.5 rounded-xl bg-ram-bg text-ram-primary hover:text-white transition touch-manipulation min-w-[44px]">90s</button>
+                <button onclick="setTimerDuration(120)" class="timer-dur-btn text-xs font-black px-3 py-2.5 rounded-xl bg-ram-bg text-ram-muted hover:text-white transition touch-manipulation min-w-[44px]">2m</button>
+                <button onclick="setTimerDuration(180)" class="timer-dur-btn text-xs font-black px-3 py-2.5 rounded-xl bg-ram-bg text-ram-muted hover:text-white transition touch-manipulation min-w-[44px]">3m</button>
+            </div>
+            <button onclick="skipRestTimer()" class="text-ram-muted hover:text-white text-sm font-black transition touch-manipulation border-l border-ram-border pl-3 py-2 min-w-[44px] text-center">Skip</button>
         </div>
-        <button onclick="skipRestTimer()" class="text-ram-muted hover:text-white text-xs font-black transition touch-manipulation border-l border-ram-border pl-3">Skip</button>
     </div>
 
     <!-- NAVBAR -->
-    <div class="sticky top-0 z-50 bg-[#131F24]/95 backdrop-blur border-b-2 border-ram-border">
-        <div class="max-w-4xl mx-auto px-4 py-2 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-ram-card px-3 py-1.5 rounded-xl border-2 border-ram-border flex items-center gap-2 cursor-pointer hover:bg-ram-border transition" onclick="logout()" title="Logout">
-                    <span class="text-xl" id="userAvatar">👤</span>
-                    <span id="userDisplay" class="font-bold text-sm hidden md:block">Guest</span>
-                </div>
-                <div class="flex items-center gap-1" title="Current Streak">
-                    <i class="fas fa-fire text-orange-500 animate-pulse"></i>
-                    <span id="streakDisplay" class="font-black text-orange-500 text-lg">0</span>
-                </div>
+    <div class="sticky top-0 z-50 bg-ram-bg/95 backdrop-blur border-b-2 border-ram-border">
+        <div class="max-w-4xl mx-auto px-3 h-14 flex items-center gap-3">
+
+            <!-- User avatar + logout -->
+            <button onclick="logout()" class="flex items-center gap-2 bg-ram-card px-3 h-10 rounded-xl border border-ram-border hover:bg-ram-border transition flex-shrink-0 touch-manipulation" title="Logout">
+                <span class="text-xl leading-none" id="userAvatar">👤</span>
+                <span id="userDisplay" class="font-bold text-sm hidden md:block">Guest</span>
+            </button>
+
+            <!-- Streak -->
+            <div class="flex items-center gap-1 flex-shrink-0" title="Streak">
+                <i class="fas fa-fire text-orange-500 text-sm"></i>
+                <span id="streakDisplay" class="font-black text-orange-500 text-base">0</span>
             </div>
-            <div class="flex-1 mx-4 max-w-xs">
+
+            <!-- XP bar (fills middle) -->
+            <div class="flex-1 min-w-0">
                 <div class="flex justify-between text-[10px] font-bold text-ram-muted mb-1">
                     <span id="levelDisplay">Lvl 1</span>
                     <span id="xpText">0 XP</span>
                 </div>
-                <div class="h-3 bg-ram-border rounded-full overflow-hidden">
+                <div class="h-2.5 bg-ram-border rounded-full overflow-hidden">
                     <div id="xpBar" class="h-full bg-yellow-400 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
+
+            <!-- Elapsed timer + history -->
+            <div class="flex items-center gap-2 flex-shrink-0">
                 <span id="elapsedTimer" class="font-mono text-sm font-black text-ram-muted hidden">00:00</span>
-                <button onclick="switchView('history')" class="text-ram-muted hover:text-white transition p-2"><i class="fas fa-scroll text-lg"></i></button>
+                <button onclick="switchView('history')" class="w-10 h-10 flex items-center justify-center text-ram-muted hover:text-white hover:bg-ram-card rounded-xl transition touch-manipulation" title="History">
+                    <i class="fas fa-scroll text-lg"></i>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- MAIN TRACKER -->
-    <main id="view-tracker" class="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        <div class="text-center space-y-1">
+    <main id="view-tracker" class="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+        <div class="text-center">
             <h1 class="text-3xl font-black text-ram-primary tracking-tight">Battering Ram 🐏</h1>
         </div>
 
-        <!-- Preset Selector & Units -->
-        <div class="bg-ram-card rounded-3xl p-6 border-2 border-ram-border shadow-xl">
-            <div class="flex justify-between items-center mb-3">
-                <label class="block text-sm font-extrabold text-ram-muted uppercase tracking-wider">Mission</label>
-                <div class="flex items-center bg-[#131F24] rounded-lg border-2 border-ram-border p-1">
-                    <button onclick="setUnit('kg')" id="btn-kg" class="px-3 py-1 rounded text-xs font-bold transition bg-ram-primary text-white">KG</button>
-                    <button onclick="setUnit('lbs')" id="btn-lbs" class="px-3 py-1 rounded text-xs font-bold transition text-ram-muted hover:text-white">LBS</button>
+        <!-- Preset + Unit toggle -->
+        <div class="bg-ram-card rounded-3xl p-5 border-2 border-ram-border shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <label class="text-sm font-extrabold text-ram-muted uppercase tracking-wider">Mission</label>
+                <div class="flex items-center bg-ram-bg rounded-xl border-2 border-ram-border p-1 gap-1">
+                    <button onclick="setUnit('kg')" id="btn-kg" class="px-4 py-2 rounded-lg text-sm font-black transition bg-ram-primary text-white touch-manipulation">KG</button>
+                    <button onclick="setUnit('lbs')" id="btn-lbs" class="px-4 py-2 rounded-lg text-sm font-black transition text-ram-muted hover:text-white touch-manipulation">LBS</button>
                 </div>
             </div>
-            <div class="relative">
-                <select id="presetSelect" onchange="loadPreset()" class="w-full bg-[#131F24] text-white border-2 border-ram-border rounded-2xl p-4 text-lg font-bold focus:border-ram-primary focus:ring-0 outline-none appearance-none cursor-pointer hover:bg-ram-border/50 transition">
-                    <option value="">Choose your workout...</option>
-                    <option value="A">💪 DAY A - PUSH (Chest, Shoulders)</option>
-                    <option value="B">🪜 DAY B - PULL (Back, Biceps)</option>
-                    <option value="C">🦵 DAY C - LEGS (Quads, Hams)</option>
-                </select>
-            </div>
+            <select id="presetSelect" onchange="loadPreset()" class="w-full bg-ram-bg text-white border-2 border-ram-border rounded-2xl px-4 py-4 text-lg font-bold focus:border-ram-primary outline-none appearance-none cursor-pointer hover:bg-ram-border/50 transition">
+                <option value="">Choose your workout...</option>
+                <option value="A">💪 DAY A — PUSH (Chest, Shoulders)</option>
+                <option value="B">🪜 DAY B — PULL (Back, Biceps)</option>
+                <option value="C">🦵 DAY C — LEGS (Quads, Hams)</option>
+            </select>
         </div>
 
         <!-- Workout Meta -->
-        <div id="workoutMeta" class="bg-ram-card rounded-3xl p-6 border-2 border-ram-border space-y-4 hidden">
-            <input type="text" id="workoutName" placeholder="Workout Name" class="w-full bg-transparent text-2xl font-black text-white placeholder-ram-muted outline-none border-b-2 border-transparent focus:border-ram-primary transition text-center" value="New Workout">
-            <div class="flex flex-wrap gap-2 justify-center">
-                <div class="bg-[#131F24] rounded-xl px-3 py-2 border-2 border-ram-border flex-1 min-w-[120px]">
-                    <label class="text-[10px] text-ram-muted font-bold uppercase block">Gym</label>
-                    <input type="text" id="gymName" value="The Barn" class="bg-transparent font-bold w-full outline-none text-sm text-white placeholder-ram-muted">
+        <div id="workoutMeta" class="bg-ram-card rounded-3xl p-5 border-2 border-ram-border space-y-4 hidden">
+            <input type="text" id="workoutName" placeholder="Workout Name" class="w-full bg-transparent text-2xl font-black text-white placeholder-ram-muted outline-none border-b-2 border-transparent focus:border-ram-primary transition text-center py-1" value="New Workout">
+            <div class="space-y-3">
+                <div class="bg-ram-bg rounded-2xl px-4 py-3 border-2 border-ram-border">
+                    <label class="text-xs text-ram-muted font-bold uppercase block mb-1">Gym</label>
+                    <input type="text" id="gymName" value="The Barn" class="bg-transparent font-bold w-full outline-none text-base text-white placeholder-ram-muted">
                 </div>
-                <div class="bg-[#131F24] rounded-xl px-3 py-2 border-2 border-ram-border w-1/3 min-w-[110px]">
-                    <label class="text-[10px] text-ram-muted font-bold uppercase block">Date</label>
-                    <input type="date" id="workoutDate" class="bg-transparent font-bold w-full outline-none text-sm text-white">
-                </div>
-                <div class="bg-[#131F24] rounded-xl px-3 py-2 border-2 border-ram-border w-1/4 min-w-[90px]">
-                    <label class="text-[10px] text-ram-muted font-bold uppercase block">Time</label>
-                    <input type="time" id="workoutTime" class="bg-transparent font-bold w-full outline-none text-sm text-white">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-ram-bg rounded-2xl px-4 py-3 border-2 border-ram-border">
+                        <label class="text-xs text-ram-muted font-bold uppercase block mb-1">Date</label>
+                        <input type="date" id="workoutDate" class="bg-transparent font-bold w-full outline-none text-sm text-white">
+                    </div>
+                    <div class="bg-ram-bg rounded-2xl px-4 py-3 border-2 border-ram-border">
+                        <label class="text-xs text-ram-muted font-bold uppercase block mb-1">Time</label>
+                        <input type="time" id="workoutTime" class="bg-transparent font-bold w-full outline-none text-sm text-white">
+                    </div>
                 </div>
             </div>
-            <textarea id="generalNotes" rows="1" class="w-full bg-[#131F24] border-2 border-ram-border rounded-2xl p-3 text-sm font-semibold focus:border-ram-primary outline-none resize-none text-white" placeholder="Add notes (e.g., 'Feeling woolly today...')"></textarea>
+            <textarea id="generalNotes" rows="2" class="w-full bg-ram-bg border-2 border-ram-border rounded-2xl px-4 py-3 text-base font-semibold focus:border-ram-primary outline-none resize-none text-white" placeholder="Workout notes..."></textarea>
         </div>
 
         <!-- Exercises -->
-        <div id="exercisesContainer" class="space-y-6">
-            <div id="emptyState" class="text-center py-10 opacity-50">
-                <i class="fas fa-dumbbell text-6xl mb-4 text-ram-border"></i>
-                <p class="font-bold text-xl text-ram-muted">Select a workout to start!</p>
+        <div id="exercisesContainer" class="space-y-5">
+            <div id="emptyState" class="text-center py-16 opacity-40">
+                <i class="fas fa-dumbbell text-7xl mb-5 block text-ram-border"></i>
+                <p class="font-bold text-xl text-ram-muted">Select a workout above to begin</p>
             </div>
         </div>
 
-        <!-- Add Button -->
-        <button id="addExerciseBtn" onclick="addExercise()" class="hidden w-full py-4 border-2 border-dashed border-ram-border text-ram-muted rounded-3xl hover:bg-ram-card hover:text-ram-primary hover:border-ram-primary transition flex items-center justify-center gap-2 font-extrabold text-lg uppercase tracking-wide">
-            <i class="fas fa-plus-circle"></i> Add Custom Exercise
+        <!-- Add Custom Exercise -->
+        <button id="addExerciseBtn" onclick="addExercise()" class="hidden w-full py-5 border-2 border-dashed border-ram-border text-ram-muted rounded-3xl hover:bg-ram-card hover:text-ram-primary hover:border-ram-primary transition flex items-center justify-center gap-2 font-extrabold text-lg uppercase tracking-wide touch-manipulation">
+            <i class="fas fa-plus-circle text-xl"></i> Add Custom Exercise
         </button>
     </main>
 
     <!-- HISTORY VIEW -->
-    <main id="view-history" class="hidden max-w-4xl mx-auto px-4 py-6 space-y-6">
-        <div class="flex justify-between items-center mb-4">
+    <main id="view-history" class="hidden max-w-4xl mx-auto px-4 py-6 space-y-5">
+        <div class="flex justify-between items-center">
             <h2 class="text-3xl font-black text-ram-primary">Past Grazing 🌿</h2>
-            <button onclick="switchView('tracker')" class="btn-3d bg-ram-border hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-xl border-slate-700">Back</button>
+            <button onclick="switchView('tracker')" class="btn-3d bg-ram-border hover:bg-slate-600 text-white font-bold py-3 px-5 rounded-2xl border-slate-700 touch-manipulation">← Back</button>
         </div>
-        <div class="bg-ram-card rounded-3xl p-6 border-2 border-ram-border text-center">
-            <div class="flex flex-wrap justify-center gap-2 mb-6">
-                <button onclick="loadHistory()" class="text-sm bg-[#131F24] px-4 py-2 rounded-xl border-2 border-ram-border font-bold hover:text-ram-primary"><i class="fas fa-sync"></i> Refresh</button>
-                <button onclick="downloadCSV()" class="text-sm bg-[#131F24] px-4 py-2 rounded-xl border-2 border-ram-border font-bold hover:text-ram-primary"><i class="fas fa-file-csv"></i> Download CSV</button>
-                <button onclick="openImportModal()" class="text-sm bg-[#131F24] px-4 py-2 rounded-xl border-2 border-ram-border font-bold hover:text-ram-primary text-ram-secondary"><i class="fas fa-file-import"></i> Import Logs</button>
+        <div class="bg-ram-card rounded-3xl p-5 border-2 border-ram-border">
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button onclick="loadHistory()" class="text-sm bg-ram-bg px-4 py-3 rounded-2xl border-2 border-ram-border font-bold hover:text-ram-primary transition touch-manipulation"><i class="fas fa-sync mr-1"></i> Refresh</button>
+                <button onclick="downloadCSV()" class="text-sm bg-ram-bg px-4 py-3 rounded-2xl border-2 border-ram-border font-bold hover:text-ram-primary transition touch-manipulation"><i class="fas fa-file-csv mr-1"></i> CSV</button>
+                <button onclick="openImportModal()" class="text-sm bg-ram-bg px-4 py-3 rounded-2xl border-2 border-ram-border font-bold hover:text-ram-primary transition text-ram-secondary touch-manipulation"><i class="fas fa-file-import mr-1"></i> Import</button>
             </div>
-            <div id="historyList" class="space-y-6"></div>
+            <div id="historyList" class="space-y-5"></div>
         </div>
     </main>
 
     <!-- FOOTER -->
-    <footer id="actionFooter" class="fixed bottom-0 w-full bg-[#131F24] border-t-2 border-ram-border p-4 z-40 hidden">
+    <footer id="actionFooter" class="fixed bottom-0 w-full bg-ram-bg border-t-2 border-ram-border p-4 z-40 hidden" style="padding-bottom: max(1rem, env(safe-area-inset-bottom))">
         <div class="max-w-4xl mx-auto">
-            <button onclick="finishWorkout()" id="finishBtn" class="w-full btn-3d bg-ram-primary hover:bg-ram-primaryDark text-white border-ram-primaryDark font-extrabold py-4 px-6 rounded-2xl shadow-xl transform transition flex justify-center items-center gap-3 text-xl uppercase tracking-wider">
-                <span id="finishBtnText">Finish & Claim XP</span> 🐏
+            <button onclick="finishWorkout()" id="finishBtn" class="w-full btn-3d bg-ram-primary hover:bg-ram-primaryDark text-white border-ram-primaryDark font-extrabold py-5 px-6 rounded-2xl shadow-xl transform transition flex justify-center items-center gap-3 text-xl uppercase tracking-wider touch-manipulation">
+                <span id="finishBtnText">Finish &amp; Claim XP</span> 🐏
             </button>
         </div>
     </footer>
 
     <!-- EXERCISE TEMPLATE -->
     <template id="exercise-template">
-        <div class="exercise-card exercise-enter bg-ram-card rounded-3xl overflow-hidden shadow-lg border-2 border-ram-border mb-6">
-            <div class="p-4 bg-ram-card border-b-2 border-ram-border flex justify-between items-center gap-3">
-                <div class="flex-1">
-                    <select class="exercise-name w-full bg-[#202F36] text-xl font-black text-white outline-none border-b border-transparent focus:border-ram-primary appearance-none py-1 cursor-pointer" onchange="handleExerciseChange(this)">
-                    </select>
-                </div>
-                <div class="flex gap-1">
-                    <button onclick="showProgress(this)" class="text-ram-accent hover:text-white transition p-2 rounded-full hover:bg-[#131F24]" title="Chart"><i class="fas fa-chart-line"></i></button>
-                    <button onclick="moveExercise(this, -1)" class="text-ram-muted hover:text-white transition p-2 rounded-full hover:bg-[#131F24]" title="Move Up"><i class="fas fa-arrow-up"></i></button>
-                    <button onclick="moveExercise(this, 1)" class="text-ram-muted hover:text-white transition p-2 rounded-full hover:bg-[#131F24]" title="Move Down"><i class="fas fa-arrow-down"></i></button>
-                    <button onclick="deleteExercise(this)" class="text-ram-border hover:text-red-400 transition p-2 rounded-full hover:bg-[#131F24]" title="Delete"><i class="fas fa-trash-alt"></i></button>
+        <div class="exercise-card exercise-enter bg-ram-card rounded-3xl overflow-hidden shadow-lg border-2 border-ram-border mb-5">
+
+            <!-- Header -->
+            <div class="p-4 border-b-2 border-ram-border">
+                <!-- Exercise name select -->
+                <select class="exercise-name w-full bg-ram-bg text-xl font-black text-white outline-none rounded-2xl px-4 py-3 border-2 border-ram-border focus:border-ram-primary appearance-none cursor-pointer mb-3" onchange="handleExerciseChange(this)">
+                </select>
+                <!-- Controls -->
+                <div class="flex gap-2">
+                    <button onclick="showProgress(this)" class="flex-1 h-12 rounded-xl border-2 border-ram-border text-ram-accent font-bold hover:bg-ram-bg transition flex items-center justify-center gap-2 text-sm touch-manipulation">
+                        <i class="fas fa-chart-line"></i><span class="hidden sm:inline">Chart</span>
+                    </button>
+                    <button onclick="moveExercise(this, -1)" class="hidden sm:flex w-12 h-12 rounded-xl border-2 border-ram-border text-ram-muted hover:text-white hover:bg-ram-bg transition items-center justify-center touch-manipulation">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <button onclick="moveExercise(this, 1)" class="hidden sm:flex w-12 h-12 rounded-xl border-2 border-ram-border text-ram-muted hover:text-white hover:bg-ram-bg transition items-center justify-center touch-manipulation">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
+                    <button onclick="deleteExercise(this)" class="w-12 h-12 rounded-xl border-2 border-ram-border text-ram-muted hover:text-red-400 hover:border-red-400/50 hover:bg-ram-bg transition flex items-center justify-center touch-manipulation">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                 </div>
             </div>
-            <div class="last-session-summary hidden px-4 py-3 bg-[#1a262b] border-b border-ram-border text-xs text-ram-muted font-mono leading-relaxed transition-all"></div>
-            <div class="sets-container p-2 space-y-3"></div>
-            <div class="p-3">
-                <button onclick="addSet(this)" class="w-full py-3 rounded-xl border-2 border-ram-border text-ram-secondary font-bold hover:bg-[#131F24] transition text-sm uppercase"><i class="fas fa-plus mr-1"></i> Add Set</button>
+
+            <!-- Last session summary -->
+            <div class="last-session-summary hidden px-4 py-3 bg-[#1a262b] border-b border-ram-border text-xs text-ram-muted font-mono leading-relaxed"></div>
+
+            <!-- Sets -->
+            <div class="sets-container p-3 space-y-3"></div>
+
+            <!-- Add Set -->
+            <div class="p-3 pt-0">
+                <button onclick="addSet(this)" class="w-full py-4 rounded-2xl border-2 border-dashed border-ram-border text-ram-secondary font-black hover:bg-ram-bg hover:border-ram-secondary transition text-base uppercase tracking-wider touch-manipulation">
+                    <i class="fas fa-plus mr-1"></i> Add Set
+                </button>
             </div>
         </div>
     </template>
 
-    <!-- SET TEMPLATE (redesigned with steppers + completion toggle) -->
+    <!-- SET TEMPLATE -->
     <template id="set-template">
-        <div class="set-row bg-[#131F24] rounded-xl p-3 border border-ram-border relative group mb-2 transition-all duration-200">
-            <!-- Top Row -->
-            <div class="flex gap-2 items-center mb-3">
+        <div class="set-row bg-ram-bg rounded-2xl border border-ram-border overflow-hidden mb-3 transition-all duration-200">
 
-                <!-- Completion Toggle -->
-                <button onclick="toggleSetDone(this)" class="set-done-btn w-9 h-9 rounded-full border-2 border-ram-border flex items-center justify-center transition flex-shrink-0 touch-manipulation hover:border-ram-primary">
-                    <i class="fas fa-check text-sm opacity-0 text-white"></i>
+            <!-- Steppers row: [done toggle] [weight] [reps] -->
+            <div class="flex items-stretch">
+
+                <!-- Done toggle — tall left column, shows set number -->
+                <button onclick="toggleSetDone(this)" class="set-done-btn w-16 flex flex-col items-center justify-center bg-[#1a262b] border-r border-ram-border flex-shrink-0 touch-manipulation gap-2 py-3 transition-colors duration-150">
+                    <span class="set-number-display font-black text-ram-primary text-xl leading-none">1</span>
+                    <i class="fas fa-check text-lg opacity-0 text-white"></i>
                 </button>
 
-                <!-- Set Number -->
-                <span class="set-number-display font-black text-ram-primary text-lg w-5 text-center flex-shrink-0">1</span>
-
-                <!-- Weight Stepper -->
-                <div class="flex-1 relative">
-                    <label class="absolute -top-2.5 left-2 text-[9px] font-bold text-ram-muted bg-[#131F24] px-1 z-10">WEIGHT <span class="unit-label"></span></label>
-                    <div class="flex items-center border border-ram-border rounded-lg overflow-hidden h-12 bg-ram-card">
-                        <button onclick="stepWeight(this, -1)" class="step-btn w-10 h-full bg-transparent hover:bg-ram-border text-white font-bold text-xl flex-shrink-0 touch-manipulation transition flex items-center justify-center">−</button>
-                        <input type="number" inputmode="decimal" class="set-weight flex-1 bg-transparent h-full text-center font-black text-2xl text-white focus:outline-none min-w-0" placeholder="0" oninput="saveToLocalStorage(); checkPRBadge(this)">
-                        <button onclick="stepWeight(this, 1)" class="step-btn w-10 h-full bg-transparent hover:bg-ram-border text-white font-bold text-xl flex-shrink-0 touch-manipulation transition flex items-center justify-center">+</button>
+                <!-- Weight stepper — vertical (+/num/−) -->
+                <div class="flex-1 flex flex-col border-r border-ram-border relative">
+                    <div class="text-center pt-2">
+                        <span class="text-[9px] font-black text-ram-muted uppercase tracking-widest">WEIGHT <span class="unit-label">(KG)</span></span>
                     </div>
-                    <span class="pr-badge hidden absolute -top-2.5 right-0 text-[9px] font-black text-yellow-400 bg-[#131F24] px-1 z-10">🏆 PR!</span>
+                    <button onclick="stepWeight(this, 1)" class="step-btn w-full py-3 bg-transparent hover:bg-ram-card text-ram-muted hover:text-white font-black text-2xl touch-manipulation transition flex items-center justify-center leading-none">+</button>
+                    <input type="number" inputmode="decimal" class="set-weight w-full bg-transparent text-center font-black text-4xl text-white focus:outline-none px-3 py-1 leading-tight min-w-0" placeholder="—" oninput="saveToLocalStorage(); checkPRBadge(this)">
+                    <button onclick="stepWeight(this, -1)" class="step-btn w-full py-3 bg-transparent hover:bg-ram-card text-ram-muted hover:text-white font-black text-2xl touch-manipulation transition flex items-center justify-center leading-none pb-3">−</button>
+                    <span class="pr-badge hidden absolute top-2 right-1 text-[8px] font-black text-yellow-400 bg-ram-bg px-1 z-10 rounded">🏆 PR!</span>
                 </div>
 
-                <!-- Reps Stepper -->
-                <div class="w-28 relative flex-shrink-0">
-                    <label class="absolute -top-2.5 left-2 text-[9px] font-bold text-ram-muted bg-[#131F24] px-1 z-10">REPS</label>
-                    <div class="flex items-center border border-ram-border rounded-lg overflow-hidden h-12 bg-ram-card">
-                        <button onclick="stepReps(this, -1)" class="step-btn w-8 h-full bg-transparent hover:bg-ram-border text-white font-bold text-xl flex-shrink-0 touch-manipulation transition flex items-center justify-center">−</button>
-                        <input type="number" inputmode="decimal" class="set-reps flex-1 bg-transparent h-full text-center font-black text-2xl text-white focus:outline-none min-w-0" placeholder="0">
-                        <button onclick="stepReps(this, 1)" class="step-btn w-8 h-full bg-transparent hover:bg-ram-border text-white font-bold text-xl flex-shrink-0 touch-manipulation transition flex items-center justify-center">+</button>
+                <!-- Reps stepper — vertical (+/num/−) -->
+                <div class="w-24 flex flex-col">
+                    <div class="text-center pt-2">
+                        <span class="text-[9px] font-black text-ram-muted uppercase tracking-widest">REPS</span>
                     </div>
+                    <button onclick="stepReps(this, 1)" class="step-btn w-full py-3 bg-transparent hover:bg-ram-card text-ram-muted hover:text-white font-black text-2xl touch-manipulation transition flex items-center justify-center leading-none">+</button>
+                    <input type="number" inputmode="decimal" class="set-reps w-full bg-transparent text-center font-black text-4xl text-white focus:outline-none px-2 py-1 leading-tight min-w-0" placeholder="—">
+                    <button onclick="stepReps(this, -1)" class="step-btn w-full py-3 bg-transparent hover:bg-ram-card text-ram-muted hover:text-white font-black text-2xl touch-manipulation transition flex items-center justify-center leading-none pb-3">−</button>
                 </div>
 
-                <!-- Delete -->
-                <button onclick="deleteSet(this)" class="text-ram-border hover:text-red-400 p-2 flex-shrink-0 touch-manipulation">
-                    <i class="fas fa-times text-base"></i>
-                </button>
             </div>
 
-            <!-- RPE Slider -->
-            <div class="mb-2 px-1">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-bold text-ram-muted uppercase tracking-wider">Intensity (RPE)</span>
-                    <span class="rpe-value text-ram-primary font-black text-sm">7</span>
+            <!-- RPE + Notes + Delete -->
+            <div class="px-4 py-3 border-t border-ram-border space-y-2.5 bg-[#1a262b]">
+                <!-- RPE slider — rpe-value must be sibling of range input inside this div -->
+                <div class="flex items-center gap-3">
+                    <span class="text-[9px] font-black text-ram-muted uppercase tracking-widest w-7 flex-shrink-0">RPE</span>
+                    <input type="range" min="1" max="10" step="0.5" value="7" class="set-rpe flex-1 h-2 bg-ram-border rounded-lg appearance-none cursor-pointer" oninput="updateRpeDisplay(this); saveToLocalStorage();">
+                    <span class="rpe-value text-ram-primary font-black text-sm w-5 text-right flex-shrink-0">7</span>
                 </div>
-                <input type="range" min="1" max="10" step="0.5" value="7" class="set-rpe w-full h-2 bg-ram-border rounded-lg appearance-none cursor-pointer" oninput="updateRpeDisplay(this); saveToLocalStorage();">
-                <div class="flex justify-between text-[8px] text-ram-muted font-bold mt-1 px-1">
-                    <span>Easy</span><span>Hard</span><span>Max</span>
+                <!-- Notes + delete -->
+                <div class="flex items-center gap-2">
+                    <input type="text" placeholder="Set notes..." oninput="saveToLocalStorage()" class="set-notes flex-1 bg-transparent border-b border-ram-border/50 focus:border-ram-primary outline-none text-xs text-ram-muted font-semibold py-1.5">
+                    <button onclick="deleteSet(this)" class="w-10 h-10 flex items-center justify-center text-ram-border hover:text-red-400 touch-manipulation rounded-lg hover:bg-ram-border/20 transition flex-shrink-0">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Notes -->
-            <div class="px-1">
-                <input type="text" placeholder="Add set notes..." oninput="saveToLocalStorage()" class="set-notes w-full bg-transparent border-b border-ram-border focus:border-ram-primary outline-none text-xs text-ram-muted font-semibold py-1">
-            </div>
         </div>
     </template>
 
@@ -1377,9 +1398,9 @@ Constraint: Max 180 words. Markdown format.`;
                     Object.values(grouped).forEach(exGroup => {
                         let rows = "";
                         exGroup.sets.forEach((s) => {
-                            if (s.weight || s.reps) rows += `<tr class="border-b border-ram-border/50 text-xs"><td class="py-1 text-ram-muted font-bold">${s.set_index}</td><td class="py-1 text-white font-bold">${s.weight}</td><td class="py-1 text-white">${s.reps}</td><td class="py-1 text-ram-accent">${s.rpe || '-'}</td><td class="py-1 text-ram-muted italic truncate max-w-[80px]">${s.notes || ''}</td></tr>`;
+                            if (s.weight || s.reps) rows += `<tr class="border-b border-ram-border/50 text-xs"><td class="py-1 text-ram-muted font-bold">${s.set_index}</td><td class="py-1 text-white font-bold">${s.weight}</td><td class="py-1 text-white">${s.reps}</td><td class="py-1 text-ram-accent">${s.rpe || '-'}</td><td class="hidden sm:table-cell py-1 text-ram-muted italic truncate max-w-[80px]">${s.notes || ''}</td></tr>`;
                         });
-                        stats += `<div class="mt-4 mb-2"><div class="font-bold text-ram-primary text-sm border-b border-ram-border pb-1 mb-2">${exGroup.name}</div><table class="w-full text-center"><thead><tr class="text-[10px] text-ram-muted uppercase tracking-wider"><th class="pb-1 font-bold">Set</th><th class="pb-1 font-bold">Kg</th><th class="pb-1 font-bold">Reps</th><th class="pb-1 font-bold">RPE</th><th class="pb-1 font-bold">Note</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+                        stats += `<div class="mt-4 mb-2"><div class="font-bold text-ram-primary text-sm border-b border-ram-border pb-1 mb-2">${exGroup.name}</div><table class="table-fixed w-full text-center"><thead><tr class="text-xs text-ram-muted uppercase tracking-wider"><th class="pb-1 font-bold">Set</th><th class="pb-1 font-bold">Kg</th><th class="pb-1 font-bold">Reps</th><th class="pb-1 font-bold">RPE</th><th class="hidden sm:table-cell pb-1 font-bold">Note</th></tr></thead><tbody>${rows}</tbody></table></div>`;
                     });
                 }
                 item.innerHTML = `<div class="flex justify-between items-start mb-2"><h3 class="font-black text-white text-lg mt-1">${workout.name || 'Session'}</h3><div class="flex items-start gap-3"><div class="text-right"><div class="text-xs font-bold text-ram-primary">${new Date(workout.date).toLocaleDateString()}</div><div class="text-[10px] text-ram-muted uppercase tracking-tighter">${workout.gym_name || 'Gym'}</div></div><button onclick="deleteWorkout('${workout.id}')" class="text-ram-border hover:text-red-500 pt-1"><i class="fas fa-trash-alt"></i></button></div></div><div class="pl-2 border-l-2 border-ram-border">${stats}</div>`;

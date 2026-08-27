@@ -55,6 +55,13 @@
         }
 
         .show-stamp { opacity: 1 !important; }
+
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-[100dvh] w-screen text-gray-800 font-sans overflow-hidden">
@@ -78,6 +85,15 @@
                         <option value="all">Loading roles...</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="relative w-full text-left mb-1">
+                <label class="block text-sm font-semibold text-gray-500 mb-1 px-1">Mode</label>
+                <div class="flex gap-2">
+                    <button id="mode-standard-btn" onclick="setSwipeMode('standard')" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm border transition-colors bg-pink-500 text-white border-pink-500">Standard</button>
+                    <button id="mode-light-btn" onclick="setSwipeMode('light')" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">Light</button>
                 </div>
             </div>
 
@@ -195,10 +211,59 @@
                 <!-- Score Stamp -->
                 <div id="stamp-score" class="stamp stamp-score"></div>
             </div>
+
+            <!-- Light Mode Card -->
+            <div id="light-card" class="absolute inset-0 bg-white flex flex-col card-transition z-20 hidden">
+                <div class="flex-1 flex flex-col min-h-0 relative">
+
+                    <!-- Top row: photo + name/agent/training -->
+                    <div class="flex gap-3 p-3 pb-2 shrink-0">
+                        <!-- Headshot -->
+                        <img id="light-headshot" src="" alt="Headshot" class="w-28 h-36 object-cover rounded-xl shadow-md bg-gray-100 shrink-0">
+
+                        <!-- Info column -->
+                        <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+                            <div class="flex items-start justify-between gap-1">
+                                <div class="min-w-0">
+                                    <h2 id="light-name" class="text-lg font-bold text-gray-800 leading-tight truncate"></h2>
+                                    <span id="light-role" class="text-xs font-medium text-gray-500"></span>
+                                </div>
+                                <a id="light-external-btn" href="#" target="_blank" class="text-gray-400 hover:text-gray-600 p-1 shrink-0">
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                                </a>
+                            </div>
+
+                            <div>
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Agent</h3>
+                                <p id="light-agent" class="text-xs font-semibold text-gray-700 leading-snug"></p>
+                            </div>
+
+                            <div>
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Training</h3>
+                                <p id="light-training" class="text-xs text-gray-700 leading-snug line-clamp-3"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Credits below -->
+                    <div class="px-3 pb-3 flex-1 min-h-0 overflow-y-auto">
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Top Credits</h3>
+                        <div id="light-credits" class="flex flex-col gap-1.5"></div>
+                    </div>
+
+                    <!-- Loading overlay -->
+                    <div id="light-data-loading" class="hidden absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10">
+                        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400"></i>
+                    </div>
+                </div>
+
+                <!-- Stamp -->
+                <div id="light-stamp" class="stamp stamp-score"></div>
+            </div>
         </div>
 
-        <!-- Controls: 1–10 score buttons -->
-        <div class="w-full bg-white border-t border-gray-200 shrink-0 z-30 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <!-- Controls: 1-10 score buttons (standard mode) -->
+        <div id="standard-controls" class="w-full bg-white border-t border-gray-200 shrink-0 z-30 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <div class="grid grid-cols-5 gap-1.5 w-full px-3">
                 <button onclick="makeDecision('1')"  class="action-btn h-10 rounded-xl bg-red-500   shadow-md flex items-center justify-center text-white font-black text-base hover:bg-red-600   focus:outline-none transition-colors">1</button>
                 <button onclick="makeDecision('2')"  class="action-btn h-10 rounded-xl bg-red-400   shadow-md flex items-center justify-center text-white font-black text-base hover:bg-red-500   focus:outline-none transition-colors">2</button>
@@ -210,6 +275,18 @@
                 <button onclick="makeDecision('8')"  class="action-btn h-10 rounded-xl bg-green-400  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-green-500  focus:outline-none transition-colors">8</button>
                 <button onclick="makeDecision('9')"  class="action-btn h-10 rounded-xl bg-green-500  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-green-600  focus:outline-none transition-colors">9</button>
                 <button onclick="makeDecision('10')" class="action-btn h-10 rounded-xl bg-green-600  shadow-md flex items-center justify-center text-white font-black text-base hover:bg-green-700  focus:outline-none transition-colors">10</button>
+            </div>
+        </div>
+
+        <!-- Controls: Yes/No buttons (light mode) -->
+        <div id="light-controls" class="hidden w-full bg-white border-t border-gray-200 shrink-0 z-30 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            <div class="flex gap-3 w-full px-4">
+                <button onclick="makeDecision('no')" class="action-btn flex-1 h-14 rounded-xl bg-red-500 shadow-md flex items-center justify-center text-white font-black text-xl hover:bg-red-600 focus:outline-none transition-colors gap-2">
+                    <i class="fa-solid fa-xmark"></i> No
+                </button>
+                <button onclick="makeDecision('yes')" class="action-btn flex-1 h-14 rounded-xl bg-green-500 shadow-md flex items-center justify-center text-white font-black text-xl hover:bg-green-600 focus:outline-none transition-colors gap-2">
+                    <i class="fa-solid fa-check"></i> Yes
+                </button>
             </div>
         </div>
     </div>
@@ -244,9 +321,11 @@
             <div class="flex gap-2 flex-wrap mt-1">
                 <button onclick="setFilter('all', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-pink-500 text-white font-medium transition-colors">All</button>
                 <button onclick="setFilter('pending', this)" class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Pending</button>
-                <button onclick="setFilter('1-3', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">1–3</button>
-                <button onclick="setFilter('4-6', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">4–6</button>
-                <button onclick="setFilter('7-10', this)"    class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">7–10</button>
+                <button onclick="setFilter('yes', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">Yes</button>
+                <button onclick="setFilter('no', this)"      class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">No</button>
+                <button onclick="setFilter('1-3', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">1-3</button>
+                <button onclick="setFilter('4-6', this)"     class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">4-6</button>
+                <button onclick="setFilter('7-10', this)"    class="filter-btn flex-1 py-1.5 px-2 text-xs rounded-md bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors">7-10</button>
             </div>
         </div>
 
@@ -306,6 +385,8 @@
                 <div id="export-filter-chips" class="flex flex-wrap gap-2 mt-1">
                     <button type="button" onclick="toggleExportChip(this, 'all')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-green-500 text-white border border-green-500 transition-colors">All</button>
                     <button type="button" onclick="toggleExportChip(this, 'pending')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">Pending</button>
+                    <button type="button" onclick="toggleExportChip(this, 'yes')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">Yes</button>
+                    <button type="button" onclick="toggleExportChip(this, 'no')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">No</button>
                     <button type="button" onclick="toggleExportChip(this, '1')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">1</button>
                     <button type="button" onclick="toggleExportChip(this, '2')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">2</button>
                     <button type="button" onclick="toggleExportChip(this, '3')" class="export-chip px-3 py-1.5 text-sm font-medium rounded-lg bg-gray-100 text-gray-600 border border-gray-200 transition-colors">3</button>
@@ -347,10 +428,15 @@
                 <i class="fa-solid fa-file-arrow-up text-blue-500"></i> Upload CSV
             </h2>
 
-            <!-- Role name input -->
+            <!-- Role mode toggle -->
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Role name *</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Role</label>
+                <div class="flex gap-2 mb-2">
+                    <button id="role-mode-csv-btn" onclick="setRoleMode('csv')" class="flex-1 py-2 px-3 rounded-xl font-bold text-sm border transition-colors bg-white text-gray-700 border-gray-200">Use CSV Column</button>
+                    <button id="role-mode-override-btn" onclick="setRoleMode('override')" class="flex-1 py-2 px-3 rounded-xl font-bold text-sm border transition-colors bg-blue-500 text-white border-blue-500">Override All</button>
+                </div>
                 <input type="text" id="upload-role-input" placeholder="e.g. Lead Actor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" oninput="validateUploadForm()">
+                <p id="role-mode-hint" class="text-xs text-gray-400 mt-1"></p>
             </div>
 
             <!-- File selection -->
@@ -428,6 +514,42 @@
         let supabaseClient = null;
         let isProcessing = false;
         let sampleMode = 'all';
+        let swipeMode = 'standard'; // 'standard' or 'light'
+        const spotlightSummaryCache = new Map();
+
+        function setSwipeMode(mode) {
+            swipeMode = mode;
+            const stdBtn = document.getElementById('mode-standard-btn');
+            const lightBtn = document.getElementById('mode-light-btn');
+            if (mode === 'light') {
+                lightBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                lightBtn.classList.add('bg-pink-500', 'text-white', 'border-pink-500');
+                stdBtn.classList.remove('bg-pink-500', 'text-white', 'border-pink-500');
+                stdBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+            } else {
+                stdBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                stdBtn.classList.add('bg-pink-500', 'text-white', 'border-pink-500');
+                lightBtn.classList.remove('bg-pink-500', 'text-white', 'border-pink-500');
+                lightBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+            }
+        }
+
+        async function fetchSpotlightSummary(url) {
+            if (spotlightSummaryCache.has(url)) return spotlightSummaryCache.get(url);
+            try {
+                const resp = await fetch(
+                    `${appConfig.url}/functions/v1/spotlight-summary?url=${encodeURIComponent(url)}`,
+                    { headers: { 'Authorization': `Bearer ${appConfig.key}` } }
+                );
+                if (!resp.ok) return null;
+                const data = await resp.json();
+                spotlightSummaryCache.set(url, data);
+                return data;
+            } catch (e) {
+                console.error('Spotlight summary fetch failed:', e);
+                return null;
+            }
+        }
 
         function setSampleMode(mode) {
             sampleMode = mode;
@@ -608,6 +730,7 @@
             if (!supabaseClient) return;
 
             document.getElementById('swipe-card').classList.add('hidden');
+            document.getElementById('light-card').classList.add('hidden');
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('loading-state').classList.remove('hidden');
             document.getElementById('progress-indicator').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
@@ -686,6 +809,23 @@
 
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('empty-state').classList.add('hidden');
+
+            const isLight = swipeMode === 'light';
+
+            // Show/hide the right card and controls
+            document.getElementById('swipe-card').classList.toggle('hidden', isLight);
+            document.getElementById('light-card').classList.toggle('hidden', !isLight);
+            document.getElementById('standard-controls').classList.toggle('hidden', isLight);
+            document.getElementById('light-controls').classList.toggle('hidden', !isLight);
+
+            if (isLight) {
+                populateLightCard();
+            } else {
+                populateStandardCard();
+            }
+        }
+
+        function populateStandardCard() {
             document.getElementById('swipe-card').classList.remove('hidden');
 
             const iframe = document.getElementById('website-frame');
@@ -709,37 +849,106 @@
             }, 1500);
         }
 
+        async function populateLightCard() {
+            document.getElementById('light-card').classList.remove('hidden');
+
+            const name = currentPerson.name || "Unknown Candidate";
+            const role = activeApplication[appConfig.roleCol] || "No role specified";
+            const agentFromDb = activeApplication.agents || "";
+
+            document.getElementById('light-name').textContent = name;
+            document.getElementById('light-role').textContent = role;
+            document.getElementById('light-external-btn').href = currentPerson.url;
+
+            // Set defaults while loading
+            document.getElementById('light-headshot').src = '';
+            document.getElementById('light-agent').textContent = agentFromDb || 'Loading...';
+            document.getElementById('light-training').textContent = 'Loading...';
+            document.getElementById('light-credits').innerHTML = '<p class="text-sm text-gray-400">Loading...</p>';
+            document.getElementById('light-data-loading').classList.remove('hidden');
+
+            // Fetch summary from edge function
+            const summary = await fetchSpotlightSummary(currentPerson.url);
+            document.getElementById('light-data-loading').classList.add('hidden');
+
+            if (summary) {
+                if (summary.headshot) {
+                    document.getElementById('light-headshot').src = summary.headshot;
+                }
+
+                const agentText = summary.agencies.length > 0
+                    ? summary.agencies.join(', ')
+                    : (agentFromDb || 'Not listed');
+                document.getElementById('light-agent').textContent = agentText;
+
+                document.getElementById('light-training').textContent = summary.training || 'None listed';
+
+                const creditsEl = document.getElementById('light-credits');
+                if (summary.credits.length > 0) {
+                    creditsEl.innerHTML = summary.credits.map(c => {
+                        const parts = [c.title];
+                        if (c.role) parts.push(`(${c.role})`);
+                        if (c.company) parts.push(`- ${c.company}`);
+                        if (c.year) parts.push(`(${c.year})`);
+                        return `<div class="bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                            <p class="text-sm font-semibold text-gray-700">${parts[0]}</p>
+                            <p class="text-xs text-gray-500">${parts.slice(1).join(' ')}</p>
+                        </div>`;
+                    }).join('');
+                } else {
+                    creditsEl.innerHTML = '<p class="text-sm text-gray-400">None listed</p>';
+                }
+            } else {
+                document.getElementById('light-agent').textContent = agentFromDb || 'Could not load';
+                document.getElementById('light-training').textContent = 'Could not load';
+                document.getElementById('light-credits').innerHTML = '<p class="text-sm text-gray-400">Could not load</p>';
+            }
+        }
+
         async function makeDecision(score) {
             if (isProcessing || !currentPerson || !activeApplication) return;
             isProcessing = true;
 
-            const swipeCard = document.getElementById('swipe-card');
-            const stampEl = document.getElementById('stamp-score');
+            const isLight = swipeMode === 'light';
+            const card = document.getElementById(isLight ? 'light-card' : 'swipe-card');
+            const stampEl = document.getElementById(isLight ? 'light-stamp' : 'stamp-score');
 
-            // Set stamp text and colour based on score range
+            // Set stamp text and colour
+            const isYesNo = (score === 'yes' || score === 'no');
             const n = parseInt(score);
-            stampEl.textContent = score;
-            if (n <= 3) {
-                stampEl.style.color = '#ef4444';
-                stampEl.style.borderColor = '#ef4444';
-            } else if (n <= 6) {
-                stampEl.style.color = '#f59e0b';
-                stampEl.style.borderColor = '#f59e0b';
+
+            if (isYesNo) {
+                stampEl.textContent = score === 'yes' ? 'YES' : 'NO';
+                stampEl.style.color = score === 'yes' ? '#22c55e' : '#ef4444';
+                stampEl.style.borderColor = score === 'yes' ? '#22c55e' : '#ef4444';
             } else {
-                stampEl.style.color = '#22c55e';
-                stampEl.style.borderColor = '#22c55e';
+                stampEl.textContent = score;
+                if (n <= 3) {
+                    stampEl.style.color = '#ef4444';
+                    stampEl.style.borderColor = '#ef4444';
+                } else if (n <= 6) {
+                    stampEl.style.color = '#f59e0b';
+                    stampEl.style.borderColor = '#f59e0b';
+                } else {
+                    stampEl.style.color = '#22c55e';
+                    stampEl.style.borderColor = '#22c55e';
+                }
             }
 
-            swipeCard.classList.remove('card-transition');
-            void swipeCard.offsetWidth; // Reflow
-            swipeCard.classList.add('card-transition');
+            card.classList.remove('card-transition');
+            void card.offsetWidth; // Reflow
+            card.classList.add('card-transition');
 
             stampEl.classList.add('show-stamp');
 
-            // Swipe direction: low scores left, mid scores up, high scores right
-            if (n <= 3) swipeCard.classList.add('swipe-left');
-            else if (n <= 6) swipeCard.classList.add('swipe-up');
-            else swipeCard.classList.add('swipe-right');
+            // Swipe direction
+            if (isYesNo) {
+                card.classList.add(score === 'yes' ? 'swipe-right' : 'swipe-left');
+            } else {
+                if (n <= 3) card.classList.add('swipe-left');
+                else if (n <= 6) card.classList.add('swipe-up');
+                else card.classList.add('swipe-right');
+            }
 
             const updateData = { updated_at: new Date().toISOString() };
             updateData[appConfig.decisionCol] = score;
@@ -749,13 +958,13 @@
             await supabaseClient.from(appConfig.table).update(updateData).eq('id', activeApplication.id);
 
             setTimeout(() => {
-                swipeCard.classList.add('hidden');
-                swipeCard.classList.remove('swipe-left', 'swipe-right', 'swipe-up');
+                card.classList.add('hidden');
+                card.classList.remove('swipe-left', 'swipe-right', 'swipe-up');
                 stampEl.classList.remove('show-stamp');
 
                 pendingOtherApplications = currentPerson.applications.filter(a => a.id !== activeApplication.id);
 
-                if (pendingOtherApplications.length > 0) {
+                if (pendingOtherApplications.length > 0 && !isLight) {
                     showMultiRoleModal();
                 } else {
                     finishPersonAndNext();
@@ -765,6 +974,8 @@
 
         function scoreSelectOptions(currentVal) {
             let html = '<option value="pending"' + (currentVal === 'pending' || !currentVal ? ' selected' : '') + '>Pending</option>';
+            html += '<option value="yes"' + (currentVal === 'yes' ? ' selected' : '') + '>Yes</option>';
+            html += '<option value="no"' + (currentVal === 'no' ? ' selected' : '') + '>No</option>';
             for (let i = 1; i <= 10; i++) {
                 html += `<option value="${i}"${currentVal == i ? ' selected' : ''}>${i}</option>`;
             }
@@ -772,6 +983,8 @@
         }
 
         function scoreSelectStyle(val) {
+            if (val === 'yes') return 'bg-green-50 border-green-200 text-green-700 font-bold';
+            if (val === 'no') return 'bg-red-50 border-red-200 text-red-700 font-bold';
             const n = parseInt(val);
             if (isNaN(n)) return 'bg-white border-gray-300 text-gray-600 font-medium';
             if (n <= 3) return 'bg-red-50 border-red-200 text-red-700 font-bold';
@@ -886,6 +1099,8 @@
         }
 
         function matchesScoreRange(decisionVal, range) {
+            if (range === 'yes') return decisionVal === 'yes';
+            if (range === 'no')  return decisionVal === 'no';
             const n = parseInt(decisionVal);
             if (isNaN(n)) return false;
             if (range === '1-3')  return n >= 1  && n <= 3;
@@ -1208,6 +1423,7 @@
         // --- UTILS ---
         function showEmptyState() {
             document.getElementById('swipe-card').classList.add('hidden');
+            document.getElementById('light-card').classList.add('hidden');
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('empty-state').classList.remove('hidden');
             currentPerson = null;
@@ -1230,24 +1446,52 @@
 
         // --- CSV UPLOAD LOGIC ---
         let uploadedCSVData = null;
+        let uploadRoleMode = 'override'; // 'override' or 'csv'
+
+        function setRoleMode(mode) {
+            uploadRoleMode = mode;
+            const csvBtn = document.getElementById('role-mode-csv-btn');
+            const overrideBtn = document.getElementById('role-mode-override-btn');
+            const roleInput = document.getElementById('upload-role-input');
+            const hint = document.getElementById('role-mode-hint');
+
+            if (mode === 'csv') {
+                csvBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                csvBtn.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                overrideBtn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                overrideBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+                roleInput.placeholder = 'Fallback role (optional)';
+                hint.textContent = 'Roles will be read from the mapped CSV column. This field is used as a fallback for empty values.';
+            } else {
+                overrideBtn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                overrideBtn.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                csvBtn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                csvBtn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+                roleInput.placeholder = 'e.g. Lead Actor';
+                hint.textContent = 'This role will be applied to every row.';
+            }
+            validateUploadForm();
+        }
 
         const COLUMN_ALIASES = {
             first_name:   ['name', 'first name', 'first', 'forename', 'given name'],
             last_name:    ['surname', 'last name', 'last', 'second name', 'family name'],
             url:          ['link', 'url', 'cv', 'cv link', 'cv url', 'linkedin', 'profile'],
             agents:       ['agent', 'agents', 'agency', 'recruiter', 'source'],
-            agents_email: ['agent_email', 'agent email', 'agents_email', 'agency email', 'recruiter email', 'email']
+            agents_email: ['agent_email', 'agent email', 'agents_email', 'agency email', 'recruiter email', 'email'],
+            role:         ['role', 'position', 'job title', 'job role']
         };
 
-        const UPLOAD_TARGETS = ['first_name', 'last_name', 'url', 'agents', 'agents_email'];
-        const UPLOAD_LABELS = { first_name: 'First Name *', last_name: 'Surname', url: 'Profile Link', agents: 'Agent', agents_email: 'Agent Email' };
-        const PREVIEW_LABELS = { first_name: 'First', last_name: 'Surname', url: 'Link', agents: 'Agent', agents_email: 'Email' };
+        const UPLOAD_TARGETS = ['first_name', 'last_name', 'role', 'url', 'agents', 'agents_email'];
+        const UPLOAD_LABELS = { first_name: 'First Name *', last_name: 'Surname', role: 'Role', url: 'Profile Link', agents: 'Agent', agents_email: 'Agent Email' };
+        const PREVIEW_LABELS = { first_name: 'First', last_name: 'Surname', role: 'Role', url: 'Link', agents: 'Agent', agents_email: 'Email' };
 
         function openUploadModal() {
             uploadedCSVData = null;
             document.getElementById('upload-file-input').value = '';
             document.getElementById('upload-file-name').textContent = '';
             document.getElementById('upload-role-input').value = '';
+            setRoleMode('override');
             document.getElementById('upload-mapping-section').classList.add('hidden');
             document.getElementById('upload-progress-section').classList.add('hidden');
             document.getElementById('upload-mapping-grid').innerHTML = '';
@@ -1372,6 +1616,14 @@
             });
             grid.innerHTML = html;
 
+            // Auto-switch to CSV mode if a role column was detected
+            const detectedRole = document.getElementById('upload-map-role')?.value;
+            if (detectedRole) {
+                setRoleMode('csv');
+            } else {
+                setRoleMode('override');
+            }
+
             updatePreview();
             document.getElementById('upload-mapping-section').classList.remove('hidden');
             validateUploadForm();
@@ -1412,7 +1664,16 @@
         function validateUploadForm() {
             const firstCol = document.getElementById('upload-map-first_name')?.value;
             const roleName = document.getElementById('upload-role-input')?.value.trim();
-            document.getElementById('execute-upload-btn').disabled = !(firstCol && roleName);
+
+            let roleValid = false;
+            if (uploadRoleMode === 'csv') {
+                const roleCol = document.getElementById('upload-map-role')?.value;
+                roleValid = !!roleCol;
+            } else {
+                roleValid = !!roleName;
+            }
+
+            document.getElementById('execute-upload-btn').disabled = !(firstCol && roleValid);
         }
 
         async function executeCSVUpload() {
@@ -1450,11 +1711,19 @@
                 const allRecords = rows.map(row => {
                     const first = (row[mappings.first_name] || '').trim();
                     const last = mappings.last_name ? (row[mappings.last_name] || '').trim() : '';
+
+                    let rowRole;
+                    if (uploadRoleMode === 'csv' && mappings.role) {
+                        rowRole = (row[mappings.role] || '').trim() || roleName;
+                    } else {
+                        rowRole = roleName;
+                    }
+
                     return {
                         first_name: first,
                         last_name: last,
                         name: [first, last].filter(Boolean).join(' '),
-                        role: roleName,
+                        role: rowRole,
                         url: mappings.url ? (row[mappings.url] || '') : '',
                         agents: mappings.agents ? (row[mappings.agents] || '') : '',
                         agents_email: mappings.agents_email ? (row[mappings.agents_email] || '') : '',
