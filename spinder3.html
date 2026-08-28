@@ -157,6 +157,16 @@
             <div class="w-full h-1 bg-gray-200">
                 <div id="progress-bar-fill" class="h-full bg-gradient-to-r from-pink-500 to-orange-400 transition-all duration-300 rounded-r-full" style="width: 0%"></div>
             </div>
+
+            <!-- Light mode Yes/No ratio bar -->
+            <div id="light-ratio-bar" class="hidden w-full bg-white border-b border-gray-100 px-4 py-1.5 flex items-center gap-2">
+                <span id="light-ratio-no-label" class="text-[10px] font-bold text-red-400 w-8 text-right">0</span>
+                <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden flex">
+                    <div id="light-ratio-yes-fill" class="h-full bg-green-400 transition-all duration-300" style="width: 50%"></div>
+                    <div id="light-ratio-no-fill" class="h-full bg-red-400 transition-all duration-300" style="width: 50%"></div>
+                </div>
+                <span id="light-ratio-yes-label" class="text-[10px] font-bold text-green-500 w-8">0</span>
+            </div>
         </div>
 
         <!-- Card Container -->
@@ -516,6 +526,8 @@
         let isProcessing = false;
         let sampleMode = 'all';
         let swipeMode = 'standard'; // 'standard' or 'light'
+        let lightYesCount = 0;
+        let lightNoCount = 0;
         const spotlightSummaryCache = new Map();
 
         function setSwipeMode(mode) {
@@ -734,6 +746,10 @@
             document.getElementById('light-card').classList.add('hidden');
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('loading-state').classList.remove('hidden');
+
+            lightYesCount = 0;
+            lightNoCount = 0;
+            renderLightRatio();
             document.getElementById('progress-indicator').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
 
             try {
@@ -793,6 +809,28 @@
             }
         }
 
+        function renderLightRatio() {
+            const total = lightYesCount + lightNoCount;
+            const bar = document.getElementById('light-ratio-bar');
+            if (!bar) return;
+
+            if (total === 0) {
+                document.getElementById('light-ratio-yes-fill').style.width = '50%';
+                document.getElementById('light-ratio-no-fill').style.width = '50%';
+                document.getElementById('light-ratio-yes-label').textContent = '0';
+                document.getElementById('light-ratio-no-label').textContent = '0';
+                return;
+            }
+
+            const yesPct = Math.round((lightYesCount / total) * 100);
+            const noPct = 100 - yesPct;
+
+            document.getElementById('light-ratio-yes-fill').style.width = yesPct + '%';
+            document.getElementById('light-ratio-no-fill').style.width = noPct + '%';
+            document.getElementById('light-ratio-yes-label').textContent = `${lightYesCount} (${yesPct}%)`;
+            document.getElementById('light-ratio-no-label').textContent = `${lightNoCount} (${noPct}%)`;
+        }
+
         function popNextSwipeCard() {
             if (swipeQueue.length === 0) {
                 showEmptyState();
@@ -818,6 +856,7 @@
             document.getElementById('light-card').classList.toggle('hidden', !isLight);
             document.getElementById('standard-controls').classList.toggle('hidden', isLight);
             document.getElementById('light-controls').classList.toggle('hidden', !isLight);
+            document.getElementById('light-ratio-bar').classList.toggle('hidden', !isLight);
 
             if (isLight) {
                 populateLightCard();
@@ -955,6 +994,12 @@
             updateData[appConfig.decisionCol] = score;
 
             activeApplication[appConfig.decisionCol] = score;
+
+            if (isLight) {
+                if (score === 'yes') lightYesCount++;
+                else if (score === 'no') lightNoCount++;
+                renderLightRatio();
+            }
 
             await supabaseClient.from(appConfig.table).update(updateData).eq('id', activeApplication.id);
 
@@ -1427,6 +1472,7 @@
             document.getElementById('light-card').classList.add('hidden');
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('empty-state').classList.remove('hidden');
+            document.getElementById('light-ratio-bar').classList.add('hidden');
             currentPerson = null;
         }
 
