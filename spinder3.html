@@ -166,6 +166,9 @@
                     <div id="light-ratio-yes-fill" class="h-full bg-green-400 transition-all duration-300" style="width: 50%"></div>
                 </div>
                 <span id="light-ratio-yes-label" class="text-[10px] font-bold text-green-500 w-8">0</span>
+                <button onclick="clearLightRatio()" class="text-gray-300 hover:text-gray-500 ml-1 transition-colors" title="Reset stats">
+                    <i class="fa-solid fa-rotate-left text-[10px]"></i>
+                </button>
             </div>
         </div>
 
@@ -827,6 +830,14 @@
             document.getElementById('light-ratio-no-fill').style.width = noPct + '%';
             document.getElementById('light-ratio-yes-label').textContent = `${lightYesCount} (${yesPct}%)`;
             document.getElementById('light-ratio-no-label').textContent = `${lightNoCount} (${noPct}%)`;
+        }
+
+        function clearLightRatio() {
+            lightYesCount = 0;
+            lightNoCount = 0;
+            localStorage.removeItem('lightYesCount');
+            localStorage.removeItem('lightNoCount');
+            renderLightRatio();
         }
 
         function popNextSwipeCard() {
