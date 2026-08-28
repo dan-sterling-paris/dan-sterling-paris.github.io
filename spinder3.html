@@ -526,8 +526,8 @@
         let isProcessing = false;
         let sampleMode = 'all';
         let swipeMode = 'standard'; // 'standard' or 'light'
-        let lightYesCount = 0;
-        let lightNoCount = 0;
+        let lightYesCount = parseInt(localStorage.getItem('lightYesCount')) || 0;
+        let lightNoCount = parseInt(localStorage.getItem('lightNoCount')) || 0;
         const spotlightSummaryCache = new Map();
 
         function setSwipeMode(mode) {
@@ -747,8 +747,6 @@
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('loading-state').classList.remove('hidden');
 
-            lightYesCount = 0;
-            lightNoCount = 0;
             renderLightRatio();
             document.getElementById('progress-indicator').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
 
@@ -998,6 +996,8 @@
             if (isLight) {
                 if (score === 'yes') lightYesCount++;
                 else if (score === 'no') lightNoCount++;
+                localStorage.setItem('lightYesCount', lightYesCount);
+                localStorage.setItem('lightNoCount', lightNoCount);
                 renderLightRatio();
             }
 
