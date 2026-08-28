@@ -166,7 +166,8 @@
                     <div id="light-ratio-yes-fill" class="h-full bg-green-400 transition-all duration-300" style="width: 50%"></div>
                 </div>
                 <span id="light-ratio-yes-label" class="text-[10px] font-bold text-green-500 w-8">0</span>
-                <button onclick="clearLightRatio()" class="text-gray-300 hover:text-gray-500 ml-1 transition-colors" title="Reset stats">
+                <span id="light-eta-label" class="text-[10px] font-medium text-gray-400 ml-1 whitespace-nowrap"></span>
+                <button onclick="clearLightRatio()" class="text-gray-300 hover:text-gray-500 ml-1 transition-colors shrink-0" title="Reset stats">
                     <i class="fa-solid fa-rotate-left text-[10px]"></i>
                 </button>
             </div>
@@ -531,6 +532,7 @@
         let swipeMode = 'standard'; // 'standard' or 'light'
         let lightYesCount = parseInt(localStorage.getItem('lightYesCount')) || 0;
         let lightNoCount = parseInt(localStorage.getItem('lightNoCount')) || 0;
+        let lightDecisionTimes = [];
         const spotlightSummaryCache = new Map();
 
         function setSwipeMode(mode) {
@@ -750,6 +752,7 @@
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('loading-state').classList.remove('hidden');
 
+            lightDecisionTimes = [];
             renderLightRatio();
             document.getElementById('progress-indicator').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-gray-400"></i>';
 
@@ -830,6 +833,35 @@
             document.getElementById('light-ratio-no-fill').style.width = noPct + '%';
             document.getElementById('light-ratio-yes-label').textContent = `${lightYesCount} (${yesPct}%)`;
             document.getElementById('light-ratio-no-label').textContent = `${lightNoCount} (${noPct}%)`;
+            renderLightETA();
+        }
+
+        function renderLightETA() {
+            const etaEl = document.getElementById('light-eta-label');
+            if (!etaEl) return;
+
+            if (lightDecisionTimes.length < 2) {
+                etaEl.textContent = '';
+                return;
+            }
+
+            let totalGap = 0;
+            for (let i = 1; i < lightDecisionTimes.length; i++) {
+                totalGap += lightDecisionTimes[i] - lightDecisionTimes[i - 1];
+            }
+            const avgMs = totalGap / (lightDecisionTimes.length - 1);
+            const remaining = swipeQueue.length;
+            const totalSecs = Math.round((avgMs * remaining) / 1000);
+
+            if (totalSecs < 60) {
+                etaEl.textContent = `~${totalSecs}s left`;
+            } else if (totalSecs < 3600) {
+                etaEl.textContent = `~${Math.round(totalSecs / 60)}m left`;
+            } else {
+                const h = Math.floor(totalSecs / 3600);
+                const m = Math.round((totalSecs % 3600) / 60);
+                etaEl.textContent = `~${h}h ${m}m left`;
+            }
         }
 
         function clearLightRatio() {
@@ -837,6 +869,7 @@
             lightNoCount = 0;
             localStorage.removeItem('lightYesCount');
             localStorage.removeItem('lightNoCount');
+            lightDecisionTimes = [];
             renderLightRatio();
         }
 
@@ -1009,6 +1042,8 @@
                 else if (score === 'no') lightNoCount++;
                 localStorage.setItem('lightYesCount', lightYesCount);
                 localStorage.setItem('lightNoCount', lightNoCount);
+                lightDecisionTimes.push(Date.now());
+                if (lightDecisionTimes.length > 11) lightDecisionTimes.shift();
                 renderLightRatio();
             }
 
