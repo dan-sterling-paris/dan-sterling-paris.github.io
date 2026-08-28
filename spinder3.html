@@ -288,6 +288,7 @@
                     <i class="fa-solid fa-check"></i> Yes
                 </button>
             </div>
+            <p class="text-center text-xs text-gray-400 mt-2 pb-1"><i class="fa-solid fa-arrows-left-right mr-1"></i>Swipe or use arrow keys</p>
         </div>
     </div>
 
@@ -1791,6 +1792,88 @@
                 }
             });
         });
+
+        // --- LIGHT MODE: SWIPE GESTURES & ARROW KEYS ---
+
+        (function() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isDragging = false;
+            const SWIPE_THRESHOLD = 50;
+
+            function isLightActive() {
+                return swipeMode === 'light'
+                    && !document.getElementById('swipe-view').classList.contains('hidden')
+                    && !document.getElementById('light-card').classList.contains('hidden')
+                    && !isProcessing;
+            }
+
+            function isModalOpen() {
+                return !document.getElementById('multi-role-modal').classList.contains('hidden')
+                    || !document.getElementById('export-modal').classList.contains('hidden')
+                    || !document.getElementById('upload-modal').classList.contains('hidden');
+            }
+
+            // Touch events on the light card
+            const lightCard = document.getElementById('light-card');
+
+            lightCard.addEventListener('touchstart', function(e) {
+                if (!isLightActive()) return;
+                const touch = e.touches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                isDragging = true;
+                lightCard.style.transition = 'none';
+            }, { passive: true });
+
+            lightCard.addEventListener('touchmove', function(e) {
+                if (!isDragging || !isLightActive()) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+
+                // Only drag horizontally if mostly horizontal movement
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    const rotation = dx * 0.05;
+                    lightCard.style.transform = `translateX(${dx}px) rotate(${rotation}deg)`;
+                    lightCard.style.opacity = Math.max(0.5, 1 - Math.abs(dx) / 400);
+                }
+            }, { passive: true });
+
+            lightCard.addEventListener('touchend', function(e) {
+                if (!isDragging || !isLightActive()) { isDragging = false; return; }
+                isDragging = false;
+
+                const touch = e.changedTouches[0];
+                const dx = touch.clientX - touchStartX;
+
+                // Reset card style
+                lightCard.style.transition = '';
+                lightCard.style.transform = '';
+                lightCard.style.opacity = '';
+
+                if (Math.abs(dx) >= SWIPE_THRESHOLD) {
+                    if (dx > 0) {
+                        makeDecision('yes');
+                    } else {
+                        makeDecision('no');
+                    }
+                }
+            }, { passive: true });
+
+            // Keyboard arrow keys
+            document.addEventListener('keydown', function(e) {
+                if (!isLightActive() || isModalOpen()) return;
+
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    makeDecision('no');
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    makeDecision('yes');
+                }
+            });
+        })();
 
         // Boot
         init();
