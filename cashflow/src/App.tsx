@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import TokenGate from './components/TokenGate'
 import BottomNav, { type Tab } from './components/BottomNav'
 import GapHeader from './components/GapHeader'
@@ -22,6 +22,17 @@ function AuthenticatedApp() {
   const { items: expenseItems, loading: expenseLoading, addItem: addExpense, updateItem: updateExpense, deleteItem: deleteExpense } = useItems('expense')
   const { loans, loading: loansLoading, addLoan, updateLoan, deleteLoan } = useLoans()
   const { selectedIds, toggleSelected, clearSelections } = useSelections()
+
+  const updateAnyItem = useCallback(
+    async (id: string, updates: Partial<Omit<import('./lib/types').CashflowItem, 'id' | 'created_at'>>) => {
+      if (incomeItems.some((i) => i.id === id)) {
+        await updateIncome(id, updates)
+      } else {
+        await updateExpense(id, updates)
+      }
+    },
+    [incomeItems, updateIncome, updateExpense]
+  )
 
   const allItems = useMemo(
     () => [...incomeItems, ...expenseItems],
@@ -60,6 +71,7 @@ function AuthenticatedApp() {
             incomeItems={modifiedIncome}
             expenseItems={modifiedExpenses}
             loans={loans}
+            onUpdateItem={updateAnyItem}
           />
         )}
         {activeTab === 'keepcalm' && (

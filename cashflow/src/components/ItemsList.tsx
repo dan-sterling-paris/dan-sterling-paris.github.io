@@ -168,6 +168,7 @@ export default function ItemsList({
           ? parseInt(data.monthly_day, 10)
           : null,
       confirmed: data.confirmed,
+      paid_through: null,
     })
     setShowForm(false)
   }
@@ -256,6 +257,11 @@ export default function ItemsList({
                 )}
                 {!item.confirmed && (
                   <p className="text-amber-500 text-xs mt-1">Unconfirmed</p>
+                )}
+                {item.paid_through && (
+                  <p className="text-blue-400 text-xs mt-1">
+                    Paid through: {new Date(item.paid_through + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
                 )}
               </button>
               <button

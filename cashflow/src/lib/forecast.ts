@@ -1,5 +1,5 @@
-import { startOfWeek, addWeeks, addDays, parseISO } from 'date-fns'
-import type { Account, CashflowItem, Loan, WeekForecast } from './types'
+import { startOfWeek, addWeeks, addDays, parseISO, format, getDay } from 'date-fns'
+import type { Account, CashflowItem, Loan, WeekCashflowItem, WeekForecast } from './types'
 
 export function calculateForecast(
   accounts: Account[],
@@ -17,12 +17,20 @@ export function calculateForecast(
     const weekStart = addWeeks(today, i)
     const weekEnd = addDays(weekStart, 6)
 
-    const incomeItems = items.filter(
-      (item) => item.type === 'income' && fallsInWeek(item, weekStart, weekEnd)
-    )
-    const expenseItems = items.filter(
-      (item) => item.type === 'expense' && fallsInWeek(item, weekStart, weekEnd)
-    )
+    const incomeItems: WeekCashflowItem[] = []
+    const expenseItems: WeekCashflowItem[] = []
+
+    for (const item of items) {
+      const occ = getOccurrenceDate(item, weekStart, weekEnd)
+      if (!occ) continue
+      const weekItem: WeekCashflowItem = {
+        ...item,
+        occurrenceDate: occ,
+        accountedFor: isAccountedFor(item, occ),
+      }
+      if (item.type === 'income') incomeItems.push(weekItem)
+      else expenseItems.push(weekItem)
+    }
 
     // Loans affect cashflow:
     // Borrowed: money IN on loan_date, money OUT on repay_date
@@ -30,7 +38,7 @@ export function calculateForecast(
     for (const loan of activeLoans) {
       const loanDate = parseISO(loan.loan_date)
       if (loanDate >= weekStart && loanDate <= weekEnd) {
-        const loanItem: CashflowItem = {
+        const loanItem: WeekCashflowItem = {
           id: `loan-${loan.id}`,
           detail: `${loan.type === 'borrowed' ? '🔽' : '🔼'} ${loan.detail} (${loan.person})`,
           type: loan.type === 'borrowed' ? 'income' : 'expense',
@@ -39,7 +47,10 @@ export function calculateForecast(
           monthly_day: null,
           amount: loan.amount,
           confirmed: true,
+          paid_through: null,
           created_at: loan.created_at,
+          occurrenceDate: loan.loan_date,
+          accountedFor: false,
         }
         if (loan.type === 'borrowed') {
           incomeItems.push(loanItem)
@@ -51,7 +62,7 @@ export function calculateForecast(
       if (loan.repay_date) {
         const repayDate = parseISO(loan.repay_date)
         if (repayDate >= weekStart && repayDate <= weekEnd) {
-          const repayItem: CashflowItem = {
+          const repayItem: WeekCashflowItem = {
             id: `loan-repay-${loan.id}`,
             detail: `${loan.type === 'borrowed' ? '🔼' : '🔽'} Repay: ${loan.detail} (${loan.person})`,
             type: loan.type === 'borrowed' ? 'expense' : 'income',
@@ -60,7 +71,10 @@ export function calculateForecast(
             monthly_day: null,
             amount: loan.amount,
             confirmed: true,
+            paid_through: null,
             created_at: loan.created_at,
+            occurrenceDate: loan.repay_date,
+            accountedFor: false,
           }
           if (loan.type === 'borrowed') {
             expenseItems.push(repayItem)
@@ -71,8 +85,12 @@ export function calculateForecast(
       }
     }
 
-    const weekIn = incomeItems.reduce((sum, item) => sum + item.amount, 0)
-    const weekOut = expenseItems.reduce((sum, item) => sum + item.amount, 0)
+    const weekIn = incomeItems
+      .filter((item) => !item.accountedFor)
+      .reduce((sum, item) => sum + item.amount, 0)
+    const weekOut = expenseItems
+      .filter((item) => !item.accountedFor)
+      .reduce((sum, item) => sum + item.amount, 0)
 
     const end = running + weekIn - weekOut
     const result: WeekForecast = {
@@ -89,22 +107,38 @@ export function calculateForecast(
   })
 }
 
-function fallsInWeek(
+function getOccurrenceDate(
   item: CashflowItem,
   weekStart: Date,
   weekEnd: Date
-): boolean {
+): string | null {
   if (item.frequency === 'once' && item.due_date) {
     const d = parseISO(item.due_date)
-    return d >= weekStart && d <= weekEnd
+    if (d >= weekStart && d <= weekEnd) return item.due_date
+    return null
   }
+
   if (item.frequency === 'weekly' && item.due_date) {
-    return parseISO(item.due_date) <= weekEnd
+    const dueDate = parseISO(item.due_date)
+    if (dueDate > weekEnd) return null
+    // Find the day within this week that matches due_date's day-of-week
+    const dueDow = getDay(dueDate) // 0=Sun, 1=Mon, ..., 6=Sat
+    for (let d = new Date(weekStart); d <= weekEnd; d = addDays(d, 1)) {
+      if (getDay(d) === dueDow) return format(d, 'yyyy-MM-dd')
+    }
+    return null
   }
+
   if (item.frequency === 'monthly' && item.monthly_day) {
     for (let d = new Date(weekStart); d <= weekEnd; d = addDays(d, 1)) {
-      if (d.getDate() === item.monthly_day) return true
+      if (d.getDate() === item.monthly_day) return format(d, 'yyyy-MM-dd')
     }
   }
-  return false
+
+  return null
+}
+
+function isAccountedFor(item: CashflowItem, occurrenceDate: string): boolean {
+  if (!item.paid_through) return false
+  return occurrenceDate <= item.paid_through
 }

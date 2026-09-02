@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import type { Account, CashflowItem, Loan, WeekForecast } from '../lib/types'
+import type { Account, CashflowItem, Loan, WeekCashflowItem, WeekForecast } from '../lib/types'
 import { calculateForecast } from '../lib/forecast'
 import { exportCashflow } from '../lib/exportXlsx'
 
@@ -9,9 +9,18 @@ interface WeeklyViewProps {
   incomeItems: CashflowItem[]
   expenseItems: CashflowItem[]
   loans: Loan[]
+  onUpdateItem?: (id: string, updates: Partial<Omit<CashflowItem, 'id' | 'created_at'>>) => Promise<void>
 }
 
-function WeekCard({ week, index }: { week: WeekForecast; index: number }) {
+function WeekCard({
+  week,
+  index,
+  onToggleAccounted,
+}: {
+  week: WeekForecast
+  index: number
+  onToggleAccounted?: (item: WeekCashflowItem) => void
+}) {
   const [expanded, setExpanded] = useState(index === 0)
   const isNegative = week.end < 0
 
@@ -70,24 +79,37 @@ function WeekCard({ week, index }: { week: WeekForecast; index: number }) {
               <p className="text-xs font-medium text-green-400 mb-2">
                 INCOME
               </p>
-              {week.incomeItems.map((item) => (
-                <div
-                  key={item.id + week.weekStart.toISOString()}
-                  className="flex justify-between py-1.5 border-l-2 border-green-500 pl-3 mb-1"
-                >
-                  <span className="text-sm text-gray-300">
-                    {item.detail}
-                    {!item.confirmed && (
-                      <span className="ml-2 text-xs text-amber-400">
-                        (pending)
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-sm text-green-400">
-                    +£{item.amount.toFixed(2)}
-                  </span>
-                </div>
-              ))}
+              {week.incomeItems.map((item) => {
+                const isLoan = item.id.startsWith('loan-')
+                const canToggle = index === 0 && !isLoan && !!onToggleAccounted
+
+                return (
+                  <button
+                    key={item.id + week.weekStart.toISOString()}
+                    type="button"
+                    disabled={!canToggle}
+                    onClick={() => canToggle && onToggleAccounted(item)}
+                    className={`w-full flex justify-between py-1.5 border-l-2 pl-3 mb-1 text-left ${
+                      item.accountedFor
+                        ? 'border-gray-600 opacity-50'
+                        : 'border-green-500'
+                    } ${canToggle ? 'active:bg-gray-800' : ''}`}
+                  >
+                    <span className={`text-sm text-gray-300 ${item.accountedFor ? 'line-through' : ''}`}>
+                      {item.accountedFor && '✓ '}
+                      {item.detail}
+                      {!item.confirmed && (
+                        <span className="ml-2 text-xs text-amber-400">
+                          (pending)
+                        </span>
+                      )}
+                    </span>
+                    <span className={`text-sm ${item.accountedFor ? 'text-gray-500 line-through' : 'text-green-400'}`}>
+                      +£{item.amount.toFixed(2)}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           )}
 
@@ -96,24 +118,37 @@ function WeekCard({ week, index }: { week: WeekForecast; index: number }) {
               <p className="text-xs font-medium text-red-400 mb-2">
                 EXPENSES
               </p>
-              {week.expenseItems.map((item) => (
-                <div
-                  key={item.id + week.weekStart.toISOString()}
-                  className="flex justify-between py-1.5 border-l-2 border-red-500 pl-3 mb-1"
-                >
-                  <span className="text-sm text-gray-300">
-                    {item.detail}
-                    {!item.confirmed && (
-                      <span className="ml-2 text-xs text-amber-400">
-                        (pending)
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-sm text-red-400">
-                    -£{item.amount.toFixed(2)}
-                  </span>
-                </div>
-              ))}
+              {week.expenseItems.map((item) => {
+                const isLoan = item.id.startsWith('loan-')
+                const canToggle = index === 0 && !isLoan && !!onToggleAccounted
+
+                return (
+                  <button
+                    key={item.id + week.weekStart.toISOString()}
+                    type="button"
+                    disabled={!canToggle}
+                    onClick={() => canToggle && onToggleAccounted(item)}
+                    className={`w-full flex justify-between py-1.5 border-l-2 pl-3 mb-1 text-left ${
+                      item.accountedFor
+                        ? 'border-gray-600 opacity-50'
+                        : 'border-red-500'
+                    } ${canToggle ? 'active:bg-gray-800' : ''}`}
+                  >
+                    <span className={`text-sm text-gray-300 ${item.accountedFor ? 'line-through' : ''}`}>
+                      {item.accountedFor && '✓ '}
+                      {item.detail}
+                      {!item.confirmed && (
+                        <span className="ml-2 text-xs text-amber-400">
+                          (pending)
+                        </span>
+                      )}
+                    </span>
+                    <span className={`text-sm ${item.accountedFor ? 'text-gray-500 line-through' : 'text-red-400'}`}>
+                      -£{item.amount.toFixed(2)}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           )}
 
@@ -133,9 +168,16 @@ export default function WeeklyView({
   incomeItems,
   expenseItems,
   loans,
+  onUpdateItem,
 }: WeeklyViewProps) {
   const allItems = [...incomeItems, ...expenseItems]
   const forecast = calculateForecast(accounts, allItems, loans)
+
+  const handleToggleAccounted = async (item: WeekCashflowItem) => {
+    if (!onUpdateItem) return
+    const newPaidThrough = item.accountedFor ? null : item.occurrenceDate
+    await onUpdateItem(item.id, { paid_through: newPaidThrough })
+  }
 
   return (
     <div>
@@ -152,7 +194,12 @@ export default function WeeklyView({
 
       <div className="space-y-2">
         {forecast.map((week, i) => (
-          <WeekCard key={week.weekStart.toISOString()} week={week} index={i} />
+          <WeekCard
+            key={week.weekStart.toISOString()}
+            week={week}
+            index={i}
+            onToggleAccounted={i === 0 ? handleToggleAccounted : undefined}
+          />
         ))}
       </div>
     </div>

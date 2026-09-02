@@ -14,7 +14,13 @@ export interface CashflowItem {
   monthly_day: number | null
   amount: number
   confirmed: boolean
+  paid_through: string | null
   created_at: string
+}
+
+export interface WeekCashflowItem extends CashflowItem {
+  occurrenceDate: string
+  accountedFor: boolean
 }
 
 export interface Loan {
@@ -35,6 +41,6 @@ export interface WeekForecast {
   in: number
   out: number
   end: number
-  incomeItems: CashflowItem[]
-  expenseItems: CashflowItem[]
+  incomeItems: WeekCashflowItem[]
+  expenseItems: WeekCashflowItem[]
 }
