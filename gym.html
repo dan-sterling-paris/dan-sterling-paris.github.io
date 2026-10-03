@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111214">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Gym Tracker</title>
+<style>
+  :root {
+    --bg: #f4f4f5;
+    --card: #ffffff;
+    --text: #18181b;
+    --muted: #71717a;
+    --border: #e4e4e7;
+    --input: #f4f4f5;
+    --accent: #18181b;
+    --accent-text: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111214;
+      --card: #1c1d21;
+      --text: #f4f4f5;
+      --muted: #a1a1aa;
+      --border: #2e2f35;
+      --input: #26272c;
+      --accent: #f4f4f5;
+      --accent-text: #111214;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  main {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 20px 16px calc(40px + env(safe-area-inset-bottom));
+  }
+  h1 { font-size: 24px; margin: 4px 0 16px; }
+
+  form.add { display: flex; gap: 8px; margin-bottom: 20px; }
+  input {
+    font: inherit;
+    font-size: 16px; /* stops iOS zooming on focus */
+    color: var(--text);
+    background: var(--input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    width: 100%;
+    min-width: 0;
+  }
+  input:focus { outline: 2px solid var(--muted); outline-offset: -1px; }
+  form.add input { background: var(--card); }
+  button {
+    font: inherit;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  form.add button {
+    background: var(--accent);
+    color: var(--accent-text);
+    padding: 0 18px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .name { font-weight: 650; font-size: 17px; flex: 1; overflow-wrap: anywhere; }
+  .del {
+    background: none;
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px 6px;
+  }
+  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .fields input { text-align: center; font-variant-numeric: tabular-nums; }
+
+  .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 8px; }
+  .when { font-size: 12px; color: var(--muted); }
+  .rating { display: flex; gap: 6px; }
+  .rating button {
+    background: var(--input);
+    border: 2px solid transparent;
+    font-size: 22px;
+    width: 46px;
+    height: 42px;
+    opacity: 0.35;
+    transition: opacity .15s;
+  }
+  .rating button.on { opacity: 1; border-color: var(--muted); }
+
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Gym Tracker</h1>
+
+  <form class="add" id="add">
+    <input id="newName" placeholder="Add exercise…" autocomplete="off" required>
+    <button type="submit">Add</button>
+  </form>
+
+  <div id="list"></div>
+</main>
+
+<script>
+  const KEY = 'gym-tracker-v1';
+  const RATINGS = ['🟢', '🟡', '🔴'];
+
+  let exercises = load();
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch { return []; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(exercises)); } catch {}
+  }
+
+  function formatDate(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const days = Math.floor((Date.now() - ts) / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return days + ' days ago';
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  }
+
+  function render() {
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+    if (!exercises.length) {
+      list.innerHTML = '<div class="empty">No exercises yet — add one above.</div>';
+      return;
+    }
+    exercises.forEach(ex => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="head">
+          <div class="name"></div>
+          <button class="del" title="Delete">×</button>
+        </div>
+        <div class="fields">
+          <div><label>Weight (kg)</label><input data-f="weight" inputmode="decimal"></div>
+          <div><label>Reps</label><input data-f="reps" inputmode="numeric"></div>
+          <div><label>Sets</label><input data-f="sets" inputmode="numeric"></div>
+        </div>
+        <div class="foot">
+          <span class="when"></span>
+          <div class="rating">
+            ${RATINGS.map(r => `<button data-r="${r}" class="${ex.rating === r ? 'on' : ''}">${r}</button>`).join('')}
+          </div>
+        </div>`;
+
+      card.querySelector('.name').textContent = ex.name;
+      const when = card.querySelector('.when');
+      when.textContent = formatDate(ex.updated);
+
+      const touch = () => { ex.updated = Date.now(); when.textContent = formatDate(ex.updated); save(); };
+
+      card.querySelectorAll('input[data-f]').forEach(input => {
+        input.value = ex[input.dataset.f] ?? '';
+        input.addEventListener('input', () => { ex[input.dataset.f] = input.value.trim(); touch(); });
+      });
+
+      card.querySelectorAll('.rating button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          ex.rating = ex.rating === btn.dataset.r ? null : btn.dataset.r;
+          card.querySelectorAll('.rating button').forEach(b => b.classList.toggle('on', b.dataset.r === ex.rating));
+          touch();
+        });
+      });
+
+      card.querySelector('.del').addEventListener('click', () => {
+        if (!confirm(`Delete "${ex.name}"?`)) return;
+        exercises = exercises.filter(e => e !== ex);
+        save();
+        render();
+      });
+
+      list.appendChild(card);
+    });
+  }
+
+  document.getElementById('add').addEventListener('submit', e => {
+    e.preventDefault();
+    const input = document.getElementById('newName');
+    const name = input.value.trim();
+    if (!name) return;
+    exercises.push({ name, weight: '', reps: '', sets: '', rating: null, updated: null });
+    save();
+    input.value = '';
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
