@@ -106,7 +106,21 @@
   }
   .rating button.on { opacity: 1; border-color: var(--muted); }
 
+  .save {
+    display: none;
+    width: 100%;
+    margin-top: 12px;
+    padding: 11px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+  }
+  .card.dirty .save { display: block; }
+  .save:disabled { opacity: 0.5; }
+
   .empty { text-align: center; color: var(--muted); padding: 40px 0; }
+  .status { color: #dc2626; font-size: 14px; margin: -8px 0 16px; }
+  .status:empty { display: none; }
 </style>
 </head>
 <body>
@@ -118,32 +132,50 @@
     <button type="submit">Add</button>
   </form>
 
-  <div id="list"></div>
+  <div class="status" id="status"></div>
+  <div id="list"><div class="empty">Loading…</div></div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <script>
-  const KEY = 'gym-tracker-v1';
-  const RATINGS = ['🟢', '🟡', '🔴'];
+  const SUPABASE_URL = "https://oaltkxblacpjjecpauya.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbHRreGJsYWNwamplY3BhdXlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTc2ODQsImV4cCI6MjA4NDQ3MzY4NH0.zDfKgAKfWjXMQsOP5ZpD_nl6yhZS1O4H794HqSRDLVo";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  let exercises = load();
+  const RATINGS = { green: '🟢', amber: '🟡', red: '🔴' };
 
-  function load() {
-    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
-    catch { return []; }
+  // [{ id, name, latest: { weight, reps, sets, rating, created_at } | null }]
+  let exercises = [];
+
+  function showError(msg) { document.getElementById('status').textContent = msg || ''; }
+
+  async function load() {
+    const [ex, latest] = await Promise.all([
+      db.from('gym_exercises').select('id, name').order('created_at'),
+      db.from('gym_latest').select('exercise_id, weight, reps, sets, rating, created_at'),
+    ]);
+    if (ex.error || latest.error) {
+      showError('Could not load from Supabase: ' + (ex.error || latest.error).message);
+      document.getElementById('list').innerHTML = '';
+      return;
+    }
+    const byId = Object.fromEntries(latest.data.map(l => [l.exercise_id, l]));
+    exercises = ex.data.map(e => ({ ...e, latest: byId[e.id] || null }));
+    render();
   }
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(exercises)); } catch {}
-  }
 
-  function formatDate(ts) {
-    if (!ts) return '';
-    const d = new Date(ts);
-    const days = Math.floor((Date.now() - ts) / 86400000);
+  function formatDate(iso) {
+    if (!iso) return 'Not done yet';
+    const d = new Date(iso);
+    const start = t => new Date(t).setHours(0, 0, 0, 0);
+    const days = Math.round((start(Date.now()) - start(d)) / 86400000);
     if (days === 0) return 'Today';
     if (days === 1) return 'Yesterday';
     if (days < 7) return days + ' days ago';
     return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   }
+
+  const num = v => (v === '' || v == null || isNaN(v)) ? null : Number(v);
 
   function render() {
     const list = document.getElementById('list');
@@ -153,6 +185,9 @@
       return;
     }
     exercises.forEach(ex => {
+      const last = ex.latest || {};
+      let rating = last.rating || null;
+
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
@@ -168,33 +203,49 @@
         <div class="foot">
           <span class="when"></span>
           <div class="rating">
-            ${RATINGS.map(r => `<button data-r="${r}" class="${ex.rating === r ? 'on' : ''}">${r}</button>`).join('')}
+            ${Object.entries(RATINGS).map(([k, r]) => `<button data-r="${k}" class="${rating === k ? 'on' : ''}">${r}</button>`).join('')}
           </div>
-        </div>`;
+        </div>
+        <button class="save">Save</button>`;
 
       card.querySelector('.name').textContent = ex.name;
-      const when = card.querySelector('.when');
-      when.textContent = formatDate(ex.updated);
+      card.querySelector('.when').textContent = formatDate(last.created_at);
 
-      const touch = () => { ex.updated = Date.now(); when.textContent = formatDate(ex.updated); save(); };
-
-      card.querySelectorAll('input[data-f]').forEach(input => {
-        input.value = ex[input.dataset.f] ?? '';
-        input.addEventListener('input', () => { ex[input.dataset.f] = input.value.trim(); touch(); });
+      const inputs = card.querySelectorAll('input[data-f]');
+      inputs.forEach(input => {
+        input.value = last[input.dataset.f] ?? '';
+        input.addEventListener('input', () => card.classList.add('dirty'));
       });
 
       card.querySelectorAll('.rating button').forEach(btn => {
         btn.addEventListener('click', () => {
-          ex.rating = ex.rating === btn.dataset.r ? null : btn.dataset.r;
-          card.querySelectorAll('.rating button').forEach(b => b.classList.toggle('on', b.dataset.r === ex.rating));
-          touch();
+          rating = rating === btn.dataset.r ? null : btn.dataset.r;
+          card.querySelectorAll('.rating button').forEach(b => b.classList.toggle('on', b.dataset.r === rating));
+          card.classList.add('dirty');
         });
       });
 
-      card.querySelector('.del').addEventListener('click', () => {
-        if (!confirm(`Delete "${ex.name}"?`)) return;
+      const saveBtn = card.querySelector('.save');
+      saveBtn.addEventListener('click', async () => {
+        const entry = { exercise_id: ex.id, rating };
+        inputs.forEach(i => entry[i.dataset.f] = num(i.value.trim()));
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+        const { data, error } = await db.from('gym_entries').insert(entry).select().single();
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+        if (error) return showError('Save failed: ' + error.message);
+        showError();
+        ex.latest = data;
+        card.classList.remove('dirty');
+        card.querySelector('.when').textContent = formatDate(data.created_at);
+      });
+
+      card.querySelector('.del').addEventListener('click', async () => {
+        if (!confirm(`Delete "${ex.name}" and all its history?`)) return;
+        const { error } = await db.from('gym_exercises').delete().eq('id', ex.id);
+        if (error) return showError('Delete failed: ' + error.message);
         exercises = exercises.filter(e => e !== ex);
-        save();
         render();
       });
 
@@ -202,18 +253,20 @@
     });
   }
 
-  document.getElementById('add').addEventListener('submit', e => {
+  document.getElementById('add').addEventListener('submit', async e => {
     e.preventDefault();
     const input = document.getElementById('newName');
     const name = input.value.trim();
     if (!name) return;
-    exercises.push({ name, weight: '', reps: '', sets: '', rating: null, updated: null });
-    save();
+    const { data, error } = await db.from('gym_exercises').insert({ name }).select('id, name').single();
+    if (error) return showError('Add failed: ' + error.message);
+    showError();
+    exercises.push({ ...data, latest: null });
     input.value = '';
     render();
   });
 
-  render();
+  load();
 </script>
 </body>
 </html>
