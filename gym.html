@@ -223,6 +223,36 @@
     ex.latest = data || null;
   }
 
+  // One entry per exercise per (local) day: overwrite that day's entry if there is one.
+  async function saveEntry(ex, day, values) {
+    const start = new Date(day + 'T00:00');
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    const { data: existing, error } = await db.from('gym_entries')
+      .select('id')
+      .eq('exercise_id', ex.id)
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString())
+      .order('created_at', { ascending: false });
+    if (error) return error;
+
+    if (existing.length) {
+      const [keep, ...extra] = existing;
+      const res = await db.from('gym_entries').update(values).eq('id', keep.id);
+      if (res.error) return res.error;
+      // Tidy up any duplicates from before this rule existed.
+      if (extra.length) {
+        const del = await db.from('gym_entries').delete().in('id', extra.map(e => e.id));
+        if (del.error) return del.error;
+      }
+      return null;
+    }
+
+    const entry = { exercise_id: ex.id, ...values };
+    // Today uses the server's timestamp; a past day is logged at midday local time.
+    if (day !== todayStr()) entry.created_at = new Date(day + 'T12:00').toISOString();
+    return (await db.from('gym_entries').insert(entry)).error;
+  }
+
   function render() {
     const list = document.getElementById('list');
     list.innerHTML = '';
@@ -284,20 +314,16 @@
 
     const saveBtn = card.querySelector('.save');
     saveBtn.addEventListener('click', async () => {
-      const entry = { exercise_id: ex.id, rating };
-      inputs.forEach(i => entry[i.dataset.f] = num(i.value.trim()));
-      const day = dateInput.value || todayStr();
-      // Today uses the server's timestamp; a past day is logged at midday local time.
-      if (day !== todayStr()) entry.created_at = new Date(day + 'T12:00').toISOString();
+      const values = { rating };
+      inputs.forEach(i => values[i.dataset.f] = num(i.value.trim()));
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving…';
-      const { data, error } = await db.from('gym_entries').insert(entry).select().single();
+      const error = await saveEntry(ex, dateInput.value || todayStr(), values);
       saveBtn.disabled = false;
       saveBtn.textContent = 'Save';
       if (error) return showError('Save failed: ' + error.message);
       showError();
-      // A backdated entry only replaces what's shown if it's newer than the current latest.
-      if (!ex.latest || new Date(data.created_at) >= new Date(ex.latest.created_at)) ex.latest = data;
+      await refreshLatest(ex);
       card.replaceWith(buildCard(ex, historyOpen));
     });
 
