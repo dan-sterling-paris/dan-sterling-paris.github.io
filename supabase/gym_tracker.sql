@@ -27,5 +27,6 @@ create view gym_latest with (security_invoker = true) as
 
 alter table gym_exercises enable row level security;
 alter table gym_entries enable row level security;
-create policy "anon full access" on gym_exercises for all to anon using (true) with check (true);
-create policy "anon full access" on gym_entries for all to anon using (true) with check (true);
+-- No "to" role: covers anon and signed-in visitors (calories.html signs in on the same origin).
+create policy "full access" on gym_exercises for all using (true) with check (true);
+create policy "full access" on gym_entries for all using (true) with check (true);
