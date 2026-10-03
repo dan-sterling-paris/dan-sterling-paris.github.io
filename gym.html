@@ -177,6 +177,7 @@
     }
     const byId = Object.fromEntries(latest.data.map(l => [l.exercise_id, l]));
     exercises = ex.data.map(e => ({ ...e, latest: byId[e.id] || null }));
+    sortExercises();
     render();
   }
 
@@ -253,6 +254,20 @@
     return (await db.from('gym_entries').insert(entry)).error;
   }
 
+  // Longest since last done first; never-done exercises at the very top.
+  const lastDone = ex => ex.latest ? new Date(ex.latest.created_at).getTime() : -Infinity;
+  function sortExercises() {
+    exercises.sort((a, b) => lastDone(a) - lastDone(b));
+  }
+
+  // Swap in a rebuilt card at its new sorted position, leaving the other cards untouched.
+  function placeCard(ex, oldCard, newCard) {
+    sortExercises();
+    const list = document.getElementById('list');
+    oldCard.remove();
+    list.insertBefore(newCard, list.children[exercises.indexOf(ex)] || null);
+  }
+
   function render() {
     const list = document.getElementById('list');
     list.innerHTML = '';
@@ -324,7 +339,7 @@
       if (error) return showError('Save failed: ' + error.message);
       showError();
       await refreshLatest(ex);
-      card.replaceWith(buildCard(ex, historyOpen));
+      placeCard(ex, card, buildCard(ex, historyOpen));
     });
 
     const histBtn = card.querySelector('.hist');
@@ -351,7 +366,7 @@
           const { error } = await db.from('gym_entries').delete().eq('id', e.id);
           if (error) return showError('Delete failed: ' + error.message);
           await refreshLatest(ex);
-          card.replaceWith(buildCard(ex, true));
+          placeCard(ex, card, buildCard(ex, true));
         });
         histBox.appendChild(row);
       });
@@ -383,6 +398,7 @@
     if (error) return showError('Add failed: ' + error.message);
     showError();
     exercises.push({ ...data, latest: null });
+    sortExercises();
     input.value = '';
     render();
   });
