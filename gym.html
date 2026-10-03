@@ -81,13 +81,15 @@
   }
   .head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
   .name { font-weight: 650; font-size: 17px; flex: 1; overflow-wrap: anywhere; }
-  .del {
+  .icon {
     background: none;
     color: var(--muted);
     font-size: 20px;
     line-height: 1;
     padding: 4px 6px;
+    display: flex;
   }
+  .icon.on { color: var(--text); }
   .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
   .fields input { text-align: center; font-variant-numeric: tabular-nums; }
@@ -106,17 +108,31 @@
   }
   .rating button.on { opacity: 1; border-color: var(--muted); }
 
+  .save-row { display: none; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .card.dirty .save-row { display: grid; }
+  .save-row input { text-align: center; padding: 9px 8px; }
   .save {
-    display: none;
-    width: 100%;
-    margin-top: 12px;
     padding: 11px;
     background: var(--accent);
     color: var(--accent-text);
     font-weight: 600;
   }
-  .card.dirty .save { display: block; }
   .save:disabled { opacity: 0.5; }
+
+  .history { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 4px; font-size: 14px; }
+  .history:empty { display: none; }
+  .h-row {
+    display: grid;
+    grid-template-columns: 64px 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .h-row + .h-row { border-top: 1px solid var(--border); }
+  .h-date, .h-msg { color: var(--muted); }
+  .h-msg { padding: 8px 0; }
+  .h-row .icon { font-size: 16px; padding: 2px 4px; }
 
   .empty { text-align: center; color: var(--muted); padding: 40px 0; }
   .status { color: #dc2626; font-size: 14px; margin: -8px 0 16px; }
@@ -177,6 +193,36 @@
 
   const num = v => (v === '' || v == null || isNaN(v)) ? null : Number(v);
 
+  const CLOCK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>';
+
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function shortDate(iso) {
+    const d = new Date(iso);
+    const opts = { day: 'numeric', month: 'short' };
+    if (d.getFullYear() !== new Date().getFullYear()) opts.year = '2-digit';
+    return d.toLocaleDateString(undefined, opts);
+  }
+
+  function summary(e) {
+    const parts = [];
+    if (e.weight != null) parts.push(`${e.weight} kg`);
+    if (e.sets != null && e.reps != null) parts.push(`${e.sets} × ${e.reps}`);
+    else if (e.reps != null) parts.push(`${e.reps} reps`);
+    else if (e.sets != null) parts.push(`${e.sets} sets`);
+    return parts.join(' · ') || '—';
+  }
+
+  async function refreshLatest(ex) {
+    const { data } = await db.from('gym_latest')
+      .select('exercise_id, weight, reps, sets, rating, created_at')
+      .eq('exercise_id', ex.id).maybeSingle();
+    ex.latest = data || null;
+  }
+
   function render() {
     const list = document.getElementById('list');
     list.innerHTML = '';
@@ -184,73 +230,122 @@
       list.innerHTML = '<div class="empty">No exercises yet — add one above.</div>';
       return;
     }
-    exercises.forEach(ex => {
-      const last = ex.latest || {};
-      let rating = last.rating || null;
+    exercises.forEach(ex => list.appendChild(buildCard(ex)));
+  }
 
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <div class="head">
-          <div class="name"></div>
-          <button class="del" title="Delete">×</button>
+  function buildCard(ex, historyOpen = false) {
+    const last = ex.latest || {};
+    let rating = last.rating || null;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="head">
+        <div class="name"></div>
+        <button class="icon hist" title="History">${CLOCK}</button>
+        <button class="icon del" title="Delete exercise">×</button>
+      </div>
+      <div class="fields">
+        <div><label>Weight (kg)</label><input data-f="weight" inputmode="decimal"></div>
+        <div><label>Reps</label><input data-f="reps" inputmode="numeric"></div>
+        <div><label>Sets</label><input data-f="sets" inputmode="numeric"></div>
+      </div>
+      <div class="foot">
+        <span class="when"></span>
+        <div class="rating">
+          ${Object.entries(RATINGS).map(([k, r]) => `<button data-r="${k}" class="${rating === k ? 'on' : ''}">${r}</button>`).join('')}
         </div>
-        <div class="fields">
-          <div><label>Weight (kg)</label><input data-f="weight" inputmode="decimal"></div>
-          <div><label>Reps</label><input data-f="reps" inputmode="numeric"></div>
-          <div><label>Sets</label><input data-f="sets" inputmode="numeric"></div>
-        </div>
-        <div class="foot">
-          <span class="when"></span>
-          <div class="rating">
-            ${Object.entries(RATINGS).map(([k, r]) => `<button data-r="${k}" class="${rating === k ? 'on' : ''}">${r}</button>`).join('')}
-          </div>
-        </div>
-        <button class="save">Save</button>`;
+      </div>
+      <div class="save-row">
+        <input type="date" class="date" title="Date done">
+        <button class="save">Save</button>
+      </div>
+      <div class="history"></div>`;
 
-      card.querySelector('.name').textContent = ex.name;
-      card.querySelector('.when').textContent = formatDate(last.created_at);
+    card.querySelector('.name').textContent = ex.name;
+    card.querySelector('.when').textContent = formatDate(last.created_at);
 
-      const inputs = card.querySelectorAll('input[data-f]');
-      inputs.forEach(input => {
-        input.value = last[input.dataset.f] ?? '';
-        input.addEventListener('input', () => card.classList.add('dirty'));
-      });
+    const dateInput = card.querySelector('.date');
+    dateInput.value = dateInput.max = todayStr();
 
-      card.querySelectorAll('.rating button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          rating = rating === btn.dataset.r ? null : btn.dataset.r;
-          card.querySelectorAll('.rating button').forEach(b => b.classList.toggle('on', b.dataset.r === rating));
-          card.classList.add('dirty');
-        });
-      });
-
-      const saveBtn = card.querySelector('.save');
-      saveBtn.addEventListener('click', async () => {
-        const entry = { exercise_id: ex.id, rating };
-        inputs.forEach(i => entry[i.dataset.f] = num(i.value.trim()));
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving…';
-        const { data, error } = await db.from('gym_entries').insert(entry).select().single();
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Save';
-        if (error) return showError('Save failed: ' + error.message);
-        showError();
-        ex.latest = data;
-        card.classList.remove('dirty');
-        card.querySelector('.when').textContent = formatDate(data.created_at);
-      });
-
-      card.querySelector('.del').addEventListener('click', async () => {
-        if (!confirm(`Delete "${ex.name}" and all its history?`)) return;
-        const { error } = await db.from('gym_exercises').delete().eq('id', ex.id);
-        if (error) return showError('Delete failed: ' + error.message);
-        exercises = exercises.filter(e => e !== ex);
-        render();
-      });
-
-      list.appendChild(card);
+    const inputs = card.querySelectorAll('.fields input');
+    inputs.forEach(input => {
+      input.value = last[input.dataset.f] ?? '';
+      input.addEventListener('input', () => card.classList.add('dirty'));
     });
+
+    card.querySelectorAll('.rating button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        rating = rating === btn.dataset.r ? null : btn.dataset.r;
+        card.querySelectorAll('.rating button').forEach(b => b.classList.toggle('on', b.dataset.r === rating));
+        card.classList.add('dirty');
+      });
+    });
+
+    const saveBtn = card.querySelector('.save');
+    saveBtn.addEventListener('click', async () => {
+      const entry = { exercise_id: ex.id, rating };
+      inputs.forEach(i => entry[i.dataset.f] = num(i.value.trim()));
+      const day = dateInput.value || todayStr();
+      // Today uses the server's timestamp; a past day is logged at midday local time.
+      if (day !== todayStr()) entry.created_at = new Date(day + 'T12:00').toISOString();
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+      const { data, error } = await db.from('gym_entries').insert(entry).select().single();
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+      if (error) return showError('Save failed: ' + error.message);
+      showError();
+      // A backdated entry only replaces what's shown if it's newer than the current latest.
+      if (!ex.latest || new Date(data.created_at) >= new Date(ex.latest.created_at)) ex.latest = data;
+      card.replaceWith(buildCard(ex, historyOpen));
+    });
+
+    const histBtn = card.querySelector('.hist');
+    const histBox = card.querySelector('.history');
+    const showHistory = async () => {
+      histBtn.classList.add('on');
+      histBox.innerHTML = '<div class="h-msg">Loading…</div>';
+      const { data, error } = await db.from('gym_entries')
+        .select('id, weight, reps, sets, rating, created_at')
+        .eq('exercise_id', ex.id)
+        .order('created_at', { ascending: false });
+      if (!historyOpen) return;
+      if (error) { histBox.innerHTML = ''; return showError('Could not load history: ' + error.message); }
+      if (!data.length) { histBox.innerHTML = '<div class="h-msg">No history yet.</div>'; return; }
+      histBox.innerHTML = '';
+      data.forEach(e => {
+        const row = document.createElement('div');
+        row.className = 'h-row';
+        row.innerHTML = `<span class="h-date"></span><span></span><span>${RATINGS[e.rating] || ''}</span><button class="icon" title="Delete entry">×</button>`;
+        row.children[0].textContent = shortDate(e.created_at);
+        row.children[1].textContent = summary(e);
+        row.querySelector('button').addEventListener('click', async () => {
+          if (!confirm(`Delete the ${shortDate(e.created_at)} entry?`)) return;
+          const { error } = await db.from('gym_entries').delete().eq('id', e.id);
+          if (error) return showError('Delete failed: ' + error.message);
+          await refreshLatest(ex);
+          card.replaceWith(buildCard(ex, true));
+        });
+        histBox.appendChild(row);
+      });
+    };
+    histBtn.addEventListener('click', () => {
+      historyOpen = !historyOpen;
+      if (historyOpen) showHistory();
+      else { histBtn.classList.remove('on'); histBox.innerHTML = ''; }
+    });
+    if (historyOpen) showHistory();
+
+    card.querySelector('.del').addEventListener('click', async () => {
+      if (!confirm(`Delete "${ex.name}" and all its history?`)) return;
+      const { error } = await db.from('gym_exercises').delete().eq('id', ex.id);
+      if (error) return showError('Delete failed: ' + error.message);
+      exercises = exercises.filter(e => e !== ex);
+      render();
+    });
+
+    return card;
   }
 
   document.getElementById('add').addEventListener('submit', async e => {
