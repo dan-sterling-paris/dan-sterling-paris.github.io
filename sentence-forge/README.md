@@ -11,6 +11,7 @@ own without context, and is the kind of thing people actually say.
 Earlier versions are kept on branches:
 - `sentence-forge-v1`: a single sentence, scored on emotional intensity.
 - `sentence-forge-v2`: adds monologues with a dramatic arc.
+- `sentence-forge-v3`: everyday leverage; monologues chosen for breadth, so they read like phrase lists.
 
 ## Pipeline
 
@@ -23,35 +24,56 @@ Earlier versions are kept on branches:
 | Candidates | real corpus sentences that already fit the vocabulary, plus new ones from a diverse beam search (≤3 per two-word prefix); mean log-prob ≥ −2.6 |
 | Situations | 30k everyday corpus sentences, embedded as SIF-weighted fastText vectors with the first principal component removed, then clustered by spherical k-means into 60 situations weighted by frequency (`python forge.py situations`) |
 | Leverage | soft assignment of the sentence to situations (softmax, T=0.05) weighted by situation frequency. Generic sentences spread thin and score low |
-| Penalties | negation (−1.5), each context-dependent pronoun *il/elle/lui…* (−1.0); bonus for sentences attested verbatim (+1.0) |
+| Penalties | negation (−1.5), each context-dependent pronoun *il/elle/lui…* (−1.0), drama: projection on an intensity axis built from pairs like *guerre − discussion*, *mort − fatigue* (−2.0), rude words (removed) |
+| Commonness | +0.5 · log(1 + times the line occurs in the subtitles); real lines (Tatoeba, or said ≥2× in subtitles) +1.0 |
 
-## Monologue
+## Monologue: making it flow
 
-1. **Pool:** the 6 best candidates from each situation.
-2. **Select:** a beam search over sentence sequences maximises facility-location coverage of
-   the situations (each new line should serve situations not yet covered), plus each line's
-   own score and a bonus for a new speech act (question / request / statement / negation).
-   Hard rules: at most a third of lines negated and never two in a row; no near-duplicates;
-   never mix *tu* and *vous*; no three questions in a row.
-3. **Length:** each line costs `--sentence-cost` (default 1.5), so the monologue grows only
-   while the next line adds more than that.
-4. **Order:** the chosen lines are re-ordered by greedy chaining, so neighbours
-   share topic and speaker.
+Choosing lines for breadth made V3 read like a phrase list. V4 learns how
+people actually move from one sentence to the next.
+
+1. **Discourse model:** about 3M lines of French film/TV subtitles (OpenSubtitles) are
+   split into speaker turns. A dash marks a new speaker, so only consecutive sentences
+   of the *same* speaker are paired. A sentence-ordering model in the style of
+   Lapata (2003) learns PMI between features of one sentence and features of the
+   next: content words, first word (*mais, alors, et…*), speech act and grammatical
+   person.
+2. **Pool:** the 10 best candidates per situation, plus 60 slots for lines opening
+   with a connective. Fragments are dropped: subordinate openers (*si, quand, que…*)
+   without a main clause, verbless lines, and *parce que* not answering a question.
+3. **Plan:** a beam search adds one line at a time, scoring:
+
+| Term | Meaning |
+|---|---|
+| flow (×2) | learned likelihood that the line follows the previous one |
+| focus (×3) | closeness to the monologue's running topic |
+| quality (×1) | the line's own score |
+| topic (×2) | closeness to `--theme` |
+| anaphora refund | *il/elle* is fine once the previous line gives it something to refer to |
+| monotony (−2, −6) | same first word as the previous line (and the one before) |
+| overuse (−6) | a word stem mentioned for the third time |
+| person (−0.5) | the speaker's grammatical person changes |
+
+   Hard rules: never mix *tu* and *vous*; at most a third negated, never two in a row;
+   no two questions in a row; no near-duplicates; no contradictions (same subject and
+   verb with opposite polarity).
+4. **Length:** the k-th line must add more than `--sentence-cost` + `--fatigue` × (k − 1),
+   so the monologue stops when the material runs thin (typically 5–10 lines).
 
 ## Run
 
 ```bash
 pip install numpy
-python forge.py fetch                                # ~90 MB: frequency list, Tatoeba, first 20k fastText vectors
+python forge.py fetch                                # ~200 MB: frequency list, Tatoeba, 20k fastText vectors, 3M subtitle lines
 python forge.py situations                           # inspect the situation clusters
 python forge.py search                               # best single sentences, top-100 vocab
 python forge.py monologue -n 1000                    # monologue, top-1000 vocab
 python forge.py monologue -n 1000 --theme voyage     # steer toward a topic
-python forge.py monologue --sentence-cost 1 --max-sentences 15   # longer
+python forge.py monologue -n 1000 --sentence-cost 4  # longer
 ```
 
-The first run builds the LM and the situation clusters (about 15 s) and caches
-them in `data/`.
+The first run builds the LM, the situation clusters and the discourse model
+(about a minute per vocabulary size) and caches them in `data/`.
 
 The vector download only streams the head of the 1.2 GB fastText file: `.vec`
 files are sorted by frequency, so the first 20k rows cover a small vocabulary.
