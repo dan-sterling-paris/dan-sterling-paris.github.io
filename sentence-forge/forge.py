@@ -1,42 +1,51 @@
 #!/usr/bin/env python3
-"""sentence-forge: find the highest-impact sentence - or a whole monologue -
+"""sentence-forge: find the highest-leverage sentence - or a whole monologue -
 you can build from a strictly limited vocabulary, without an LLM.
+
+"Leverage" means everyday usefulness: a sentence earns it by covering the
+common situations of daily conversation and by standing on its own, without
+needing context. Emotional force is deliberately not rewarded.
 
 Pipeline (all classical):
   1. Vocabulary  - the top-N words of a frequency list ("word count" per line).
   2. Fluency     - interpolated Kneser-Ney trigram LM trained on Tatoeba French,
-                   plus hard filters: every bigram/trigram must be attested.
+                   plus hard filters: attested 2/3/4-grams, hashed 5-grams,
+                   attested sentence endings.
   3. Coherence   - every pair of content words must co-occur in corpus
-                   sentences with positive PMI, so long-range combinations
-                   the n-grams cannot see ("la route ... mourir") are rejected.
-  4. Meaning     - fastText word vectors. Sentence vector = SIF-weighted mean.
-                   Intensity = projection onto a semantic axis (strong - weak
-                   seed words, SemAxis-style). Optional theme = cosine to a
-                   theme centroid.
-  5. Search      - beam search over the vocabulary, scoring every hypothesis
-                   with fluency + coherence + intensity + theme.
-  6. Monologue   - a diverse beam search fills a pool of sentences; a second
-                   beam search over that pool orders them into a monologue of
-                   variable length (cohesion between neighbours, no repetition,
-                   an intensity arc that builds to the last line).
+                   sentences with positive PMI.
+  4. Situations  - ~30k everyday corpus sentences are embedded (SIF over
+                   fastText vectors, first principal component removed) and
+                   clustered with spherical k-means; each cluster is a common
+                   situation, weighted by its share of the corpus.
+  5. Leverage    - weighted coverage of those situations, minus penalties for
+                   negation and for pronouns that need an antecedent.
+  6. Search      - candidates are real corpus sentences that already fit the
+                   vocabulary plus new ones from a diverse beam search; all
+                   are re-ranked by leverage.
+  7. Monologue   - a second beam search picks the sequence of candidates that
+                   together cover the most situations (facility-location
+                   coverage), mixing questions, requests and statements, with
+                   at most a third negated and a per-sentence cost that sets
+                   the length.
 
 Usage:
   python forge.py fetch                         # download data into ./data
-  python forge.py search                        # top-100 words, default scoring
-  python forge.py search --theme amour --top 10
-  python forge.py monologue -n 1000 --theme "voyage partir"
+  python forge.py search                        # top-100 words
+  python forge.py situations                    # show the situation clusters
+  python forge.py monologue
+  python forge.py monologue -n 1000 --theme "voyage"
 """
 import argparse
 import bz2
-import hashlib
 import gzip
+import hashlib
 import math
 import pickle
 import re
 import shutil
 import sys
-import urllib.request
 import textwrap
+import urllib.request
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -52,22 +61,6 @@ CORPUS_URL = "https://downloads.tatoeba.org/exports/per_language/fra/fra_sentenc
 
 BOS, UNK, PAUSE = "<s>", "<unk>", "<p>"
 ENDS = {"</.>": ".", "</!>": " !", "</?>": " ?"}
-
-# Intensity axis (SemAxis-style): mean of (strong - weak) difference vectors.
-# Each pair shares a part of speech so the axis measures force, not grammar.
-# Pairs touching the search vocabulary are dropped at load time so the axis is
-# not defined by the words it scores.
-AXIS_PAIRS = [
-    ("toujours", "parfois"), ("jamais", "rarement"), ("absolument", "plutôt"),
-    ("totalement", "légèrement"), ("vraiment", "assez"), ("tout", "quelque"),
-    ("terrible", "correct"), ("énorme", "moyen"), ("éternel", "temporaire"),
-    ("extraordinaire", "ordinaire"), ("essentiel", "secondaire"),
-    ("passion", "habitude"), ("vérité", "opinion"), ("guerre", "discussion"),
-    ("terreur", "gêne"), ("mort", "fatigue"), ("adorer", "apprécier"),
-    ("détruire", "modifier"),
-]
-AXIS_WORDS = {w for pair in AXIS_PAIRS for w in pair}
-REFERENCE_SIZE = 5000   # intensity is z-scored against this many common words
 
 # Finite and infinitive verb forms likely to appear in a small French core
 # vocabulary; used only for the optional "must contain a verb" constraint.
@@ -95,8 +88,29 @@ QUESTION_OPENERS = {"pourquoi", "comment", "où", "quoi", "quand", "est-ce", "qu
 # almost always wrong ("Tu ne peux pas partir avec toi").
 SELF_CLASH = [({"je", "j'"}, "moi"), ({"tu"}, "toi"), ({"il"}, "lui")]
 
+NEGATION = {"ne", "n'", "pas", "jamais", "rien", "personne", "aucun", "aucune"}
+# Third-person pronouns point back to something said earlier; a sentence that
+# depends on them is useful in fewer situations.
+ANAPHORA = {"il", "elle", "ils", "elles", "lui", "leur", "eux"}
+REQUEST = {"veux", "voudrais", "peux", "pouvez", "peut", "besoin", "faut",
+           "aimerais", "voulez", "puis"}
+
 LETTERS = "a-zàâäçéèêëîïôöùûüÿœæ"
 TOKEN_RE = re.compile(rf"[{LETTERS}]+'|[{LETTERS}]+(?:-[{LETTERS}]+)*|[.!?]+|[,;:…«»()\"—–]")
+
+
+def is_negated(toks):
+    return bool(NEGATION & set(toks))
+
+
+def speech_act(toks, end):
+    if end == "</?>":
+        return "question"
+    if is_negated(toks):
+        return "negation"
+    if REQUEST & set(toks):
+        return "request"
+    return "statement"
 
 
 # ---------------------------------------------------------------- data ----
@@ -148,13 +162,14 @@ def load_freq(path, n):
     return words, {w: c / total for w, c in counts.items()}
 
 
-def load_vectors(path, wanted):
+def load_vectors(path, wanted=None):
+    """Unit-normalised vectors for `wanted` words, or every word if None."""
     vecs = {}
     with open(path, encoding="utf-8", errors="ignore") as f:
         next(f)  # header: "<count> <dim>"
         for line in f:
             w, rest = line.split(" ", 1)
-            if w in wanted and w not in vecs:
+            if (wanted is None or w in wanted) and w not in vecs:
                 v = np.array(rest.split(), dtype=np.float32)
                 vecs[w] = v / (np.linalg.norm(v) + 1e-9)
     return vecs
@@ -278,18 +293,11 @@ def build_lm(corpus_path, vocab, cache_dir):
 # ------------------------------------------------------------ semantics ---
 
 class Semantics:
-    def __init__(self, vocab, vecs, prob, reference, theme_words, sif_a=1e-3):
+    def __init__(self, vocab, vecs, prob, theme_words, sif_a=1e-3):
         self.vocab = [w for w in vocab if w in vecs]
         self.vec = vecs
-        self.weight = {w: sif_a / (sif_a + prob.get(w, 1e-6)) for w in self.vocab}
-        vset = set(vocab)
-        diffs = [vecs[a] - vecs[b] for a, b in AXIS_PAIRS
-                 if a in vecs and b in vecs and a not in vset and b not in vset]
-        axis = np.mean(diffs, 0)
-        axis /= np.linalg.norm(axis)
-        ref = np.array([float(vecs[w] @ axis) for w in reference if w in vecs])
-        mu, sd = ref.mean(), ref.std()
-        self.intensity = {w: (float(vecs[w] @ axis) - mu) / sd for w in self.vocab}
+        self.dim = len(next(iter(vecs.values())))
+        self.weight = {w: sif_a / (sif_a + prob.get(w, 1e-6)) for w in vecs}
         self.theme = None
         if theme_words:
             missing = [w for w in theme_words if w not in vecs]
@@ -301,18 +309,91 @@ class Semantics:
 
     def sentence_vec(self, tokens):
         """SIF-weighted sum of word vectors (not normalised)."""
-        return sum(self.weight[t] * self.vec[t] for t in tokens)
+        v = np.zeros(self.dim, dtype=np.float32)
+        for t in tokens:
+            if t in self.vec:
+                v += self.weight[t] * self.vec[t]
+        return v
 
-    def score(self, tokens):
-        """Return (intensity, theme resonance) for a token list."""
-        ws = [self.weight[t] for t in tokens]
-        total = sum(ws) or 1.0
-        inten = sum(w * self.intensity[t] for w, t in zip(ws, tokens)) / total
-        res = 0.0
-        if self.theme is not None:
-            v = self.sentence_vec(tokens)
-            res = float(v @ self.theme / (np.linalg.norm(v) + 1e-9))
-        return inten, res
+    def theme_score(self, tokens):
+        if self.theme is None or not tokens:
+            return 0.0
+        v = self.sentence_vec(tokens)
+        return float(v @ self.theme / (np.linalg.norm(v) + 1e-9))
+
+
+class Situations:
+    """Common everyday situations: spherical k-means over embeddings of a
+    sample of corpus sentences. A situation's weight is its share of the
+    sample, so frequent situations count for more."""
+
+    def __init__(self, sem, corpus_path, k, sample, seed=0):
+        rng = np.random.default_rng(seed)
+        sents = []
+        for line in open(corpus_path, encoding="utf-8"):
+            toks, end = tokenize(line.rstrip("\n").split("\t")[-1])
+            words = [t for t in toks if t != PAUSE]
+            if 3 <= len(words) <= 12 and sum(t in sem.vec for t in words) >= 0.8 * len(words):
+                sents.append((tuple(words), end))
+        sents = [sents[i] for i in rng.choice(len(sents), min(sample, len(sents)), replace=False)]
+        X = np.stack([sem.sentence_vec(w) for w, _ in sents])
+        # SIF: remove the first principal component, the direction shared by
+        # every sentence (mostly function words).
+        self.pc = np.linalg.svd(X, full_matrices=False)[2][0]
+        X = self._project(X)
+
+        C = X[rng.choice(len(X), k, replace=False)].copy()
+        for _ in range(25):
+            assign = (X @ C.T).argmax(1)
+            for j in range(k):
+                total = X[assign == j].sum(0)
+                if total.any():
+                    C[j] = total / np.linalg.norm(total)
+        self.centroids = C
+        sizes = np.bincount(assign, minlength=k)
+        self.weights = sizes / sizes.sum()
+
+        # Label each situation with its most distinctive content words.
+        df = Counter(t for w, _ in sents for t in set(w) if t not in FUNCTION_WORDS)
+        sims = X @ C.T
+        self.labels, self.examples = [], []
+        for j in range(k):
+            members = np.where(assign == j)[0]
+            tf = Counter(t for i in members for t in set(sents[i][0]) if t not in FUNCTION_WORDS)
+            keyness = {t: c * math.log(c * len(sents) / (len(members) * df[t]))
+                       for t, c in tf.items() if c >= 3}
+            self.labels.append(" / ".join(sorted(keyness, key=keyness.get, reverse=True)[:3]) or "-")
+            self.examples.append(render(*sents[members[sims[members, j].argmax()]]) if len(members) else "")
+
+    def _project(self, X):
+        X = X - np.outer(X @ self.pc, self.pc)
+        return X / (np.linalg.norm(X, axis=1, keepdims=True) + 1e-9)
+
+    def embed(self, sem, token_lists):
+        return self._project(np.stack([sem.sentence_vec(t) for t in token_lists]))
+
+    def affinity(self, sem, token_lists, temperature):
+        """Soft assignment of each sentence to situations (rows sum to 1).
+
+        A generic sentence is about equally close to everything, so its
+        membership is spread thin and it fully covers no situation; a
+        specific sentence concentrates on the situation it serves."""
+        logits = self.embed(sem, token_lists) @ self.centroids.T / temperature
+        logits -= logits.max(1, keepdims=True)
+        p = np.exp(logits)
+        return p / p.sum(1, keepdims=True)
+
+
+def build_situations(sem, corpus_path, vec_path, args):
+    key = hashlib.sha1(f"s1|{corpus_path}|{vec_path}|{args.situations}|{args.sample}".encode()).hexdigest()[:10]
+    cache = DATA / f"situations_{key}.pkl"
+    if cache.exists():
+        with open(cache, "rb") as f:
+            return pickle.load(f)
+    sit = Situations(sem, corpus_path, args.situations, args.sample)
+    with open(cache, "wb") as f:
+        pickle.dump(sit, f)
+    return sit
 
 
 # --------------------------------------------------------------- search ---
@@ -325,37 +406,51 @@ def render(tokens, end):
 
 
 def pmi(lm, a, b):
-    """Pointwise mutual information of two words over corpus sentences,
-    or None if they co-occur fewer than --min-cooc times."""
+    """Pointwise mutual information of two words over corpus sentences."""
     c = lm.cooc.get((a, b) if a < b else (b, a), 0)
     return math.log(c * lm.n_sents / (lm.df[a] * lm.df[b])) if c else None
+
+
+def zscore(xs):
+    xs = np.array(xs, dtype=float)
+    return (xs - xs.mean()) / (xs.std() + 1e-9)
 
 
 @dataclass
 class Sentence:
     toks: tuple
     end: str
-    score: float
+    base: float             # generation score: fluency, coherence, theme, penalties
     fluency: float
     coherence: float
-    intensity: float
     theme: float
-    seen: bool          # exact sentence already exists in the corpus
+    seen: bool              # exact sentence already exists in the corpus
+    leverage: float = 0.0   # weighted situation coverage
+    situation: int = -1     # situation it serves best
+    score: float = 0.0      # base + leverage, the final ranking score
 
     @property
     def text(self):
         return render(self.toks, self.end)
 
+    @property
+    def negated(self):
+        return is_negated(self.toks)
 
-def beam_search(lm, sem, args, diversity=0):
-    """Return finished Sentences, best first.
+    @property
+    def act(self):
+        return speech_act(self.toks, self.end)
 
-    With diversity > 0, at most that many beam entries may share their first
-    two words (a simple diverse beam search), so the results are not one
-    sentence with small variations.
+
+def beam_search(lm, sem, args):
+    """Generate fluent sentences; returns Sentences sorted by generation score.
+
+    At most --diversity beam entries may share their first two words (a simple
+    diverse beam search), so the results are not one sentence with small
+    variations.
     """
     words = sem.vocab
-    ends = list(ENDS) if args.punct == "any" else [{"." : "</.>", "!": "</!>", "?": "</?>"}[args.punct]]
+    ends = list(ENDS) if args.punct == "any" else [{".": "</.>", "!": "</!>", "?": "</?>"}[args.punct]]
 
     def coherence(toks):
         cw = [t for t in toks if t not in FUNCTION_WORDS]
@@ -374,11 +469,11 @@ def beam_search(lm, sem, args, diversity=0):
         return True
 
     def total(lm_sum, n, toks):
-        inten, res = sem.score(toks) if toks else (0.0, 0.0)
-        fl, coh = lm_sum / n, coherence(toks)
-        return (args.w_fluency * fl + args.w_coherence * coh
-                + args.w_intensity * inten + args.w_theme * res,
-                fl, coh, inten, res)
+        fl, coh, res = lm_sum / n, coherence(toks), sem.theme_score(toks)
+        penalty = (args.w_negation * is_negated(toks)
+                   + args.w_anaphora * sum(t in ANAPHORA for t in toks))
+        return (args.w_fluency * fl + args.w_coherence * coh + args.w_theme * res - penalty,
+                fl, coh, res)
 
     def attested5(toks):
         seq = [BOS] * 4 + list(toks)
@@ -420,15 +515,66 @@ def beam_search(lm, sem, args, diversity=0):
         cands.sort(key=lambda c: -c[0])
         beam, per_prefix = [], Counter()
         for _, nt, nlp in cands:
-            if diversity:
-                if per_prefix[nt[:2]] >= diversity:
+            if args.diversity:
+                if per_prefix[nt[:2]] >= args.diversity:
                     continue
                 per_prefix[nt[:2]] += 1
             beam.append((nt, nlp))
             if len(beam) == args.beam:
                 break
     ranked = sorted(finished.items(), key=lambda kv: -kv[1][0][0])
-    return [Sentence(t, e, *sc, seen=(*t, e) in lm.closed) for t, (sc, e) in ranked]
+    out = []
+    for t, (sc, e) in ranked:
+        seen = (*t, e) in lm.closed
+        out.append(Sentence(t, e, sc[0] + args.w_attested * seen, *sc[1:], seen=seen))
+    return out
+
+
+def attested_sentences(lm, sem, args):
+    """Corpus sentences written entirely in the vocabulary, scored like
+    generated ones. They are guaranteed natural, so they make good candidates."""
+    out = []
+    for sent in lm.closed:
+        toks, end = sent[:-1], sent[-1]
+        if not args.min_len <= len(toks) <= args.max_len or len(set(toks)) < len(toks):
+            continue
+        seq = (BOS, BOS) + toks + (end,)
+        lp = sum(lm.logp(seq[i - 2], seq[i - 1], seq[i]) for i in range(2, len(seq)))
+        fl = lp / (len(toks) + 1)
+        cw = [t for t in toks if t not in FUNCTION_WORDS]
+        pm = [pmi(lm, a, b) for i, a in enumerate(cw) for b in cw[i + 1:]]
+        coh = sum(x for x in pm if x is not None) / len(pm) if pm else 0.0
+        res = sem.theme_score(toks)
+        base = (args.w_fluency * fl + args.w_coherence * coh + args.w_theme * res
+                - args.w_negation * is_negated(toks)
+                - args.w_anaphora * sum(t in ANAPHORA for t in toks)
+                + args.w_attested)
+        out.append(Sentence(toks, end, base, fl, coh, res, seen=True))
+    return out
+
+
+def candidates(lm, sem, sit, args):
+    """Generated plus attested sentences, deduplicated and ranked by leverage."""
+    pool = {}
+    for p in beam_search(lm, sem, args) + attested_sentences(lm, sem, args):
+        if p.fluency < args.min_fluency:
+            continue
+        if p.toks not in pool or p.base > pool[p.toks].base:
+            pool[p.toks] = p
+    return rerank(list(pool.values()), sem, sit, args)
+
+
+def rerank(pool, sem, sit, args):
+    """Add leverage (weighted situation coverage) and sort by final score."""
+    if not pool:
+        return pool
+    aff = sit.affinity(sem, [p.toks for p in pool], args.temperature)
+    lev = aff @ sit.weights
+    for p, l, lz, row in zip(pool, lev, zscore(lev), aff):
+        p.leverage, p.situation = float(l), int(row.argmax())
+        p.score = p.base + args.w_leverage * lz
+    pool.sort(key=lambda p: -p.score)
+    return pool
 
 
 # ------------------------------------------------------------ monologue ---
@@ -436,7 +582,6 @@ def beam_search(lm, sem, args, diversity=0):
 # Discourse markers: fine inside a monologue, never as its first word.
 CONNECTIVES = {"mais", "alors", "et", "donc", "parce", "ou", "puis", "enfin",
                "pourtant", "si", "quand", "comme"}
-
 
 # Grammatical person of a sentence's subject, for speaker consistency.
 PERSON = {"je": "1s", "j'": "1s", "tu": "2s", "nous": "1p", "vous": "2p", "on": "1p",
@@ -449,79 +594,101 @@ def person(toks):
     return next((PERSON[t] for t in toks if t in PERSON), None)
 
 
-def plan_monologue(pool, sem, args):
-    """Beam search over sentence sequences; returns [(score, [Sentence])]."""
+def plan_monologue(pool, sem, sit, args):
+    """Beam search over sentence sequences that together cover the most
+    everyday situations. Returns [(score, [Sentence])], best first."""
     n = len(pool)
-    vecs = np.stack([sem.sentence_vec(p.toks) for p in pool])
-    vecs -= vecs.mean(0)   # drop the component every everyday sentence shares
-    vecs /= np.linalg.norm(vecs, axis=1, keepdims=True) + 1e-9
-    sim = vecs @ vecs.T
+    aff = sit.affinity(sem, [p.toks for p in pool], args.temperature)
+    emb = sit.embed(sem, [p.toks for p in pool])
+    sim = emb @ emb.T
+    w = sit.weights
+    cov_scale = (aff @ w).std() + 1e-9      # puts coverage gains in z-units
 
-    def z(xs):
-        xs = np.array(xs, dtype=float)
-        return (xs - xs.mean()) / (xs.std() + 1e-9)
-
-    quality = z([p.score for p in pool])
-    topic = z([p.theme for p in pool]) if sem.theme is not None else np.zeros(n)
+    quality = zscore([p.score for p in pool])
+    topic = zscore([p.theme for p in pool]) if sem.theme is not None else np.zeros(n)
     persons = [person(p.toks) for p in pool]
-    register = [("tu" if toks_ & INFORMAL else "") + ("vous" if toks_ & FORMAL else "")
-                for toks_ in (set(p.toks) for p in pool)]
-    inten = z([p.intensity for p in pool])
+    register = [("tu" if INFORMAL & set(p.toks) else "") + ("vous" if FORMAL & set(p.toks) else "")
+                for p in pool]
     toks = [frozenset(p.toks) for p in pool]
     content = [frozenset(t for t in p.toks if t not in FUNCTION_WORDS) for p in pool]
+    neg = [p.negated for p in pool]
+    acts = [p.act for p in pool]
 
     def redundant(i, j):
         overlap = len(toks[i] & toks[j]) / len(toks[i] | toks[j])
         a, b = pool[i].toks, pool[j].toks
         return overlap > args.max_overlap or a[:3] == b[:3] or a[-3:] == b[-3:]
 
-    def final(idxs, acc):
-        k = len(idxs)
-        arc = inten[idxs[-1]]                       # end on the strongest line
-        if k > 1:
-            arc += np.polyfit(range(k), inten[list(idxs)], 1)[0] * (k - 1)   # build up
-        # Each sentence must earn its place: length is wherever the next
-        # line would add less than --sentence-cost.
-        return acc - args.sentence_cost * k + args.w_arc * arc
-
-    # state: (sentence ids, summed gain, content words used, tu/vous register)
-    beam = [((), 0.0, frozenset(), "")]
+    # state: (ids, summed gain, content words used, tu/vous register,
+    #         best affinity per situation so far, speech acts used)
+    beam = [((), 0.0, frozenset(), "", np.zeros(len(w)), frozenset())]
     finished = []
     for step in range(args.max_sentences):
         cands = []
-        for idxs, acc, used, reg in beam:
+        for idxs, acc, used, reg, best, used_acts in beam:
+            cov_gain = (np.maximum(aff, best) - best) @ w / cov_scale
+            n_neg = sum(neg[i] for i in idxs)
+            prev = next((persons[i] for i in reversed(idxs) if persons[i]), None)
             for j in range(n):
-                if register[j] == "tuvous" or (register[j] and reg and register[j] != reg):
-                    continue                        # never mix tu and vous
+                if quality[j] < args.min_quality:
+                    continue
                 if j in idxs or (not idxs and pool[j].toks[0] in CONNECTIVES):
                     continue
+                if register[j] == "tuvous" or (register[j] and reg and register[j] != reg):
+                    continue                        # never mix tu and vous
+                if neg[j] and (n_neg + 1 > max(1, (len(idxs) + 1) // 3) or (idxs and neg[idxs[-1]])):
+                    continue                        # at most a third negated, never two in a row
+                if acts[j] == "question" and len(idxs) >= 2 and all(acts[i] == "question" for i in idxs[-2:]):
+                    continue                        # no three questions in a row
                 if any(redundant(i, j) for i in idxs):
                     continue
-                if pool[j].end == "</?>" and len(idxs) >= 2 and all(
-                        pool[i].end == "</?>" for i in idxs[-2:]):
-                    continue                        # no three questions in a row
-                gain = (args.w_quality * quality[j] + args.w_topic * topic[j]
+                gain = (args.w_quality * quality[j] + args.w_coverage * cov_gain[j]
+                        + args.w_topic * topic[j] + args.w_variety * (acts[j] not in used_acts)
                         - args.w_repeat * len(content[j] & used))
                 if idxs:
                     gain += args.w_cohesion * sim[idxs[-1], j]
-                    prev = next((persons[i] for i in reversed(idxs) if persons[i]), None)
+                    gain += args.w_connective * (pool[j].toks[0] in CONNECTIVES)
                     if persons[j] and prev and persons[j] != prev:
                         gain -= args.w_person
-                    gain += args.w_connective * (pool[j].toks[0] in CONNECTIVES)
-                cands.append((idxs + (j,), acc + gain, used | content[j], reg or register[j]))
+                cands.append((idxs + (j,), acc + gain, used | content[j], reg or register[j],
+                              np.maximum(best, aff[j]), used_acts | {acts[j]}))
         if not cands:
             break
         cands.sort(key=lambda c: -c[1] / len(c[0]))
         beam = cands[:args.mono_beam]
         if step + 1 >= args.min_sentences:
-            finished += [(final(idxs, acc), idxs) for idxs, acc, _, _ in beam]
+            # Each sentence must earn its place: the monologue ends where the
+            # next line would add less than --sentence-cost.
+            finished += [(acc - args.sentence_cost * len(idxs), idxs) for idxs, acc, *_ in beam]
+
+    def flow(order):
+        """Adjacent-sentence fit: topical similarity, same speaker, and
+        connectives only after the first line."""
+        total = -10.0 * (pool[order[0]].toks[0] in CONNECTIVES)
+        for a, b in zip(order, order[1:]):
+            total += sim[a, b] - 0.5 * (persons[a] != persons[b] and None not in (persons[a], persons[b]))
+        return total
+
+    def reorder(idxs):
+        """Coverage picked the set; order it so it reads as one monologue
+        (greedy chaining from every possible first line)."""
+        best = list(idxs)
+        for start in idxs:
+            order, rest = [start], set(idxs) - {start}
+            while rest:
+                nxt = max(rest, key=lambda j: flow([order[-1], j]))
+                order.append(nxt)
+                rest.discard(nxt)
+            if flow(order) > flow(best):
+                best = order
+        return best
 
     finished.sort(key=lambda f: -f[0])
     out, seen = [], set()
     for sc, idxs in finished:
         if frozenset(idxs) not in seen:
             seen.add(frozenset(idxs))
-            out.append((sc, [pool[i] for i in idxs]))
+            out.append((sc, [pool[i] for i in reorder(idxs)]))
     return out
 
 
@@ -536,50 +703,61 @@ def load_models(args):
         if not p or not p.exists():
             sys.exit(f"missing {name}; run `python forge.py fetch` first")
 
-    reference, prob = load_freq(freq, max(args.n, REFERENCE_SIZE))
-    vocab = reference[:args.n]
+    vocab, prob = load_freq(freq, args.n)
     theme = args.theme.lower().split() if args.theme else []
-    vecs = load_vectors(vec_path, set(reference) | AXIS_WORDS | set(theme))
-    sem = Semantics(vocab, vecs, prob, reference, theme)
+    sem = Semantics(vocab, load_vectors(vec_path), prob, theme)
     if len(sem.vocab) < len(vocab):
         print(f"  no vectors for {len(vocab) - len(sem.vocab)} words", file=sys.stderr)
     lm = build_lm(corpus, sem.vocab, DATA)
+    sit = build_situations(sem, corpus, vec_path, args)
     print(f"\nvocabulary: top {len(sem.vocab)} words of {freq.name}"
           + (f" | theme: {' '.join(theme)}" if theme else ""))
-    return sem, lm
+    return sem, lm, sit
 
 
-def print_table(sentences, numbered=False):
-    print(f"{'#':>3} {'score':>6} {'fluency':>8} {'cohere':>7} {'intens':>7} {'theme':>6}  in-corpus  sentence"
-          if numbered else
-          f"{'score':>6} {'fluency':>8} {'cohere':>7} {'intens':>7} {'theme':>6}  in-corpus  sentence")
+def print_table(sentences, sit, numbered=False):
+    print(("  # " if numbered else "")
+          + f"{'score':>6} {'fluency':>7} {'lever':>6}  {'act':<9} {'situation':<28} corpus  sentence")
     for k, p in enumerate(sentences, 1):
         print((f"{k:>3} " if numbered else "")
-              + f"{p.score:6.2f} {p.fluency:8.2f} {p.coherence:7.2f} {p.intensity:+7.2f} {p.theme:6.2f}"
-              f"  {'yes' if p.seen else 'NEW':^9}  {p.text}")
+              + f"{p.score:6.2f} {p.fluency:7.2f} {p.leverage:6.3f}  {p.act:<9} "
+              f"{sit.labels[p.situation][:28]:<28} {'yes' if p.seen else 'NEW':<6}  {p.text}")
 
 
 def search(args):
-    sem, lm = load_models(args)
-    if args.show_vocab:
-        ranked = sorted(sem.vocab, key=lambda w: -sem.intensity[w])
-        print("intensity (z):", ", ".join(f"{w} {sem.intensity[w]:+.2f}" for w in ranked))
-    print_table(beam_search(lm, sem, args)[:args.top])
+    sem, lm, sit = load_models(args)
+    print_table(candidates(lm, sem, sit, args)[:args.top], sit)
+
+
+def situations(args):
+    sem, lm, sit = load_models(args)
+    print(f"{len(sit.weights)} situations from {args.sample:,} corpus sentences\n")
+    print(f"{'share':>6}  {'distinctive words':<34} example")
+    for j in np.argsort(-sit.weights):
+        print(f"{sit.weights[j]:6.1%}  {sit.labels[j][:34]:<34} {sit.examples[j]}")
 
 
 def monologue(args):
-    sem, lm = load_models(args)
-    pool = beam_search(lm, sem, args, diversity=args.diversity)[:args.pool]
-    print(f"sentence pool: {len(pool)} candidates")
-    results = plan_monologue(pool, sem, args)
+    sem, lm, sit = load_models(args)
+    # The best few candidates from every situation, so the planner can reach
+    # situations whose sentences are less fluent than the generic ones.
+    per_sit = Counter()
+    pool = []
+    for p in candidates(lm, sem, sit, args):
+        if per_sit[p.situation] < args.per_situation:
+            per_sit[p.situation] += 1
+            pool.append(p)
+    print(f"sentence pool: {len(pool)} candidates from {len(per_sit)} situations")
+    results = plan_monologue(pool, sem, sit, args)
     if not results:
         sys.exit("no monologue found; loosen --max-overlap or grow --pool")
     for rank, (sc, lines) in enumerate(results[:1 + args.alternatives]):
         label = "best monologue" if rank == 0 else f"alternative {rank}"
-        print(f"\n=== {label}: {len(lines)} sentences, score {sc:.2f} ===\n")
+        covered = len({p.situation for p in lines})
+        print(f"\n=== {label}: {len(lines)} sentences, {covered} situations, score {sc:.2f} ===\n")
         print(textwrap.fill(" ".join(p.text for p in lines), 78), "\n")
         if rank == 0:
-            print_table(lines, numbered=True)
+            print_table(lines, sit, numbered=True)
 
 
 def main():
@@ -595,9 +773,15 @@ def main():
     common.add_argument("--vectors", help="fastText .vec file (default: data/cc.fr.300.top*k.vec)")
     common.add_argument("--corpus", help="Tatoeba-style TSV, sentence in last column")
     common.add_argument("-n", type=int, default=100, help="vocabulary size (top-n words)")
-    common.add_argument("--theme", help="space-separated words to steer meaning, e.g. 'amour'")
-    common.add_argument("--beam", type=int, default=200)
-    common.add_argument("--min-len", type=int, default=3, help="min words per sentence")
+    common.add_argument("--theme", help="space-separated words to steer meaning, e.g. 'voyage'")
+    common.add_argument("--situations", type=int, default=60, help="number of situation clusters")
+    common.add_argument("--sample", type=int, default=30000, help="corpus sentences to cluster")
+    common.add_argument("--temperature", type=float, default=0.05,
+                        help="softness of sentence-to-situation assignment")
+    common.add_argument("--beam", type=int, default=300)
+    common.add_argument("--diversity", type=int, default=3,
+                        help="max beam entries sharing their first two words (0 = off)")
+    common.add_argument("--min-len", type=int, default=2, help="min words per sentence")
     common.add_argument("--max-len", type=int, default=7, help="max words per sentence")
     common.add_argument("--min-bigram", type=int, default=2, help="bigram must occur this often in corpus")
     common.add_argument("--min-trigram", type=int, default=1, help="trigram must occur this often (0 = off)")
@@ -609,35 +793,44 @@ def main():
     common.add_argument("--min-pmi", type=float, default=1.0, help="minimum PMI between content words")
     common.add_argument("--no-verb", dest="require_verb", action="store_false", help="allow verbless sentences")
     common.add_argument("--punct", choices=["any", ".", "!", "?"], default="any")
+    common.add_argument("--min-fluency", type=float, default=-2.6,
+                        help="drop candidates whose mean log-prob per token is lower")
     common.add_argument("--w-fluency", type=float, default=3.0)
     common.add_argument("--w-coherence", type=float, default=0.3)
-    common.add_argument("--w-intensity", type=float, default=0.5)
     common.add_argument("--w-theme", type=float, default=6.0)
+    common.add_argument("--w-leverage", type=float, default=2.0, help="weight of situation coverage (z)")
+    common.add_argument("--w-attested", type=float, default=1.0,
+                        help="bonus for sentences that exist verbatim in the corpus")
+    common.add_argument("--w-negation", type=float, default=1.5, help="penalty for a negated sentence")
+    common.add_argument("--w-anaphora", type=float, default=1.0, help="penalty per il/elle/lui...")
 
-    s = sub.add_parser("search", parents=[common], help="beam-search the highest-impact sentence")
+    s = sub.add_parser("search", parents=[common], help="find the highest-leverage sentence")
     s.add_argument("--top", type=int, default=15)
-    s.add_argument("--show-vocab", action="store_true", help="print per-word intensity scores")
     s.set_defaults(func=search)
 
+    c = sub.add_parser("situations", parents=[common], help="list the everyday situation clusters")
+    c.set_defaults(func=situations)
+
     m = sub.add_parser("monologue", parents=[common], help="compose a variable-length monologue")
-    m.add_argument("--pool", type=int, default=300, help="candidate sentences to plan with")
-    m.add_argument("--diversity", type=int, default=3,
-                   help="max pool beam entries sharing their first two words")
+    m.add_argument("--per-situation", type=int, default=6, help="pool candidates kept per situation")
     m.add_argument("--min-sentences", type=int, default=3)
     m.add_argument("--max-sentences", type=int, default=10)
     m.add_argument("--mono-beam", type=int, default=100)
     m.add_argument("--max-overlap", type=float, default=0.4,
                    help="max word-set Jaccard overlap between any two sentences")
-    m.add_argument("--w-quality", type=float, default=2.0, help="weight of each sentence's own score")
-    m.add_argument("--w-cohesion", type=float, default=1.0, help="topical link between neighbours")
+    m.add_argument("--min-quality", type=float, default=-0.5,
+                   help="skip pool sentences whose score is this many std below the pool mean")
+    m.add_argument("--w-quality", type=float, default=1.0, help="weight of each sentence's own score")
+    m.add_argument("--w-coverage", type=float, default=1.5, help="new situations a sentence covers")
+    m.add_argument("--w-variety", type=float, default=0.5, help="bonus for a new speech act")
     m.add_argument("--w-topic", type=float, default=1.0, help="per-sentence closeness to --theme")
-    m.add_argument("--w-person", type=float, default=1.5, help="penalty when the subject's person changes")
+    m.add_argument("--w-cohesion", type=float, default=0.5, help="topical link between neighbours")
+    m.add_argument("--w-person", type=float, default=0.5, help="penalty when the subject's person changes")
     m.add_argument("--w-connective", type=float, default=0.3, help="bonus for mais/alors/et... openers")
     m.add_argument("--w-repeat", type=float, default=0.3, help="penalty per reused content word")
-    m.add_argument("--w-arc", type=float, default=0.3, help="reward for building to a strong last line")
-    m.add_argument("--sentence-cost", type=float, default=2.0,
+    m.add_argument("--sentence-cost", type=float, default=1.5,
                    help="what each sentence must add to be included; lower = longer monologues")
-    m.add_argument("--alternatives", type=int, default=2)
+    m.add_argument("--alternatives", type=int, default=1)
     m.set_defaults(func=monologue)
 
     args = ap.parse_args()
