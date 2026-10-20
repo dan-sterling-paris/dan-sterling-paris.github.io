@@ -7,10 +7,11 @@ vocabulary (default: the top 100 French words). It uses no LLM, only classical N
 |---|---|
 | Vocabulary | top-N words of a frequency list (`word count` per line, e.g. `fr_50.txt`) |
 | Fluency | interpolated Kneser-Ney trigram LM trained on Tatoeba French (~730k sentences) |
-| Grammar filter | every bigram (≥2), trigram and 4-gram in the output must be attested in the corpus |
+| Grammar filter | every bigram (≥2), trigram and 4-gram must be attested in the corpus, and the sentence may only end where its last four words have ended a real sentence |
+| Coherence | every pair of content words must share ≥3 corpus sentences with PMI ≥ 1, which rejects long-range nonsense the n-grams can't see ("la route … mourir") |
 | Meaning | fastText `cc.fr.300` vectors, SIF-weighted sentence vector |
 | Impact | projection onto an intensity axis built from POS-matched seed pairs (`terrible − correct`, `toujours − parfois`, …), z-scored against the 5,000 most common words; plus optional cosine to a `--theme` |
-| Search | beam search over the vocabulary; score = fluency + 1.5·intensity + 3·theme |
+| Search | beam search over the vocabulary; score = 3·fluency + 0.3·coherence + 0.5·intensity + 6·theme (weighted toward everyday French) |
 
 ## Run
 
@@ -19,6 +20,7 @@ pip install numpy
 python forge.py fetch                    # ~90 MB: frequency list, Tatoeba, first 20k fastText vectors
 python forge.py search                   # top-100 vocab, default scoring
 python forge.py search --theme amour     # steer meaning toward a concept
+python forge.py search -n 1000 --theme "voyage partir route"   # topics need a bigger vocab
 python forge.py search --freq fr_50.txt -n 100 --max-len 9 --w-intensity 3 --show-vocab
 ```
 
